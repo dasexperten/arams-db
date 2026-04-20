@@ -1,11 +1,79 @@
-<div align="center">
+# Arams Product Placement — Ozon Performance
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+ETL и аналитика для рекламного кабинета Ozon через **Performance API**
+(`api-performance.ozon.ru`). Забирает кампании и дневную статистику,
+складывает в SQLite и считает KPI (ДРР, ROAS, CPO, CTR, CR).
 
-  <h1>Built with AI Studio</h2>
+## Структура
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+```
+ozon_perf/
+  client.py     OAuth2 (client_credentials), retry, 429/401 handling
+  api.py        Обёртки над /api/client/campaign, /api/client/statistics
+  db.py         SQLite-схема и upsert-лоадеры
+  etl.py        Оркестрация выгрузки
+  analyze.py    SQL-агрегации для KPI
+cli.py          Точка входа: init / ping / sync-* / kpi
+```
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Установка
 
-</div>
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# заполнить OZON_PERF_CLIENT_ID и OZON_PERF_CLIENT_SECRET
+```
+
+Ключи берутся в кабинете Ozon Performance: **Настройки → API-ключи**.
+
+## Использование
+
+```bash
+python cli.py init                       # создать SQLite-схему
+python cli.py ping                       # проверить credentials
+python cli.py sync-all --days 30         # кампании + статистика за 30 дней
+python cli.py sync-campaigns             # только каталог кампаний
+python cli.py sync-daily --days 7        # дневная статистика за 7 дней
+python cli.py sync-daily --from 2026-04-01 --to 2026-04-15
+python cli.py kpi --days 30              # дашборд в консоли
+python cli.py kpi --from 2026-04-01 --to 2026-04-15 --sku
+```
+
+## Схема БД
+
+| таблица                | смысл                                         |
+|------------------------|-----------------------------------------------|
+| `campaigns`            | каталог кампаний, upsert по `campaign_id`     |
+| `campaign_daily_stats` | дневная статистика по кампании (PK день+id)   |
+| `sku_daily_stats`      | дневная статистика по SKU (заготовка)         |
+| `etl_runs`             | журнал запусков ETL                           |
+
+Re-run за тот же день **идемпотентен** — данные переписываются.
+
+## Что считается в `kpi`
+
+- **CTR** = clicks / views
+- **CR** = orders / clicks
+- **CPO** = spent / orders
+- **ДРР** = spent / revenue
+- **ROAS** = revenue / spent
+
+## Ограничения и нюансы
+
+- Токен живёт ~30 минут, клиент кеширует и обновляет автоматически.
+- Лимит — 100 000 запросов/сутки на аккаунт Performance.
+- Статистика за текущий день неполная; ETL по умолчанию идёт по «вчера».
+- SKU-уровень (`sku_daily_stats`) — заготовка: нужен отчёт с
+  `groupBy=PLACEMENT` через асинхронный `/api/client/statistics`.
+  Лоадер есть (`db.upsert_sku_daily`), парсер CSV-отчёта добавим,
+  когда появится доступ к реальным данным.
+- Без реальных `client_id` / `client_secret` интеграция протестирована
+  только на уровне структуры; первый запуск лучше делать на тестовом
+  кабинете с коротким окном (`--days 1`).
+
+## Дальше
+
+- Парсинг CSV асинхронных отчётов → `sku_daily_stats`.
+- Связка с Seller API (заказы/возвраты) для честного ROI.
+- Выгрузка в Google Sheets / BigQuery, когда определимся с целевым DWH.
