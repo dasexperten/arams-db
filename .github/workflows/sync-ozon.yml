@@ -1,0 +1,87 @@
+name: Sync Ozon Performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days to sync"
+        required: false
+        default: "30"
+  schedule:
+    - cron: "0 5 * * *"  # daily at 05:00 UTC (08:00 MSK)
+  push:
+    branches:
+      - claude/explore-capabilities-b9Hjh
+    paths:
+      - ozon_perf/**
+      - cli.py
+      - .github/workflows/sync-ozon.yml
+
+concurrency:
+  group: sync-ozon-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      OZON_PERF_CLIENT_ID: ${{ secrets.OZON_PERF_CLIENT_ID }}
+      OZON_PERF_CLIENT_SECRET: ${{ secrets.OZON_PERF_CLIENT_SECRET }}
+      OZON_PERF_BASE_URL: https://api-performance.ozon.ru
+      OZON_PERF_DB_PATH: data/ozon_performance.db
+      DAYS: ${{ github.event.inputs.days || '30' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify credentials present
+        run: |
+          if [ -z "$OZON_PERF_CLIENT_ID" ] || [ -z "$OZON_PERF_CLIENT_SECRET" ]; then
+            echo "::error::Add repo secrets OZON_PERF_CLIENT_ID and OZON_PERF_CLIENT_SECRET in Settings → Secrets → Actions"
+            exit 1
+          fi
+
+      - name: Ping Ozon API
+        run: python cli.py ping
+
+      - name: Sync campaigns and daily stats
+        run: python cli.py sync-all --days "$DAYS"
+
+      - name: Sync SKU stats (best effort)
+        continue-on-error: true
+        run: python cli.py sync-sku --days "$DAYS"
+
+      - name: Generate dashboard
+        run: |
+          mkdir -p samples
+          python cli.py dashboard --days "$DAYS" --out samples/dashboard.html
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: samples/dashboard.html
+
+      - name: Commit refreshed dashboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add samples/dashboard.html
+          if git diff --cached --quiet; then
+            echo "No changes in dashboard."
+          else
+            git commit -m "chore: refresh dashboard [skip ci]"
+            git push
+          fi

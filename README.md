@@ -25,6 +25,29 @@ samples/        Демо-дашборд со синтетическими дан
 Открой `samples/dashboard_demo.html` в браузере двойным кликом — никаких
 запусков и установок не нужно, там зашиты синтетические данные для превью.
 
+## Автоматическая выгрузка через GitHub Actions
+
+Настроен workflow `.github/workflows/sync-ozon.yml`, который каждую ночь
+подтягивает данные из Ozon Performance API и обновляет
+`samples/dashboard.html`. Без локального Python.
+
+**Разовая настройка (≈1 минута):**
+
+1. Открой репо на github.com → **Settings** → **Secrets and variables** →
+   **Actions** → **New repository secret**.
+2. Добавь два секрета:
+   - `OZON_PERF_CLIENT_ID` — `94071772-1776699682393@advertising.performance.ozon.ru`
+   - `OZON_PERF_CLIENT_SECRET` — длинный токен из кабинета Performance
+3. Перейди во вкладку **Actions** → слева выбери **Sync Ozon Performance** →
+   справа **Run workflow** → **Run workflow**. Первый запуск — руками.
+4. Через 2-3 минуты job завершится. Открой
+   `samples/dashboard.html` через raw.githack.com — там уже реальные данные.
+
+Дальше каждый день в 08:00 МСК GitHub сам всё обновит.
+
+**Если upstream упадёт с 401/403** — значит ключи невалидны: перевыпусти их
+в кабинете Performance и обнови оба секрета.
+
 ## Установка
 
 ```bash
