@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 
 from ozon_perf import OzonPerformanceClient
 from ozon_perf import analyze, dashboard, db, etl
+from ozon_seller import OzonSellerClient, SellerAPI
+from ozon_seller import db as seller_db
+from ozon_seller import etl as seller_etl
 
 
 def _parse_date(s: str) -> date:
@@ -16,7 +19,40 @@ def _parse_date(s: str) -> date:
 
 def cmd_init(_: argparse.Namespace) -> int:
     db.init_schema()
-    print("schema ready:", db._db_path())
+    seller_db.init_schema()
+    print("perf schema ready:  ", db._db_path())
+    print("seller schema ready:", seller_db._db_path())
+    return 0
+
+
+def cmd_ping_seller(_: argparse.Namespace) -> int:
+    with OzonSellerClient() as c:
+        data = SellerAPI(c).reviews_count()
+    print("seller auth ok, review counts:")
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_reviews(args: argparse.Namespace) -> int:
+    seller_db.init_schema()
+    with OzonSellerClient() as c:
+        result = seller_etl.sync_reviews(
+            c,
+            status=args.status,
+            max_reviews=args.max,
+            with_comments=args.with_comments,
+        )
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_mark_reviews(args: argparse.Namespace) -> int:
+    if not args.review_ids:
+        print("no review_ids given")
+        return 1
+    with OzonSellerClient() as c:
+        result = SellerAPI(c).change_status(args.review_ids, args.status)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -241,9 +277,24 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="ozon-perf", description="Ozon Performance API ETL & analytics")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("init", help="Create SQLite schema").set_defaults(func=cmd_init)
-    sub.add_parser("ping", help="Test credentials / token fetch").set_defaults(func=cmd_ping)
+    sub.add_parser("init", help="Create SQLite schema (perf + seller)").set_defaults(func=cmd_init)
+    sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
+    sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
+        .set_defaults(func=cmd_ping_seller)
     sub.add_parser("sync-campaigns", help="Fetch campaign list").set_defaults(func=cmd_sync_campaigns)
+
+    sr = sub.add_parser("sync-reviews", help="Fetch reviews from Seller API into SQLite")
+    sr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="ALL")
+    sr.add_argument("--max", type=int, default=None,
+                    help="Stop after N reviews (default: all)")
+    sr.add_argument("--with-comments", action="store_true",
+                    help="Also pull comments for reviews with comments_amount > 0")
+    sr.set_defaults(func=cmd_sync_reviews)
+
+    mr = sub.add_parser("mark-reviews", help="Mark reviews PROCESSED / UNPROCESSED (safe write)")
+    mr.add_argument("--status", choices=["PROCESSED", "UNPROCESSED"], required=True)
+    mr.add_argument("review_ids", nargs="+")
+    mr.set_defaults(func=cmd_mark_reviews)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
