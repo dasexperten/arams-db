@@ -8,7 +8,7 @@ on:
         required: false
         default: "30"
   schedule:
-    - cron: "0 5 * * *"  # daily at 05:00 UTC (08:00 MSK)
+    - cron: "0 23 * * *"  # daily at 23:00 UTC = 02:00 MSK next day
   push:
     branches:
       - claude/explore-capabilities-b9Hjh
@@ -55,10 +55,6 @@ jobs:
 
       - name: Ping Ozon API
         run: python cli.py ping
-
-      - name: Debug Ozon API responses
-        continue-on-error: true
-        run: python cli.py debug
 
       - name: Sync campaigns and daily stats
         run: python cli.py sync-all --days "$DAYS"
