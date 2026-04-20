@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Ozon Performance — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+         margin: 0; background: #0f1115; color: #e6e6e6; }
+  header { padding: 24px 32px; border-bottom: 1px solid #2a2f3a; display: flex;
+           justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .range { color: #8a93a6; font-size: 14px; }
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+           gap: 12px; margin-bottom: 24px; }
+  .card { background: #161a22; border: 1px solid #2a2f3a; border-radius: 10px;
+          padding: 16px; }
+  .card .label { color: #8a93a6; font-size: 12px; text-transform: uppercase;
+                 letter-spacing: 0.04em; }
+  .card .value { font-size: 24px; font-weight: 600; margin-top: 6px; }
+  .card.accent .value { color: #7dd3fc; }
+  .card.warn .value { color: #fbbf24; }
+  .card.bad .value { color: #f87171; }
+  .card.good .value { color: #4ade80; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel { background: #161a22; border: 1px solid #2a2f3a; border-radius: 10px;
+           padding: 16px; margin-bottom: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #c9d2e3; }
+  canvas { max-height: 320px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2a2f3a; }
+  th { color: #8a93a6; font-weight: 500; text-transform: uppercase;
+       font-size: 11px; letter-spacing: 0.04em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover { background: #1c2230; }
+  .muted { color: #8a93a6; }
+  .footer { padding: 16px 32px; color: #55627b; font-size: 12px; border-top: 1px solid #2a2f3a; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Ozon Performance</h1>
+    <div class="range">Период: 2026-03-21 — 2026-04-19</div>
+  </div>
+  <div class="muted">Сгенерировано: 2026-04-20 17:05</div>
+</header>
+
+<main>
+  <div class="cards" id="totals"></div>
+
+  <div class="panel">
+    <h2>Динамика расхода и выручки по дням</h2>
+    <canvas id="timeChart"></canvas>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Топ-10 кампаний по расходу</h2>
+      <canvas id="spendChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>ДРР по кампаниям, %</h2>
+      <canvas id="drrChart"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Кампании</h2>
+    <table id="campaignsTable">
+      <thead><tr>
+        <th>Кампания</th><th>Тип</th>
+        <th class="num">Показы</th><th class="num">Клики</th>
+        <th class="num">Заказы</th><th class="num">Выручка</th>
+        <th class="num">Расход</th><th class="num">CTR</th>
+        <th class="num">CR</th><th class="num">CPO</th>
+        <th class="num">ДРР</th><th class="num">ROAS</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>Топ-20 SKU по расходу</h2>
+    <table id="skuTable">
+      <thead><tr>
+        <th>SKU</th>
+        <th class="num">Показы</th><th class="num">Клики</th>
+        <th class="num">Заказы</th><th class="num">Выручка</th>
+        <th class="num">Расход</th><th class="num">ДРР</th>
+        <th class="num">ROAS</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="footer">
+  Данные из SQLite (<code>data/ozon_performance.db</code>). Нажми F5 после перезапуска ETL, чтобы обновить.
+</div>
+
+<script>
+const DATA = {"totals": {"views": 4319317, "clicks": 105789, "orders": 7580, "revenue": 5212083.49, "spent": 695341.95, "drr": 0.13340959547829498, "roas": 7.495712706532377}, "campaigns": [{"campaign_id": "13880562", "title": "Трафареты Пасты", "type": "SKU", "views": 1951760, "clicks": 35076, "orders": 2202, "revenue": 1685614.9, "spent": 153672.45, "ctr": 0.017971471902283067, "cr": 0.06277796784125898, "cpo": 69.78767029972752, "drr": 0.09116699787122196, "roas": 10.96888153992469}, {"campaign_id": "10701734", "title": "ЧЕТВЕРКИ ТОП", "type": "SKU", "views": 264851, "clicks": 13716, "orders": 1232, "revenue": 792945.71, "spent": 127134.17, "ctr": 0.05178760888197515, "cr": 0.08982210557013706, "cpo": 103.1933198051948, "drr": 0.16033149356467294, "roas": 6.237077805282404}, {"campaign_id": "13965971", "title": "Трафареты Щетки", "type": "SKU", "views": 1347558, "clicks": 37135, "orders": 1605, "revenue": 803953.6, "spent": 116208.29, "ctr": 0.027557255420545906, "cr": 0.04322068129796688, "cpo": 72.40391900311526, "drr": 0.1445460160884907, "roas": 6.9182121172250275}, {"campaign_id": "10342501", "title": "пастаТОП", "type": "SKU", "views": 209662, "clicks": 10635, "orders": 1475, "revenue": 1140251.69, "spent": 102738.04, "ctr": 0.0507244994324198, "cr": 0.1386929948283968, "cpo": 69.65290847457626, "drr": 0.09010119511421202, "roas": 11.098631918615538}, {"campaign_id": "23980996", "title": "Cибиоз", "type": "BANNER", "views": 389780, "clicks": 409, "orders": 14, "revenue": 11097.0, "spent": 58241.9, "ctr": 0.0010493098671045206, "cr": 0.034229828850855744, "cpo": 4160.135714285714, "drr": 5.248436514373254, "roas": 0.19053293247644737}, {"campaign_id": "24000043", "title": "Эволюция Рекалдент", "type": "BANNER", "views": 0, "clicks": 1930, "orders": 10, "revenue": 5983.0, "spent": 51465.8, "ctr": 0, "cr": 0.0051813471502590676, "cpo": 5146.58, "drr": 8.602005682767842, "roas": 0.11625195761068514}, {"campaign_id": "13957966", "title": "Спецпасты", "type": "SKU", "views": 79653, "clicks": 4038, "orders": 582, "revenue": 455617.38, "spent": 38339.409999999996, "ctr": 0.05069488908139053, "cr": 0.14413075780089152, "cpo": 65.87527491408935, "drr": 0.08414826054265093, "roas": 11.883786944034872}, {"campaign_id": "10662914", "title": "нити ерщики ТОП", "type": "SKU", "views": 30207, "clicks": 1370, "orders": 216, "revenue": 156573.78, "spent": 13190.59, "ctr": 0.04535372595755951, "cr": 0.15766423357664233, "cpo": 61.0675462962963, "drr": 0.08424520376272451, "roas": 11.870111951019629}, {"campaign_id": "22170776", "title": "Спецразмещение Пасты. Из Спецразмещения", "type": "SKU", "views": 6468, "clicks": 189, "orders": 53, "revenue": 41236.76, "spent": 12557.83, "ctr": 0.02922077922077922, "cr": 0.2804232804232804, "cpo": 236.9401886792453, "drr": 0.3045299873219913, "roas": 3.2837488642544135}, {"campaign_id": "22170777", "title": "Спец щетки. Из Спецразмещения", "type": "SKU", "views": 5940, "clicks": 316, "orders": 57, "revenue": 39742.0, "spent": 12419.22, "ctr": 0.0531986531986532, "cr": 0.18037974683544303, "cpo": 217.88105263157894, "drr": 0.31249609984399374, "roas": 3.2000399380959514}, {"campaign_id": "13914596", "title": "Детство", "type": "SKU", "views": 33438, "clicks": 975, "orders": 134, "revenue": 79067.67, "spent": 9374.25, "ctr": 0.02915844249057958, "cr": 0.13743589743589743, "cpo": 69.95708955223881, "drr": 0.11855983615047719, "roas": 8.43455956476518}], "skus": [], "timeline": [{"date": "2026-03-21", "views": 128183, "clicks": 2838, "orders": 253, "revenue": 173619.03999999998, "spent": 22907.92}, {"date": "2026-03-22", "views": 140487, "clicks": 2809, "orders": 210, "revenue": 148250.0, "spent": 22822.3}, {"date": "2026-03-23", "views": 235103, "clicks": 4438, "orders": 289, "revenue": 199725.43, "spent": 31056.05}, {"date": "2026-03-24", "views": 239466, "clicks": 5142, "orders": 291, "revenue": 205708.0, "spent": 35129.81}, {"date": "2026-03-25", "views": 232976, "clicks": 5439, "orders": 306, "revenue": 220651.55, "spent": 34595.01}, {"date": "2026-03-26", "views": 263060, "clicks": 5697, "orders": 364, "revenue": 254792.56, "spent": 33070.5}, {"date": "2026-03-27", "views": 200613, "clicks": 4219, "orders": 322, "revenue": 231274.34, "spent": 25192.58}, {"date": "2026-03-28", "views": 239294, "clicks": 5131, "orders": 317, "revenue": 231698.22, "spent": 30904.29}, {"date": "2026-03-29", "views": 293338, "clicks": 6308, "orders": 325, "revenue": 234711.0, "spent": 37029.94}, {"date": "2026-03-30", "views": 153178, "clicks": 3302, "orders": 313, "revenue": 224392.66, "spent": 21240.8}, {"date": "2026-03-31", "views": 95109, "clicks": 2133, "orders": 254, "revenue": 185401.0, "spent": 13852.17}, {"date": "2026-04-01", "views": 103919, "clicks": 2606, "orders": 266, "revenue": 190193.44, "spent": 18315.6}, {"date": "2026-04-02", "views": 113039, "clicks": 2928, "orders": 242, "revenue": 167805.09, "spent": 22552.82}, {"date": "2026-04-03", "views": 102476, "clicks": 2516, "orders": 230, "revenue": 155901.76, "spent": 15660.84}, {"date": "2026-04-04", "views": 111582, "clicks": 2859, "orders": 231, "revenue": 153135.2, "spent": 18611.0}, {"date": "2026-04-05", "views": 125462, "clicks": 3336, "orders": 235, "revenue": 158780.89, "spent": 19132.31}, {"date": "2026-04-06", "views": 106197, "clicks": 3457, "orders": 224, "revenue": 151566.0, "spent": 24910.030000000002}, {"date": "2026-04-07", "views": 105802, "clicks": 2951, "orders": 219, "revenue": 141694.41, "spent": 20404.96}, {"date": "2026-04-08", "views": 107345, "clicks": 3061, "orders": 228, "revenue": 152077.77, "spent": 20677.75}, {"date": "2026-04-09", "views": 97157, "clicks": 2993, "orders": 190, "revenue": 125703.89, "spent": 24110.920000000002}, {"date": "2026-04-10", "views": 97876, "clicks": 2696, "orders": 250, "revenue": 164882.48, "spent": 16845.92}, {"date": "2026-04-11", "views": 106757, "clicks": 2800, "orders": 205, "revenue": 141139.68, "spent": 16698.86}, {"date": "2026-04-12", "views": 119224, "clicks": 3404, "orders": 212, "revenue": 140720.98, "spent": 20159.24}, {"date": "2026-04-13", "views": 111782, "clicks": 3008, "orders": 214, "revenue": 142561.0, "spent": 17434.36}, {"date": "2026-04-14", "views": 124641, "clicks": 3516, "orders": 224, "revenue": 145259.0, "spent": 20203.8}, {"date": "2026-04-15", "views": 122424, "clicks": 3261, "orders": 224, "revenue": 147013.91999999998, "spent": 19231.22}, {"date": "2026-04-16", "views": 117694, "clicks": 3356, "orders": 245, "revenue": 165598.51, "spent": 23337.94}, {"date": "2026-04-17", "views": 103393, "clicks": 2981, "orders": 255, "revenue": 168826.57, "spent": 20724.91}, {"date": "2026-04-18", "views": 98026, "clicks": 2979, "orders": 210, "revenue": 136930.0, "spent": 22048.5}, {"date": "2026-04-19", "views": 123714, "clicks": 3625, "orders": 232, "revenue": 152069.1, "spent": 26479.6}]};
+
+const fmt = (v, digits = 0) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(v);
+const fmtPct = (v) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { style: 'percent', maximumFractionDigits: 2 }).format(v);
+const fmtMoney = (v) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(v) + ' ₽';
+
+const totals = DATA.totals || {};
+const cards = [
+  { label: 'Показы', value: fmt(totals.views), cls: '' },
+  { label: 'Клики', value: fmt(totals.clicks), cls: '' },
+  { label: 'Заказы', value: fmt(totals.orders), cls: 'accent' },
+  { label: 'Выручка', value: fmtMoney(totals.revenue), cls: 'good' },
+  { label: 'Расход', value: fmtMoney(totals.spent), cls: 'warn' },
+  { label: 'ДРР', value: fmtPct(totals.drr),
+    cls: (totals.drr != null && totals.drr > 0.3) ? 'bad' : 'good' },
+  { label: 'ROAS', value: totals.roas != null ? totals.roas.toFixed(2) + 'x' : '—',
+    cls: (totals.roas != null && totals.roas < 3) ? 'bad' : 'good' },
+];
+document.getElementById('totals').innerHTML = cards.map(c =>
+  `<div class="card ${c.cls}"><div class="label">${c.label}</div>
+   <div class="value">${c.value}</div></div>`).join('');
+
+const tlCtx = document.getElementById('timeChart');
+if (DATA.timeline && DATA.timeline.length) {
+  new Chart(tlCtx, {
+    type: 'line',
+    data: {
+      labels: DATA.timeline.map(r => r.date),
+      datasets: [
+        { label: 'Выручка, ₽', data: DATA.timeline.map(r => r.revenue),
+          borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.1)',
+          tension: 0.25, fill: true },
+        { label: 'Расход, ₽', data: DATA.timeline.map(r => r.spent),
+          borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)',
+          tension: 0.25, fill: true },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+      plugins: { legend: { labels: { color: '#c9d2e3' } } },
+    },
+  });
+}
+
+const camps = (DATA.campaigns || []).slice(0, 10);
+new Chart(document.getElementById('spendChart'), {
+  type: 'bar',
+  data: {
+    labels: camps.map(c => c.title || c.campaign_id),
+    datasets: [{ label: 'Расход, ₽', data: camps.map(c => c.spent),
+                 backgroundColor: '#60a5fa' }],
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+    plugins: { legend: { display: false } },
+  },
+});
+
+new Chart(document.getElementById('drrChart'), {
+  type: 'bar',
+  data: {
+    labels: camps.map(c => c.title || c.campaign_id),
+    datasets: [{ label: 'ДРР, %', data: camps.map(c => c.drr == null ? 0 : c.drr * 100),
+                 backgroundColor: camps.map(c =>
+                   c.drr != null && c.drr > 0.3 ? '#f87171' : '#4ade80') }],
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+    plugins: { legend: { display: false } },
+  },
+});
+
+const cTbody = document.querySelector('#campaignsTable tbody');
+cTbody.innerHTML = (DATA.campaigns || []).map(c => `<tr>
+  <td>${c.title || c.campaign_id}</td>
+  <td>${c.type || '—'}</td>
+  <td class="num">${fmt(c.views)}</td>
+  <td class="num">${fmt(c.clicks)}</td>
+  <td class="num">${fmt(c.orders)}</td>
+  <td class="num">${fmt(c.revenue, 0)}</td>
+  <td class="num">${fmt(c.spent, 0)}</td>
+  <td class="num">${fmtPct(c.ctr)}</td>
+  <td class="num">${fmtPct(c.cr)}</td>
+  <td class="num">${fmt(c.cpo, 0)}</td>
+  <td class="num">${fmtPct(c.drr)}</td>
+  <td class="num">${c.roas == null ? '—' : c.roas.toFixed(2) + 'x'}</td>
+</tr>`).join('');
+
+const sTbody = document.querySelector('#skuTable tbody');
+const skus = DATA.skus || [];
+sTbody.innerHTML = skus.length ? skus.map(s => `<tr>
+  <td>${s.sku}</td>
+  <td class="num">${fmt(s.views)}</td>
+  <td class="num">${fmt(s.clicks)}</td>
+  <td class="num">${fmt(s.orders)}</td>
+  <td class="num">${fmt(s.revenue, 0)}</td>
+  <td class="num">${fmt(s.spent, 0)}</td>
+  <td class="num">${fmtPct(s.drr)}</td>
+  <td class="num">${s.roas == null ? '—' : s.roas.toFixed(2) + 'x'}</td>
+</tr>`).join('') : '<tr><td colspan="8" class="muted">Нет данных по SKU — запусти sync-sku.</td></tr>';
+</script>
+</body>
+</html>

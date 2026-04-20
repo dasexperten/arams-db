@@ -1,0 +1,301 @@
+import argparse
+import json
+import os
+import sys
+from datetime import date, datetime, timedelta
+
+from dotenv import load_dotenv
+
+from ozon_perf import OzonPerformanceClient
+from ozon_perf import analyze, dashboard, db, etl
+
+
+def _parse_date(s: str) -> date:
+    return datetime.strptime(s, "%Y-%m-%d").date()
+
+
+def cmd_init(_: argparse.Namespace) -> int:
+    db.init_schema()
+    print("schema ready:", db._db_path())
+    return 0
+
+
+def cmd_ping(_: argparse.Namespace) -> int:
+    with OzonPerformanceClient() as c:
+        c._auth_header()
+        print("auth ok, token cached")
+    return 0
+
+
+def cmd_sync_campaigns(_: argparse.Namespace) -> int:
+    db.init_schema()
+    with OzonPerformanceClient() as c:
+        n = etl.sync_campaigns(c)
+    print(f"campaigns upserted: {n}")
+    return 0
+
+
+def cmd_sync_daily(args: argparse.Namespace) -> int:
+    db.init_schema()
+    if args.days:
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+    else:
+        date_from = _parse_date(args.date_from)
+        date_to = _parse_date(args.date_to)
+    with OzonPerformanceClient() as c:
+        n = etl.sync_daily_stats(c, date_from, date_to, args.campaigns or None)
+    print(f"daily rows upserted: {n} ({date_from}..{date_to})")
+    return 0
+
+
+def cmd_sync_sku(args: argparse.Namespace) -> int:
+    db.init_schema()
+    if args.days:
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+    else:
+        date_from = _parse_date(args.date_from)
+        date_to = _parse_date(args.date_to)
+    with OzonPerformanceClient() as c:
+        n = etl.sync_sku_stats(c, date_from, date_to, args.campaigns or None,
+                               group_by=args.group_by)
+    print(f"SKU rows upserted: {n} ({date_from}..{date_to})")
+    return 0
+
+
+def cmd_sync_all(args: argparse.Namespace) -> int:
+    db.init_schema()
+    with OzonPerformanceClient() as c:
+        result = etl.sync_last_n_days(c, days=args.days)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_kpi(args: argparse.Namespace) -> int:
+    date_to = _parse_date(args.date_to) if args.date_to else date.today() - timedelta(days=1)
+    date_from = _parse_date(args.date_from) if args.date_from else date_to - timedelta(days=6)
+
+    totals = analyze.totals(date_from, date_to)
+    print(f"--- totals {date_from}..{date_to} ---")
+    print(json.dumps(totals, indent=2, ensure_ascii=False, default=str))
+
+    print(f"\n--- top {args.limit} campaigns by spend ---")
+    rows = analyze.kpi_by_campaign(date_from, date_to, limit=args.limit)
+    _print_table(rows)
+
+    if args.sku:
+        print(f"\n--- top {args.limit} SKUs by spend ---")
+        rows = analyze.kpi_by_sku(date_from, date_to, limit=args.limit)
+        _print_table(rows)
+    return 0
+
+
+def _print_table(rows: list[dict]) -> None:
+    if not rows:
+        print("(no data)")
+        return
+    headers = list(rows[0].keys())
+    widths = {h: max(len(h), *(len(_fmt(r.get(h))) for r in rows)) for h in headers}
+    print(" | ".join(h.ljust(widths[h]) for h in headers))
+    print("-+-".join("-" * widths[h] for h in headers))
+    for r in rows:
+        print(" | ".join(_fmt(r.get(h)).ljust(widths[h]) for h in headers))
+
+
+def _fmt(v) -> str:
+    if v is None:
+        return "-"
+    if isinstance(v, float):
+        return f"{v:.4f}" if abs(v) < 1 else f"{v:.2f}"
+    return str(v)
+
+
+def cmd_debug(args: argparse.Namespace) -> int:
+    print("=" * 70)
+    print("DEBUG: raw Ozon Performance API responses")
+    print("=" * 70)
+
+    with OzonPerformanceClient() as c:
+        print("\n--- GET /api/client/campaign ---")
+        resp = c.request("GET", "/api/client/campaign")
+        print("status:", resp.status_code)
+        print("body (first 3000 chars):")
+        print(resp.text[:3000])
+
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=6)
+
+        from ozon_perf.api import PerformanceAPI
+        api = PerformanceAPI(c)
+        campaigns = api.list_campaigns()
+        print(f"\n--- list_campaigns() parsed {len(campaigns)} items ---")
+        if campaigns:
+            print("first campaign dict:")
+            print(json.dumps(campaigns[0], ensure_ascii=False, indent=2, default=str))
+
+        if campaigns:
+            first_ids = [str(c.get("id") or c.get("campaignId")) for c in campaigns[:3]]
+            first_ids = [x for x in first_ids if x and x != "None"]
+            print(f"\n--- GET /api/client/statistics/daily/json for {first_ids} ---")
+            try:
+                resp = c.request("GET", "/api/client/statistics/daily/json", params={
+                    "campaign_ids": first_ids,
+                    "date_from": date_from.isoformat(),
+                    "date_to": date_to.isoformat(),
+                })
+                print("status:", resp.status_code)
+                print("body (first 3000 chars):")
+                print(resp.text[:3000])
+            except Exception as e:
+                print("error:", e)
+    return 0
+
+
+def cmd_notify_telegram(args: argparse.Namespace) -> int:
+    import html
+    import httpx
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        print("Telegram not configured (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID), skipping")
+        return 0
+
+    repo = os.environ.get("GITHUB_REPOSITORY", "dasexperten/arams-db")
+    branch = os.environ.get("GITHUB_REF_NAME", "claude/explore-capabilities-b9Hjh")
+    dashboard_url = f"https://raw.githack.com/{repo}/{branch}/samples/dashboard.html"
+
+    if args.status == "success":
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+        totals = analyze.totals(date_from, date_to)
+
+        def fmt_money(v):
+            return f"{v:,.0f}".replace(",", "\u202f") if v else "0"
+        def fmt_int(v):
+            return f"{v:,}".replace(",", "\u202f") if v else "0"
+        def fmt_pct(v):
+            return f"{v * 100:.2f}%" if v is not None else "—"
+        def fmt_roas(v):
+            return f"{v:.2f}x" if v is not None else "—"
+
+        drr = totals.get("drr")
+        drr_flag = "\U0001f7e2" if drr is not None and drr < 0.3 else "\U0001f534"
+
+        text = (
+            f"<b>\u2705 Ozon Performance обновлён</b>\n\n"
+            f"\U0001f4c5 <b>{date_from}…{date_to}</b> ({args.days} дней)\n"
+            f"\U0001f441 Показы: <b>{fmt_int(totals.get('views') or 0)}</b>\n"
+            f"\U0001f446 Клики: <b>{fmt_int(totals.get('clicks') or 0)}</b>\n"
+            f"\U0001f4e6 Заказы: <b>{fmt_int(totals.get('orders') or 0)}</b>\n"
+            f"\U0001f4b0 Выручка: <b>{fmt_money(totals.get('revenue'))} ₽</b>\n"
+            f"\U0001f4b8 Расход: <b>{fmt_money(totals.get('spent'))} ₽</b>\n"
+            f"{drr_flag} ДРР: <b>{fmt_pct(drr)}</b>\n"
+            f"\U0001f3af ROAS: <b>{fmt_roas(totals.get('roas'))}</b>\n\n"
+            f"<a href=\"{html.escape(dashboard_url)}\">Открыть дашборд</a>"
+        )
+    else:
+        run_url = args.run_url or ""
+        text = (
+            f"<b>\u274c Ozon Performance: ошибка синхронизации</b>\n\n"
+            f"Не удалось обновить данные. "
+            + (f"<a href=\"{html.escape(run_url)}\">Посмотреть лог</a>" if run_url else "")
+        )
+
+    resp = httpx.post(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        json={
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+            "disable_web_page_preview": True,
+        },
+        timeout=15,
+    )
+    print("telegram:", resp.status_code, resp.text[:300])
+    resp.raise_for_status()
+    return 0
+
+
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    from pathlib import Path
+    out = Path(args.out)
+    if args.demo:
+        dashboard.write_demo(out)
+        print(f"demo dashboard written: {out.resolve()}")
+        return 0
+    db.init_schema()
+    if args.days:
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+    else:
+        date_to = _parse_date(args.date_to) if args.date_to else date.today() - timedelta(days=1)
+        date_from = _parse_date(args.date_from) if args.date_from else date_to - timedelta(days=6)
+    dashboard.write(out, date_from, date_to, db_path_label=os.environ.get("OZON_PERF_DB_PATH", ""))
+    print(f"dashboard written: {out.resolve()} ({date_from}..{date_to})")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="ozon-perf", description="Ozon Performance API ETL & analytics")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("init", help="Create SQLite schema").set_defaults(func=cmd_init)
+    sub.add_parser("ping", help="Test credentials / token fetch").set_defaults(func=cmd_ping)
+    sub.add_parser("sync-campaigns", help="Fetch campaign list").set_defaults(func=cmd_sync_campaigns)
+
+    sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
+    sd.add_argument("--from", dest="date_from")
+    sd.add_argument("--to", dest="date_to")
+    sd.add_argument("--days", type=int, help="Last N days (ending yesterday)")
+    sd.add_argument("--campaigns", nargs="*", help="Campaign IDs (default: all)")
+    sd.set_defaults(func=cmd_sync_daily)
+
+    ss = sub.add_parser("sync-sku", help="Fetch SKU-level stats via async report")
+    ss.add_argument("--from", dest="date_from")
+    ss.add_argument("--to", dest="date_to")
+    ss.add_argument("--days", type=int, help="Last N days (ending yesterday)")
+    ss.add_argument("--campaigns", nargs="*", help="Campaign IDs (default: all)")
+    ss.add_argument("--group-by", default="DATE", help="DATE | NO_GROUP_BY | PLACEMENT")
+    ss.set_defaults(func=cmd_sync_sku)
+
+    sa = sub.add_parser("sync-all", help="Sync campaigns + last N days of stats")
+    sa.add_argument("--days", type=int, default=7)
+    sa.set_defaults(func=cmd_sync_all)
+
+    kpi = sub.add_parser("kpi", help="Print KPIs by campaign and SKU")
+    kpi.add_argument("--from", dest="date_from")
+    kpi.add_argument("--to", dest="date_to")
+    kpi.add_argument("--limit", type=int, default=20)
+    kpi.add_argument("--sku", action="store_true")
+    kpi.set_defaults(func=cmd_kpi)
+
+    sub.add_parser("debug", help="Print raw Ozon API responses (no secrets leaked)")\
+        .set_defaults(func=cmd_debug)
+
+    tg = sub.add_parser("notify-telegram", help="Send summary/failure to Telegram")
+    tg.add_argument("--status", choices=["success", "failure"], default="success")
+    tg.add_argument("--days", type=int, default=7)
+    tg.add_argument("--run-url", default=None)
+    tg.set_defaults(func=cmd_notify_telegram)
+
+    dash = sub.add_parser("dashboard", help="Generate HTML dashboard with charts")
+    dash.add_argument("--from", dest="date_from")
+    dash.add_argument("--to", dest="date_to")
+    dash.add_argument("--days", type=int, help="Last N days (ending yesterday)")
+    dash.add_argument("--out", default="dashboard.html")
+    dash.add_argument("--demo", action="store_true", help="Use synthetic data (no DB needed)")
+    dash.set_defaults(func=cmd_dashboard)
+
+    return p
+
+
+def main(argv: list[str] | None = None) -> int:
+    load_dotenv()
+    args = build_parser().parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
