@@ -48,6 +48,21 @@ def cmd_sync_daily(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_sku(args: argparse.Namespace) -> int:
+    db.init_schema()
+    if args.days:
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+    else:
+        date_from = _parse_date(args.date_from)
+        date_to = _parse_date(args.date_to)
+    with OzonPerformanceClient() as c:
+        n = etl.sync_sku_stats(c, date_from, date_to, args.campaigns or None,
+                               group_by=args.group_by)
+    print(f"SKU rows upserted: {n} ({date_from}..{date_to})")
+    return 0
+
+
 def cmd_sync_all(args: argparse.Namespace) -> int:
     db.init_schema()
     with OzonPerformanceClient() as c:
@@ -109,6 +124,14 @@ def build_parser() -> argparse.ArgumentParser:
     sd.add_argument("--days", type=int, help="Last N days (ending yesterday)")
     sd.add_argument("--campaigns", nargs="*", help="Campaign IDs (default: all)")
     sd.set_defaults(func=cmd_sync_daily)
+
+    ss = sub.add_parser("sync-sku", help="Fetch SKU-level stats via async report")
+    ss.add_argument("--from", dest="date_from")
+    ss.add_argument("--to", dest="date_to")
+    ss.add_argument("--days", type=int, help="Last N days (ending yesterday)")
+    ss.add_argument("--campaigns", nargs="*", help="Campaign IDs (default: all)")
+    ss.add_argument("--group-by", default="DATE", help="DATE | NO_GROUP_BY | PLACEMENT")
+    ss.set_defaults(func=cmd_sync_sku)
 
     sa = sub.add_parser("sync-all", help="Sync campaigns + last N days of stats")
     sa.add_argument("--days", type=int, default=7)

@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from . import db
 from .api import PerformanceAPI
 from .client import OzonPerformanceClient
+from .report import parse_report_bytes
 
 
 def sync_campaigns(client: OzonPerformanceClient) -> int:
@@ -49,6 +50,51 @@ def sync_daily_stats(
     except Exception as e:
         with db.connect() as conn:
             db.log_run(conn, "sync_daily_stats", started, datetime.utcnow().isoformat(),
+                       "error", rows_written=total, error=str(e))
+        raise
+    return total
+
+
+def sync_sku_stats(
+    client: OzonPerformanceClient,
+    date_from: date,
+    date_to: date,
+    campaign_ids: list[str] | None = None,
+    group_by: str = "DATE",
+    poll_interval: float = 5.0,
+    timeout: float = 600.0,
+) -> int:
+    api = PerformanceAPI(client)
+    started = datetime.utcnow().isoformat()
+
+    if campaign_ids is None:
+        campaigns = api.list_campaigns()
+        campaign_ids = [str(c.get("id") or c.get("campaignId")) for c in campaigns]
+        campaign_ids = [c for c in campaign_ids if c and c != "None"]
+
+    if not campaign_ids:
+        with db.connect() as conn:
+            db.log_run(conn, "sync_sku_stats", started, datetime.utcnow().isoformat(),
+                       "no_campaigns", rows_written=0)
+        return 0
+
+    total = 0
+    try:
+        for chunk in _chunks(campaign_ids, 10):
+            uuid = api.submit_statistics_report(chunk, date_from, date_to, group_by=group_by)
+            payload = api.wait_for_report(uuid, poll_interval=poll_interval, timeout=timeout)
+            default_cid = chunk[0] if len(chunk) == 1 else None
+            rows = [r for r in parse_report_bytes(payload, default_campaign_id=default_cid)
+                    if r.get("sku") and r.get("campaign_id") and r.get("date")]
+            if rows:
+                with db.connect() as conn:
+                    total += db.upsert_sku_daily(conn, rows)
+        with db.connect() as conn:
+            db.log_run(conn, "sync_sku_stats", started, datetime.utcnow().isoformat(),
+                       "ok", rows_written=total)
+    except Exception as e:
+        with db.connect() as conn:
+            db.log_run(conn, "sync_sku_stats", started, datetime.utcnow().isoformat(),
                        "error", rows_written=total, error=str(e))
         raise
     return total
