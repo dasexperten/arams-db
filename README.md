@@ -14,9 +14,16 @@ ozon_perf/
   db.py         SQLite-схема и upsert-лоадеры
   etl.py        Оркестрация выгрузки
   analyze.py    SQL-агрегации для KPI
-cli.py          Точка входа: init / ping / sync-* / kpi
+  dashboard.py  Генератор HTML-дашборда (Chart.js, self-contained)
+cli.py          Точка входа: init / ping / sync-* / kpi / dashboard
 tests/          pytest + httpx MockTransport
+samples/        Демо-дашборд со синтетическими данными
 ```
+
+## Посмотреть дашборд прямо сейчас
+
+Открой `samples/dashboard_demo.html` в браузере двойным кликом — никаких
+запусков и установок не нужно, там зашиты синтетические данные для превью.
 
 ## Установка
 
@@ -41,6 +48,8 @@ python cli.py sync-daily --from 2026-04-01 --to 2026-04-15
 python cli.py sync-sku --days 7          # SKU-level через async-отчёт
 python cli.py kpi --days 30              # дашборд в консоли
 python cli.py kpi --from 2026-04-01 --to 2026-04-15 --sku
+python cli.py dashboard --days 30           # HTML из SQLite
+python cli.py dashboard --demo --out demo.html  # демо без БД
 ```
 
 ## Тесты

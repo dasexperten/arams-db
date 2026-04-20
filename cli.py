@@ -1,12 +1,13 @@
 import argparse
 import json
+import os
 import sys
 from datetime import date, datetime, timedelta
 
 from dotenv import load_dotenv
 
 from ozon_perf import OzonPerformanceClient
-from ozon_perf import analyze, db, etl
+from ozon_perf import analyze, dashboard, db, etl
 
 
 def _parse_date(s: str) -> date:
@@ -110,6 +111,21 @@ def _fmt(v) -> str:
     return str(v)
 
 
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    from pathlib import Path
+    out = Path(args.out)
+    if args.demo:
+        dashboard.write_demo(out)
+        print(f"demo dashboard written: {out.resolve()}")
+        return 0
+    db.init_schema()
+    date_to = _parse_date(args.date_to) if args.date_to else date.today() - timedelta(days=1)
+    date_from = _parse_date(args.date_from) if args.date_from else date_to - timedelta(days=6)
+    dashboard.write(out, date_from, date_to, db_path_label=os.environ.get("OZON_PERF_DB_PATH", ""))
+    print(f"dashboard written: {out.resolve()} ({date_from}..{date_to})")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="ozon-perf", description="Ozon Performance API ETL & analytics")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -143,6 +159,13 @@ def build_parser() -> argparse.ArgumentParser:
     kpi.add_argument("--limit", type=int, default=20)
     kpi.add_argument("--sku", action="store_true")
     kpi.set_defaults(func=cmd_kpi)
+
+    dash = sub.add_parser("dashboard", help="Generate HTML dashboard with charts")
+    dash.add_argument("--from", dest="date_from")
+    dash.add_argument("--to", dest="date_to")
+    dash.add_argument("--out", default="dashboard.html")
+    dash.add_argument("--demo", action="store_true", help="Use synthetic data (no DB needed)")
+    dash.set_defaults(func=cmd_dashboard)
 
     return p
 
