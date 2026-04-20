@@ -11,7 +11,7 @@ class PerformanceAPI:
     def list_campaigns(self, campaign_ids: list[str] | None = None) -> list[dict]:
         params: dict = {}
         if campaign_ids:
-            params["campaignIds"] = ",".join(campaign_ids)
+            params["campaignIds"] = list(campaign_ids)
         data = self.c.get("/api/client/campaign", params=params or None)
         return data.get("list") or data.get("items") or []
 
@@ -28,9 +28,9 @@ class PerformanceAPI:
         return self.c.get(
             "/api/client/statistics/daily/json",
             params={
-                "campaignIds": ",".join(str(c) for c in campaign_ids),
-                "dateFrom": date_from.isoformat(),
-                "dateTo": date_to.isoformat(),
+                "campaign_ids": [str(c) for c in campaign_ids],
+                "date_from": date_from.isoformat(),
+                "date_to": date_to.isoformat(),
             },
         )
 

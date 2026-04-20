@@ -25,7 +25,8 @@ def test_sync_campaigns_and_daily():
             ]})
         if req.url.path == "/api/client/statistics/daily/json":
             assert req.method == "GET"
-            assert "campaignIds" in req.url.params
+            assert "campaign_ids" in req.url.params
+            assert "date_from" in req.url.params
             return httpx.Response(200, json={"rows": [
                 {"id": "1", "rows": [
                     {"date": "2026-04-18", "views": 100, "clicks": 10,
