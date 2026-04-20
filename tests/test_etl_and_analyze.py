@@ -19,25 +19,24 @@ def test_sync_campaigns_and_daily():
         if req.url.path == "/api/client/campaign":
             return httpx.Response(200, json={"list": [
                 {"id": "1", "title": "Alpha", "state": "RUNNING",
-                 "advertisingObjectType": "SKU", "budget": "1000"},
+                 "advObjectType": "SKU", "budget": "1000"},
                 {"id": "2", "title": "Beta", "state": "STOPPED",
-                 "advertisingObjectType": "SEARCH_PROMO", "budget": "500"},
+                 "advObjectType": "SEARCH_PROMO", "budget": "500"},
             ]})
         if req.url.path == "/api/client/statistics/daily/json":
             assert req.method == "GET"
             assert "campaign_ids" in req.url.params
             assert "date_from" in req.url.params
             return httpx.Response(200, json={"rows": [
-                {"id": "1", "rows": [
-                    {"date": "2026-04-18", "views": 100, "clicks": 10,
-                     "orders": 1, "revenue": 500, "moneySpent": 50},
-                    {"date": "2026-04-19", "views": 200, "clicks": 20,
-                     "orders": 2, "revenue": 900, "moneySpent": 90},
-                ]},
-                {"id": "2", "rows": [
-                    {"date": "2026-04-18", "views": 50, "clicks": 5,
-                     "orders": 0, "revenue": 0, "moneySpent": 40},
-                ]},
+                {"id": "1", "title": "Alpha", "date": "2026-04-18",
+                 "views": "100", "clicks": "10",
+                 "orders": "1", "ordersMoney": "500,00", "moneySpent": "50,00"},
+                {"id": "1", "title": "Alpha", "date": "2026-04-19",
+                 "views": "200", "clicks": "20",
+                 "orders": "2", "ordersMoney": "900,00", "moneySpent": "90,00"},
+                {"id": "2", "title": "Beta", "date": "2026-04-18",
+                 "views": "50", "clicks": "5",
+                 "orders": "0", "ordersMoney": "0,00", "moneySpent": "40,00"},
             ]})
         return httpx.Response(404)
 
@@ -76,10 +75,8 @@ def test_sync_is_idempotent():
         if req.url.path == "/api/client/statistics/daily/json":
             assert req.method == "GET"
             return httpx.Response(200, json={"rows": [
-                {"id": "1", "rows": [
-                    {"date": "2026-04-19", "views": 100, "clicks": 10,
-                     "orders": 1, "revenue": 500, "moneySpent": 50},
-                ]},
+                {"id": "1", "date": "2026-04-19", "views": "100", "clicks": "10",
+                 "orders": "1", "ordersMoney": "500,00", "moneySpent": "50,00"},
             ]})
         return httpx.Response(404)
 

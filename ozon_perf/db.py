@@ -112,8 +112,9 @@ def upsert_campaigns(conn: sqlite3.Connection, rows: list[dict]) -> int:
             "campaign_id": str(r.get("id") or r.get("campaignId") or r.get("campaign_id")),
             "title": r.get("title") or r.get("name"),
             "state": r.get("state"),
-            "advertising_type": r.get("advertisingObjectType") or r.get("advertisingType"),
-            "payment_type": r.get("paymentType"),
+            "advertising_type": (r.get("advObjectType") or r.get("advertisingObjectType")
+                                 or r.get("advertisingType")),
+            "payment_type": r.get("paymentType") or r.get("PaymentType"),
             "start_date": r.get("fromDate") or r.get("startDate"),
             "end_date": r.get("toDate") or r.get("endDate"),
             "budget": _to_float(r.get("budget")),
@@ -199,6 +200,6 @@ def _to_float(v) -> float | None:
     if v is None or v == "":
         return None
     try:
-        return float(v)
+        return float(str(v).replace("\xa0", "").replace(" ", "").replace(",", "."))
     except (TypeError, ValueError):
         return None

@@ -120,34 +120,60 @@ def _chunks(items: list, size: int):
 
 def _flatten_daily(payload: dict) -> list[dict]:
     rows: list[dict] = []
-    for campaign_block in payload.get("rows") or payload.get("list") or []:
-        campaign_id = str(campaign_block.get("id") or campaign_block.get("campaignId") or "")
-        for day in campaign_block.get("rows") or campaign_block.get("days") or []:
-            rows.append({
-                "campaign_id": campaign_id,
-                "date": day.get("date"),
-                "views": _int(day.get("views") or day.get("impressions")),
-                "clicks": _int(day.get("clicks")),
-                "orders": _int(day.get("orders")),
-                "revenue": _float(day.get("revenue") or day.get("ordersMoney")),
-                "money_spent": _float(day.get("moneySpent") or day.get("cost")),
-                "avg_bid": _float(day.get("avgBid")),
-                "ctr": _float(day.get("ctr")),
-                "drr": _float(day.get("drr")),
-                "raw": day,
-            })
-    return rows
+    raw_rows = payload.get("rows") or payload.get("list") or []
+    for item in raw_rows:
+        nested = item.get("rows") or item.get("days")
+        if isinstance(nested, list):
+            campaign_id = str(item.get("id") or item.get("campaignId") or "")
+            for day in nested:
+                rows.append(_day_row(campaign_id, day))
+        else:
+            campaign_id = str(item.get("id") or item.get("campaignId") or "")
+            rows.append(_day_row(campaign_id, item))
+    return [r for r in rows if r["date"] and r["campaign_id"]]
+
+
+def _day_row(campaign_id: str, day: dict) -> dict:
+    return {
+        "campaign_id": campaign_id,
+        "date": day.get("date"),
+        "views": _int(day.get("views") or day.get("impressions")),
+        "clicks": _int(day.get("clicks")),
+        "orders": _int(day.get("orders")),
+        "revenue": _float(day.get("ordersMoney") or day.get("revenue")),
+        "money_spent": _float(day.get("moneySpent") or day.get("cost")),
+        "avg_bid": _float(day.get("avgBid")),
+        "ctr": _float(day.get("ctr")),
+        "drr": _float(day.get("drr")),
+        "raw": day,
+    }
+
+
+def _clean_num(v) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip().replace("\xa0", "").replace(" ", "").replace(",", ".").rstrip("%")
+    return s if s and s != "-" else None
 
 
 def _int(v) -> int:
-    try:
-        return int(v or 0)
-    except (TypeError, ValueError):
+    s = _clean_num(v)
+    if s is None:
         return 0
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return int(float(s))
+        except ValueError:
+            return 0
 
 
 def _float(v) -> float:
+    s = _clean_num(v)
+    if s is None:
+        return 0.0
     try:
-        return float(v or 0)
-    except (TypeError, ValueError):
+        return float(s)
+    except ValueError:
         return 0.0
