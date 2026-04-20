@@ -56,6 +56,10 @@ jobs:
       - name: Ping Ozon API
         run: python cli.py ping
 
+      - name: Debug Ozon API responses
+        continue-on-error: true
+        run: python cli.py debug
+
       - name: Sync campaigns and daily stats
         run: python cli.py sync-all --days "$DAYS"
 

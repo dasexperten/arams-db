@@ -111,6 +111,47 @@ def _fmt(v) -> str:
     return str(v)
 
 
+def cmd_debug(args: argparse.Namespace) -> int:
+    print("=" * 70)
+    print("DEBUG: raw Ozon Performance API responses")
+    print("=" * 70)
+
+    with OzonPerformanceClient() as c:
+        print("\n--- GET /api/client/campaign ---")
+        resp = c.request("GET", "/api/client/campaign")
+        print("status:", resp.status_code)
+        print("body (first 3000 chars):")
+        print(resp.text[:3000])
+
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=6)
+
+        from ozon_perf.api import PerformanceAPI
+        api = PerformanceAPI(c)
+        campaigns = api.list_campaigns()
+        print(f"\n--- list_campaigns() parsed {len(campaigns)} items ---")
+        if campaigns:
+            print("first campaign dict:")
+            print(json.dumps(campaigns[0], ensure_ascii=False, indent=2, default=str))
+
+        if campaigns:
+            first_ids = [str(c.get("id") or c.get("campaignId")) for c in campaigns[:3]]
+            first_ids = [x for x in first_ids if x and x != "None"]
+            print(f"\n--- GET /api/client/statistics/daily/json for {first_ids} ---")
+            try:
+                resp = c.request("GET", "/api/client/statistics/daily/json", params={
+                    "campaign_ids": first_ids,
+                    "date_from": date_from.isoformat(),
+                    "date_to": date_to.isoformat(),
+                })
+                print("status:", resp.status_code)
+                print("body (first 3000 chars):")
+                print(resp.text[:3000])
+            except Exception as e:
+                print("error:", e)
+    return 0
+
+
 def cmd_dashboard(args: argparse.Namespace) -> int:
     from pathlib import Path
     out = Path(args.out)
@@ -163,6 +204,9 @@ def build_parser() -> argparse.ArgumentParser:
     kpi.add_argument("--limit", type=int, default=20)
     kpi.add_argument("--sku", action="store_true")
     kpi.set_defaults(func=cmd_kpi)
+
+    sub.add_parser("debug", help="Print raw Ozon API responses (no secrets leaked)")\
+        .set_defaults(func=cmd_debug)
 
     dash = sub.add_parser("dashboard", help="Generate HTML dashboard with charts")
     dash.add_argument("--from", dest="date_from")
