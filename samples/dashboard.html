@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Ozon Performance — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+         margin: 0; background: #0f1115; color: #e6e6e6; }
+  header { padding: 24px 32px; border-bottom: 1px solid #2a2f3a; display: flex;
+           justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .range { color: #8a93a6; font-size: 14px; }
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+           gap: 12px; margin-bottom: 24px; }
+  .card { background: #161a22; border: 1px solid #2a2f3a; border-radius: 10px;
+          padding: 16px; }
+  .card .label { color: #8a93a6; font-size: 12px; text-transform: uppercase;
+                 letter-spacing: 0.04em; }
+  .card .value { font-size: 24px; font-weight: 600; margin-top: 6px; }
+  .card.accent .value { color: #7dd3fc; }
+  .card.warn .value { color: #fbbf24; }
+  .card.bad .value { color: #f87171; }
+  .card.good .value { color: #4ade80; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel { background: #161a22; border: 1px solid #2a2f3a; border-radius: 10px;
+           padding: 16px; margin-bottom: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; color: #c9d2e3; }
+  canvas { max-height: 320px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2a2f3a; }
+  th { color: #8a93a6; font-weight: 500; text-transform: uppercase;
+       font-size: 11px; letter-spacing: 0.04em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:hover { background: #1c2230; }
+  .muted { color: #8a93a6; }
+  .footer { padding: 16px 32px; color: #55627b; font-size: 12px; border-top: 1px solid #2a2f3a; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Ozon Performance</h1>
+    <div class="range">Период: 2026-03-21 — 2026-04-19</div>
+  </div>
+  <div class="muted">Сгенерировано: 2026-04-20 16:40</div>
+</header>
+
+<main>
+  <div class="cards" id="totals"></div>
+
+  <div class="panel">
+    <h2>Динамика расхода и выручки по дням</h2>
+    <canvas id="timeChart"></canvas>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Топ-10 кампаний по расходу</h2>
+      <canvas id="spendChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>ДРР по кампаниям, %</h2>
+      <canvas id="drrChart"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Кампании</h2>
+    <table id="campaignsTable">
+      <thead><tr>
+        <th>Кампания</th><th>Тип</th>
+        <th class="num">Показы</th><th class="num">Клики</th>
+        <th class="num">Заказы</th><th class="num">Выручка</th>
+        <th class="num">Расход</th><th class="num">CTR</th>
+        <th class="num">CR</th><th class="num">CPO</th>
+        <th class="num">ДРР</th><th class="num">ROAS</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>Топ-20 SKU по расходу</h2>
+    <table id="skuTable">
+      <thead><tr>
+        <th>SKU</th>
+        <th class="num">Показы</th><th class="num">Клики</th>
+        <th class="num">Заказы</th><th class="num">Выручка</th>
+        <th class="num">Расход</th><th class="num">ДРР</th>
+        <th class="num">ROAS</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="footer">
+  Данные из SQLite (<code>data/ozon_performance.db</code>). Нажми F5 после перезапуска ETL, чтобы обновить.
+</div>
+
+<script>
+const DATA = {"totals": {"views": null, "clicks": null, "orders": null, "revenue": null, "spent": null, "drr": null, "roas": null}, "campaigns": [], "skus": [], "timeline": []};
+
+const fmt = (v, digits = 0) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(v);
+const fmtPct = (v) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { style: 'percent', maximumFractionDigits: 2 }).format(v);
+const fmtMoney = (v) => v == null ? '—'
+  : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(v) + ' ₽';
+
+const totals = DATA.totals || {};
+const cards = [
+  { label: 'Показы', value: fmt(totals.views), cls: '' },
+  { label: 'Клики', value: fmt(totals.clicks), cls: '' },
+  { label: 'Заказы', value: fmt(totals.orders), cls: 'accent' },
+  { label: 'Выручка', value: fmtMoney(totals.revenue), cls: 'good' },
+  { label: 'Расход', value: fmtMoney(totals.spent), cls: 'warn' },
+  { label: 'ДРР', value: fmtPct(totals.drr),
+    cls: (totals.drr != null && totals.drr > 0.3) ? 'bad' : 'good' },
+  { label: 'ROAS', value: totals.roas != null ? totals.roas.toFixed(2) + 'x' : '—',
+    cls: (totals.roas != null && totals.roas < 3) ? 'bad' : 'good' },
+];
+document.getElementById('totals').innerHTML = cards.map(c =>
+  `<div class="card ${c.cls}"><div class="label">${c.label}</div>
+   <div class="value">${c.value}</div></div>`).join('');
+
+const tlCtx = document.getElementById('timeChart');
+if (DATA.timeline && DATA.timeline.length) {
+  new Chart(tlCtx, {
+    type: 'line',
+    data: {
+      labels: DATA.timeline.map(r => r.date),
+      datasets: [
+        { label: 'Выручка, ₽', data: DATA.timeline.map(r => r.revenue),
+          borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.1)',
+          tension: 0.25, fill: true },
+        { label: 'Расход, ₽', data: DATA.timeline.map(r => r.spent),
+          borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)',
+          tension: 0.25, fill: true },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+      plugins: { legend: { labels: { color: '#c9d2e3' } } },
+    },
+  });
+}
+
+const camps = (DATA.campaigns || []).slice(0, 10);
+new Chart(document.getElementById('spendChart'), {
+  type: 'bar',
+  data: {
+    labels: camps.map(c => c.title || c.campaign_id),
+    datasets: [{ label: 'Расход, ₽', data: camps.map(c => c.spent),
+                 backgroundColor: '#60a5fa' }],
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+    plugins: { legend: { display: false } },
+  },
+});
+
+new Chart(document.getElementById('drrChart'), {
+  type: 'bar',
+  data: {
+    labels: camps.map(c => c.title || c.campaign_id),
+    datasets: [{ label: 'ДРР, %', data: camps.map(c => c.drr == null ? 0 : c.drr * 100),
+                 backgroundColor: camps.map(c =>
+                   c.drr != null && c.drr > 0.3 ? '#f87171' : '#4ade80') }],
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    scales: { y: { ticks: { color: '#8a93a6' } }, x: { ticks: { color: '#8a93a6' } } },
+    plugins: { legend: { display: false } },
+  },
+});
+
+const cTbody = document.querySelector('#campaignsTable tbody');
+cTbody.innerHTML = (DATA.campaigns || []).map(c => `<tr>
+  <td>${c.title || c.campaign_id}</td>
+  <td>${c.type || '—'}</td>
+  <td class="num">${fmt(c.views)}</td>
+  <td class="num">${fmt(c.clicks)}</td>
+  <td class="num">${fmt(c.orders)}</td>
+  <td class="num">${fmt(c.revenue, 0)}</td>
+  <td class="num">${fmt(c.spent, 0)}</td>
+  <td class="num">${fmtPct(c.ctr)}</td>
+  <td class="num">${fmtPct(c.cr)}</td>
+  <td class="num">${fmt(c.cpo, 0)}</td>
+  <td class="num">${fmtPct(c.drr)}</td>
+  <td class="num">${c.roas == null ? '—' : c.roas.toFixed(2) + 'x'}</td>
+</tr>`).join('');
+
+const sTbody = document.querySelector('#skuTable tbody');
+const skus = DATA.skus || [];
+sTbody.innerHTML = skus.length ? skus.map(s => `<tr>
+  <td>${s.sku}</td>
+  <td class="num">${fmt(s.views)}</td>
+  <td class="num">${fmt(s.clicks)}</td>
+  <td class="num">${fmt(s.orders)}</td>
+  <td class="num">${fmt(s.revenue, 0)}</td>
+  <td class="num">${fmt(s.spent, 0)}</td>
+  <td class="num">${fmtPct(s.drr)}</td>
+  <td class="num">${s.roas == null ? '—' : s.roas.toFixed(2) + 'x'}</td>
+</tr>`).join('') : '<tr><td colspan="8" class="muted">Нет данных по SKU — запусти sync-sku.</td></tr>';
+</script>
+</body>
+</html>
