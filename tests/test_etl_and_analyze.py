@@ -24,6 +24,8 @@ def test_sync_campaigns_and_daily():
                  "advertisingObjectType": "SEARCH_PROMO", "budget": "500"},
             ]})
         if req.url.path == "/api/client/statistics/daily/json":
+            assert req.method == "GET"
+            assert "campaignIds" in req.url.params
             return httpx.Response(200, json={"rows": [
                 {"id": "1", "rows": [
                     {"date": "2026-04-18", "views": 100, "clicks": 10,
@@ -71,6 +73,7 @@ def test_sync_is_idempotent():
                 {"id": "1", "title": "Alpha", "state": "RUNNING"}
             ]})
         if req.url.path == "/api/client/statistics/daily/json":
+            assert req.method == "GET"
             return httpx.Response(200, json={"rows": [
                 {"id": "1", "rows": [
                     {"date": "2026-04-19", "views": 100, "clicks": 10,

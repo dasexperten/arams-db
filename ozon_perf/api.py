@@ -25,10 +25,10 @@ class PerformanceAPI:
         date_from: date,
         date_to: date,
     ) -> dict:
-        return self.c.post(
+        return self.c.get(
             "/api/client/statistics/daily/json",
-            json={
-                "campaignIds": campaign_ids,
+            params={
+                "campaignIds": ",".join(str(c) for c in campaign_ids),
                 "dateFrom": date_from.isoformat(),
                 "dateTo": date_to.isoformat(),
             },
