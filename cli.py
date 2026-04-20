@@ -119,8 +119,12 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
         print(f"demo dashboard written: {out.resolve()}")
         return 0
     db.init_schema()
-    date_to = _parse_date(args.date_to) if args.date_to else date.today() - timedelta(days=1)
-    date_from = _parse_date(args.date_from) if args.date_from else date_to - timedelta(days=6)
+    if args.days:
+        date_to = date.today() - timedelta(days=1)
+        date_from = date_to - timedelta(days=args.days - 1)
+    else:
+        date_to = _parse_date(args.date_to) if args.date_to else date.today() - timedelta(days=1)
+        date_from = _parse_date(args.date_from) if args.date_from else date_to - timedelta(days=6)
     dashboard.write(out, date_from, date_to, db_path_label=os.environ.get("OZON_PERF_DB_PATH", ""))
     print(f"dashboard written: {out.resolve()} ({date_from}..{date_to})")
     return 0
@@ -163,6 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
     dash = sub.add_parser("dashboard", help="Generate HTML dashboard with charts")
     dash.add_argument("--from", dest="date_from")
     dash.add_argument("--to", dest="date_to")
+    dash.add_argument("--days", type=int, help="Last N days (ending yesterday)")
     dash.add_argument("--out", default="dashboard.html")
     dash.add_argument("--demo", action="store_true", help="Use synthetic data (no DB needed)")
     dash.set_defaults(func=cmd_dashboard)
