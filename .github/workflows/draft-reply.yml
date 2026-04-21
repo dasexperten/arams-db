@@ -1,0 +1,45 @@
+name: Draft Reply (Ozon review)
+
+on:
+  workflow_dispatch:
+    inputs:
+      review_id:
+        description: "Ozon review_id (UUID from /v1/review/list)"
+        required: true
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      REVIEW_ID: ${{ github.event.inputs.review_id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          missing=""
+          [ -z "$OZON_SELLER_CLIENT_ID" ] && missing="$missing OZON_SELLER_CLIENT_ID"
+          [ -z "$OZON_SELLER_API_KEY" ] && missing="$missing OZON_SELLER_API_KEY"
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Fetch review + draft reply
+        run: python cli.py draft-reply "$REVIEW_ID"
