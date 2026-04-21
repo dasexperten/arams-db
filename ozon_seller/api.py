@@ -108,7 +108,7 @@ class SellerAPI:
         review_id: str,
         text: str,
         mark_review_as_processed: bool = True,
-        parent_comment_id: int = 0,
+        parent_comment_id: str | int = "",
     ) -> dict:
         text = (text or "").strip()
         if not text:
@@ -117,12 +117,15 @@ class SellerAPI:
             raise ValueError(
                 f"comment_create: text too long ({len(text)} chars, max 1000 per Ozon limits)"
             )
+        # Ozon requires parent_comment_id as a STRING (protobuf string field);
+        # empty string means "reply to the review itself, not to another comment".
+        parent = str(parent_comment_id).strip() if parent_comment_id else ""
         return self.c.post(
             "/v1/review/comment/create",
             {
                 "review_id": str(review_id),
                 "text": text,
                 "mark_review_as_processed": bool(mark_review_as_processed),
-                "parent_comment_id": int(parent_comment_id or 0),
+                "parent_comment_id": parent,
             },
         )

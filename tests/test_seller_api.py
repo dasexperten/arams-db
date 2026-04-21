@@ -165,3 +165,42 @@ def test_review_info_and_count_shapes():
     api = _api_with(handler)
     assert api.review_info("rev-42")["rating"] == 5
     assert api.reviews_count()["result"]["total"] == 3
+
+
+def test_comment_create_sends_parent_comment_id_as_string():
+    # Ozon's proto schema types parent_comment_id as string; an int 0 triggers
+    # 400 "invalid value for string field parent_comment_id: 0".
+    captured = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/v1/review/comment/create"
+        captured["body"] = json.loads(req.read())
+        return httpx.Response(200, json={"comment_id": 999})
+
+    api = _api_with(handler)
+
+    # default: no parent → empty string
+    api.comment_create("rev-1", "спасибо")
+    assert captured["body"] == {
+        "review_id": "rev-1",
+        "text": "спасибо",
+        "mark_review_as_processed": True,
+        "parent_comment_id": "",
+    }
+
+    # explicit parent (passing int or string both coerce to str)
+    api.comment_create("rev-1", "ответ", parent_comment_id=12345)
+    assert captured["body"]["parent_comment_id"] == "12345"
+
+    api.comment_create("rev-1", "ответ", parent_comment_id="67890")
+    assert captured["body"]["parent_comment_id"] == "67890"
+
+
+def test_comment_create_rejects_empty_or_oversize_text():
+    api = _api_with(lambda req: httpx.Response(200, json={}))
+    with pytest.raises(ValueError):
+        api.comment_create("rev-1", "")
+    with pytest.raises(ValueError):
+        api.comment_create("rev-1", "   ")
+    with pytest.raises(ValueError):
+        api.comment_create("rev-1", "x" * 1001)
