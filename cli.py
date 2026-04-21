@@ -128,6 +128,138 @@ def cmd_post_reply(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_auto_reply(args: argparse.Namespace) -> int:
+    """Fetch all UNPROCESSED reviews, let Claude draft a reply for each one
+    that has non-empty text, post it via Seller API (Ozon marks the review
+    PROCESSED atomically). Reviews with no text are just marked PROCESSED.
+    """
+    from ozon_seller.replier import draft_reply
+
+    max_per_run = args.max_per_run
+    seller_db.init_schema()
+
+    with OzonSellerClient() as c:
+        api = SellerAPI(c)
+
+        reviews: list[dict] = []
+        for r in api.reviews_iter(status="UNPROCESSED"):
+            reviews.append(r)
+            if len(reviews) > max_per_run:
+                break
+
+        if len(reviews) > max_per_run:
+            summary = {
+                "status": "aborted",
+                "reason": f"more than {max_per_run} UNPROCESSED reviews, refusing to auto-post",
+                "seen": len(reviews),
+            }
+            print(json.dumps(summary, indent=2, ensure_ascii=False))
+            _telegram_autoreply(summary, errors=[])
+            return 2
+
+        replied: list[dict] = []
+        no_text_marked: list[str] = []
+        errors: list[dict] = []
+
+        for review in reviews:
+            review_id = str(review.get("id") or "").strip()
+            if not review_id:
+                errors.append({"stage": "validate", "error": "review missing id"})
+                continue
+
+            text = (review.get("text") or "").strip()
+            if not text:
+                try:
+                    api.change_status([review_id], "PROCESSED")
+                    no_text_marked.append(review_id)
+                except Exception as e:
+                    errors.append({"review_id": review_id, "stage": "mark_no_text",
+                                   "error": str(e)})
+                continue
+
+            try:
+                draft = draft_reply(review)
+            except Exception as e:
+                errors.append({"review_id": review_id, "stage": "draft",
+                               "error": str(e)})
+                continue
+
+            draft_text = (draft.text or "").strip()
+            if not draft_text:
+                errors.append({"review_id": review_id, "stage": "draft",
+                               "error": "empty draft text"})
+                continue
+
+            try:
+                api.comment_create(
+                    review_id=review_id,
+                    text=draft_text,
+                    mark_review_as_processed=True,
+                )
+                replied.append({"review_id": review_id, "chars": len(draft_text)})
+            except Exception as e:
+                errors.append({"review_id": review_id, "stage": "post",
+                               "error": str(e)})
+
+        summary = {
+            "status": "ok" if not errors else "partial",
+            "total_unprocessed": len(reviews),
+            "replied": len(replied),
+            "no_text_marked": len(no_text_marked),
+            "errors": len(errors),
+        }
+        print(json.dumps(summary, indent=2, ensure_ascii=False))
+        if errors:
+            print("errors:")
+            print(json.dumps(errors, indent=2, ensure_ascii=False))
+
+        _telegram_autoreply(summary, errors=errors)
+
+    return 0 if not errors else 1
+
+
+def _telegram_autoreply(summary: dict, errors: list[dict]) -> None:
+    import httpx
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return
+
+    status = summary.get("status")
+    if status == "aborted":
+        text = (
+            "<b>🛑 Ozon Auto-Reply: стоп-кран</b>\n\n"
+            f"UNPROCESSED отзывов больше лимита ({summary.get('seen')}), "
+            "ничего не запостили. Проверь руками, прежде чем запускать снова."
+        )
+    else:
+        flag = "✅" if status == "ok" else "⚠️"
+        text = (
+            f"<b>{flag} Ozon Auto-Reply</b>\n\n"
+            f"Всего UNPROCESSED: <b>{summary.get('total_unprocessed')}</b>\n"
+            f"Отвечено: <b>{summary.get('replied')}</b>\n"
+            f"Без текста (помечены PROCESSED): <b>{summary.get('no_text_marked')}</b>\n"
+            f"Ошибок: <b>{summary.get('errors')}</b>"
+        )
+        if errors:
+            preview = errors[:3]
+            text += "\n\nПервые ошибки:\n" + "\n".join(
+                f"• {e.get('review_id', '?')} [{e.get('stage')}]: {e.get('error', '')[:100]}"
+                for e in preview
+            )
+
+    try:
+        httpx.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+                  "disable_web_page_preview": True},
+            timeout=15,
+        )
+    except Exception as e:
+        print(f"(telegram notify failed: {e})", file=sys.stderr)
+
+
 def cmd_mark_reviews(args: argparse.Namespace) -> int:
     if not args.review_ids:
         print("no review_ids given")
@@ -406,6 +538,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Do NOT mark review as processed after posting (default: mark as processed)",
     )
     pr.set_defaults(func=cmd_post_reply)
+
+    ar = sub.add_parser(
+        "auto-reply",
+        help="END-TO-END: fetch UNPROCESSED reviews, draft via Claude, post automatically",
+    )
+    ar.add_argument(
+        "--max-per-run", type=int, default=50,
+        help="Safety stop: if more UNPROCESSED reviews than this, abort without posting (default: 50)",
+    )
+    ar.set_defaults(func=cmd_auto_reply)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
