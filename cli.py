@@ -196,7 +196,15 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     text=draft_text,
                     mark_review_as_processed=True,
                 )
-                replied.append({"review_id": review_id, "chars": len(draft_text)})
+                replied.append({
+                    "review_id": review_id,
+                    "chars": len(draft_text),
+                    "question": text,
+                    "answer": draft_text,
+                    "rating": review.get("rating"),
+                    "author": review.get("author") or review.get("name") or "",
+                    "sku": review.get("sku"),
+                })
             except Exception as e:
                 errors.append({"review_id": review_id, "stage": "post",
                                "error": str(e)})
@@ -213,13 +221,24 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
             print("errors:")
             print(json.dumps(errors, indent=2, ensure_ascii=False))
 
-        _telegram_autoreply(summary, errors=errors)
+        _telegram_autoreply(summary, errors=errors, replied=replied)
 
     return 0 if not errors else 1
 
 
-def _telegram_autoreply(summary: dict, errors: list[dict]) -> None:
+def _tg_send(token: str, chat_id: str, text: str) -> None:
     import httpx
+    httpx.post(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+              "disable_web_page_preview": True},
+        timeout=15,
+    )
+
+
+def _telegram_autoreply(summary: dict, errors: list[dict],
+                        replied: list[dict] | None = None) -> None:
+    import html
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
@@ -250,14 +269,34 @@ def _telegram_autoreply(summary: dict, errors: list[dict]) -> None:
             )
 
     try:
-        httpx.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML",
-                  "disable_web_page_preview": True},
-            timeout=15,
-        )
+        _tg_send(token, chat_id, text)
     except Exception as e:
         print(f"(telegram notify failed: {e})", file=sys.stderr)
+
+    for item in (replied or []):
+        stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
+        author = item.get("author") or "(без имени)"
+        sku = item.get("sku") or ""
+        header = f"{stars} {html.escape(str(author))}"
+        if sku:
+            header += f" · SKU {html.escape(str(sku))}"
+        question = html.escape((item.get("question") or "").strip())
+        answer = html.escape((item.get("answer") or "").strip())
+        # Telegram hard limit is 4096; keep a safety margin for the formatting.
+        if len(question) > 1500:
+            question = question[:1500] + "…"
+        if len(answer) > 1500:
+            answer = answer[:1500] + "…"
+        msg = (
+            f"{header}\n\n"
+            f"<b>Отзыв:</b>\n<i>{question or '(пустой)'}</i>\n\n"
+            f"<b>Ответ Das Experten:</b>\n{answer}"
+        )
+        try:
+            _tg_send(token, chat_id, msg)
+        except Exception as e:
+            print(f"(telegram Q/A send failed for {item.get('review_id')}: {e})",
+                  file=sys.stderr)
 
 
 def cmd_mark_reviews(args: argparse.Namespace) -> int:
