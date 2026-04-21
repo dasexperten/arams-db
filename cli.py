@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 
 from ozon_perf import OzonPerformanceClient
 from ozon_perf import analyze, dashboard, db, etl
+from ozon_seller import OzonSellerClient, SellerAPI
+from ozon_seller import db as seller_db
+from ozon_seller import etl as seller_etl
 
 
 def _parse_date(s: str) -> date:
@@ -16,7 +19,122 @@ def _parse_date(s: str) -> date:
 
 def cmd_init(_: argparse.Namespace) -> int:
     db.init_schema()
-    print("schema ready:", db._db_path())
+    seller_db.init_schema()
+    print("perf schema ready:  ", db._db_path())
+    print("seller schema ready:", seller_db._db_path())
+    return 0
+
+
+def cmd_ping_seller(_: argparse.Namespace) -> int:
+    with OzonSellerClient() as c:
+        data = SellerAPI(c).reviews_count()
+    print("seller auth ok, review counts:")
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_reviews(args: argparse.Namespace) -> int:
+    seller_db.init_schema()
+    with OzonSellerClient() as c:
+        result = seller_etl.sync_reviews(
+            c,
+            status=args.status,
+            max_reviews=args.max,
+            with_comments=args.with_comments,
+        )
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_list_recent(args: argparse.Namespace) -> int:
+    with OzonSellerClient() as c:
+        page = SellerAPI(c).reviews_list(
+            status=args.status, limit=args.count, sort_dir="DESC",
+        )
+    reviews = page.get("reviews") or []
+    if not reviews:
+        print(f"(no reviews found with status={args.status})")
+        return 0
+    print(f"{len(reviews)} most recent reviews (status={args.status}):")
+    print("=" * 90)
+    for r in reviews:
+        rid = r.get("id", "")
+        rating = r.get("rating", "?")
+        sku = r.get("sku", "")
+        author = r.get("author") or r.get("name") or "(anonymous)"
+        published = (r.get("published_at") or "")[:19]
+        text = (r.get("text") or "").strip().replace("\n", " ")
+        preview = text[:120] + ("…" if len(text) > 120 else "")
+        if not preview:
+            preview = "(no text, rating-only review)"
+        print(f"id: {rid}")
+        print(f"    ⭐ {rating}/5   SKU: {sku}   by: {author}   on: {published}")
+        print(f"    “{preview}”")
+        print("-" * 90)
+    print()
+    print("Pick an id and run: python cli.py draft-reply <id>")
+    return 0
+
+
+def cmd_draft_reply(args: argparse.Namespace) -> int:
+    from ozon_seller.replier import draft_reply
+    with OzonSellerClient() as c:
+        info = SellerAPI(c).review_info(args.review_id)
+    review = info.get("result") if isinstance(info.get("result"), dict) else info
+    if not review or "id" not in review:
+        review = {**(review or {}), "id": args.review_id}
+    print("=" * 70)
+    print(f"Review {args.review_id}")
+    print("=" * 70)
+    print(f"Author: {review.get('author') or review.get('name') or '(anonymous)'}")
+    print(f"Rating: {review.get('rating')}/5   SKU: {review.get('sku')}")
+    print(f"Published: {review.get('published_at')}")
+    print("-" * 70)
+    print(review.get("text") or "(empty review text)")
+    print("=" * 70)
+    print()
+    draft = draft_reply(review)
+    print("DRAFT REPLY:")
+    print("-" * 70)
+    print(draft.text)
+    print("-" * 70)
+    print(
+        f"[{draft.model}] in={draft.input_tokens} out={draft.output_tokens} "
+        f"cache_read={draft.cache_read_input_tokens} cache_write={draft.cache_creation_input_tokens} "
+        f"stop={draft.stop_reason} chars={len(draft.text)}"
+    )
+    print()
+    print("To post this draft as-is, run:")
+    print(f"  python cli.py post-reply {args.review_id} \"<paste approved text here>\"")
+    return 0
+
+
+def cmd_post_reply(args: argparse.Namespace) -> int:
+    if not args.text.strip():
+        print("error: empty reply text", file=sys.stderr)
+        return 1
+    if args.confirm != "YES":
+        print("refusing to post without --confirm YES (safety guard)", file=sys.stderr)
+        print("the reply is public and cannot be edited after sending.", file=sys.stderr)
+        return 1
+    with OzonSellerClient() as c:
+        result = SellerAPI(c).comment_create(
+            review_id=args.review_id,
+            text=args.text,
+            mark_review_as_processed=not args.keep_unprocessed,
+        )
+    print("posted:")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_mark_reviews(args: argparse.Namespace) -> int:
+    if not args.review_ids:
+        print("no review_ids given")
+        return 1
+    with OzonSellerClient() as c:
+        result = SellerAPI(c).change_status(args.review_ids, args.status)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -241,9 +359,53 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="ozon-perf", description="Ozon Performance API ETL & analytics")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("init", help="Create SQLite schema").set_defaults(func=cmd_init)
-    sub.add_parser("ping", help="Test credentials / token fetch").set_defaults(func=cmd_ping)
+    sub.add_parser("init", help="Create SQLite schema (perf + seller)").set_defaults(func=cmd_init)
+    sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
+    sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
+        .set_defaults(func=cmd_ping_seller)
     sub.add_parser("sync-campaigns", help="Fetch campaign list").set_defaults(func=cmd_sync_campaigns)
+
+    sr = sub.add_parser("sync-reviews", help="Fetch reviews from Seller API into SQLite")
+    sr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="ALL")
+    sr.add_argument("--max", type=int, default=None,
+                    help="Stop after N reviews (default: all)")
+    sr.add_argument("--with-comments", action="store_true",
+                    help="Also pull comments for reviews with comments_amount > 0")
+    sr.set_defaults(func=cmd_sync_reviews)
+
+    mr = sub.add_parser("mark-reviews", help="Mark reviews PROCESSED / UNPROCESSED (safe write)")
+    mr.add_argument("--status", choices=["PROCESSED", "UNPROCESSED"], required=True)
+    mr.add_argument("review_ids", nargs="+")
+    mr.set_defaults(func=cmd_mark_reviews)
+
+    lr = sub.add_parser(
+        "list-recent",
+        help="Print the most recent Ozon reviews with id + preview (no DB write, no POST)",
+    )
+    lr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="UNPROCESSED")
+    lr.add_argument("--count", type=int, default=10, help="How many reviews to show (max 100)")
+    lr.set_defaults(func=cmd_list_recent)
+
+    dr = sub.add_parser(
+        "draft-reply",
+        help="Fetch a review and generate a draft reply via Claude API (no POST)",
+    )
+    dr.add_argument("review_id")
+    dr.set_defaults(func=cmd_draft_reply)
+
+    pr = sub.add_parser(
+        "post-reply",
+        help="PUBLICLY post an approved reply to Ozon. Requires --confirm YES.",
+    )
+    pr.add_argument("review_id")
+    pr.add_argument("text", help="The exact approved reply text to publish")
+    pr.add_argument("--confirm", default="", help='Pass "YES" to acknowledge the reply is public and irreversible')
+    pr.add_argument(
+        "--keep-unprocessed",
+        action="store_true",
+        help="Do NOT mark review as processed after posting (default: mark as processed)",
+    )
+    pr.set_defaults(func=cmd_post_reply)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")

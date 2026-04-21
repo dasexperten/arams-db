@@ -4,17 +4,24 @@
 
 ## Что за проект
 
-ETL + аналитика для **Ozon Performance API**. Забираем рекламные данные,
-складываем в SQLite, считаем KPI, рендерим HTML-дашборд, присылаем сводку
-в Telegram. Всё автоматизировано через GitHub Actions (cron 02:00 МСК).
+ETL + аналитика для **двух API Ozon**:
+
+1. **Performance API** (`api-performance.ozon.ru`) — реклама: кампании, статистика,
+   KPI (ДРР, ROAS, CPO). Дашборд, Telegram-сводка, cron 02:00 МСК.
+2. **Seller API** (`api-seller.ozon.ru`) — кабинет продавца: пока используется
+   для выгрузки **отзывов** и последующих ответов на них. Требует Premium Plus
+   для `/v1/review/*`.
 
 Репозиторий: `dasexperten/arams-db` (раньше был `arams-product-placement`,
 потом `arams-tutorial`, GitHub-редиректы работают).
 
+**Полный playbook с граблями и контрактами обеих API — в
+`.claude/skills/ozon-skill/SKILL.md`.** Подтягивается автоматически по триггерам.
+
 ## Структура
 
 ```
-ozon_perf/
+ozon_perf/                        # Performance API (реклама)
   client.py     OAuth2 (client_credentials), retry, 429/401
   api.py        Обёртки над эндпоинтами
   report.py     Парсер CSV/ZIP-отчётов (RU/EN заголовки, ; и ,)
@@ -22,7 +29,12 @@ ozon_perf/
   etl.py        Оркестрация выгрузки
   analyze.py    SQL-агрегаты KPI
   dashboard.py  Генератор self-contained HTML (Chart.js via CDN)
-cli.py          Точка входа
+ozon_seller/                      # Seller API (отзывы, позже — товары/заказы)
+  client.py     httpx с Client-Id + Api-Key headers, 429-retry
+  api.py        Обёртки: reviews_list/info/count/change-status, comments_list
+  db.py         Схема: reviews, review_comments, seller_runs
+  etl.py       sync_reviews (пагинация last_id) + опциональные комментарии
+cli.py          Точка входа (обе API)
 .github/workflows/sync-ozon.yml   cron + push + workflow_dispatch
 tests/          pytest + httpx.MockTransport
 samples/        dashboard.html (live) + dashboard_demo.html (fake)
@@ -157,7 +169,8 @@ samples/        dashboard.html (live) + dashboard_demo.html (fake)
 
 - Локально: `.env` (в `.gitignore`, никогда не коммитится).
 - Production: **GitHub Secrets** (`OZON_PERF_CLIENT_ID`,
-  `OZON_PERF_CLIENT_SECRET`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
+  `OZON_PERF_CLIENT_SECRET`, `OZON_SELLER_CLIENT_ID`, `OZON_SELLER_API_KEY`,
+  `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`).
 - **Никогда** не клади креденшлы ни в `.env.example`, ни в код, ни в логи.
 - Если пользователь делится секретами в чате — после запуска напомни
   перевыпустить, так как история чата сохраняется.
@@ -172,9 +185,10 @@ samples/        dashboard.html (live) + dashboard_demo.html (fake)
 ## CLI-шпаргалка
 
 ```bash
-python cli.py init              # создать SQLite
-python cli.py ping              # проверить credentials
-python cli.py debug             # сырые ответы Ozon в stdout
+# Базовое / Performance
+python cli.py init              # создать SQLite (обе БД)
+python cli.py ping              # проверить Performance credentials
+python cli.py debug             # сырые ответы Performance в stdout
 python cli.py sync-campaigns    # только каталог
 python cli.py sync-daily --days 7
 python cli.py sync-sku --days 7           # async-отчёт CSV → sku_daily_stats
@@ -183,14 +197,27 @@ python cli.py kpi --days 30 [--sku]
 python cli.py dashboard --days 30 --out samples/dashboard.html
 python cli.py dashboard --demo            # без БД, для превью
 python cli.py notify-telegram --status success --days 7
+
+# Seller (отзывы)
+python cli.py ping-seller                 # проверить Seller credentials (счётчики отзывов)
+python cli.py sync-reviews                # все отзывы, пагинация last_id
+python cli.py sync-reviews --status UNPROCESSED --with-comments
+python cli.py sync-reviews --max 50       # только первые 50 (для теста)
+python cli.py mark-reviews --status PROCESSED rev-id-1 rev-id-2
 ```
 
 ## Схема SQLite
 
+**`ozon_performance.db` (Performance):**
 - `campaigns` (PK `campaign_id`) — каталог, upsert
 - `campaign_daily_stats` (PK `campaign_id + date`) — дневная статистика, upsert
 - `sku_daily_stats` (PK `campaign_id + sku + date`) — SKU-уровень, upsert
 - `etl_runs` — журнал синков
+
+**`ozon_seller.db` (Seller, пока только отзывы):**
+- `reviews` (PK `review_id`) — отзывы, upsert
+- `review_comments` (PK `comment_id`) — комментарии (и наши, и покупательские)
+- `seller_runs` — журнал синков Seller-ETL
 
 Идемпотентность — через `ON CONFLICT DO UPDATE`. Повторный прогон за тот же
 день перезапишет, не задублит.
