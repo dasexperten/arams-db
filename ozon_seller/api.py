@@ -23,7 +23,8 @@ class SellerAPI:
     ) -> dict:
         if status not in REVIEW_STATUSES:
             raise ValueError(f"status must be one of {REVIEW_STATUSES}, got {status!r}")
-        limit = max(1, min(int(limit), 100))
+        # Ozon constraint: ReviewListRequest.Limit must be in [20, 100]
+        limit = max(20, min(int(limit), 100))
         return self.c.post(
             "/v1/review/list",
             {

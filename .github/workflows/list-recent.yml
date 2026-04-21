@@ -13,9 +13,9 @@ on:
           - PROCESSED
           - ALL
       count:
-        description: "How many reviews to show (max 100)"
+        description: "How many reviews to show (Ozon requires 20-100)"
         required: false
-        default: "10"
+        default: "20"
 
 jobs:
   list:
@@ -25,7 +25,7 @@ jobs:
       OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
       OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
       STATUS: ${{ github.event.inputs.status }}
-      COUNT: ${{ github.event.inputs.count || '10' }}
+      COUNT: ${{ github.event.inputs.count || '20' }}
 
     steps:
       - name: Checkout
