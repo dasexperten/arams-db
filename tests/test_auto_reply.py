@@ -151,6 +151,60 @@ def test_auto_reply_aborts_when_over_max_per_run(monkeypatch, capsys):
     assert summary["status"] == "aborted"
 
 
+def test_auto_reply_telegram_sends_summary_plus_one_message_per_reply(monkeypatch, capsys):
+    seller_db.init_schema()
+
+    reviews = [
+        _review("r-1", text="Щётка слишком жёсткая, дёсны кровят."),
+        _review("r-empty", text=""),
+        _review("r-2", text="Паста супер, зубы стали белее.", rating=5),
+    ]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        path = req.url.path
+        if path == "/v1/review/list":
+            return httpx.Response(200, json={
+                "reviews": reviews, "has_next": False, "last_id": "",
+            })
+        if path == "/v1/review/comment/create":
+            return httpx.Response(200, json={"comment_id": "c"})
+        if path == "/v1/review/change-status":
+            return httpx.Response(200, json={"result": "ok"})
+        return httpx.Response(404)
+
+    monkeypatch.setattr(cli, "OzonSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr(
+        "ozon_seller.replier.draft_reply",
+        lambda review: _FakeDraft(text=f"Ответ для {review['id']}"),
+    )
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "-100")
+
+    tg_messages: list[str] = []
+
+    def fake_tg_send(token, chat_id, text):
+        tg_messages.append(text)
+
+    monkeypatch.setattr(cli, "_tg_send", fake_tg_send)
+
+    rc = cli.cmd_auto_reply(_args())
+    assert rc == 0
+
+    # 1 summary + 2 Q/A messages (r-1 and r-2; r-empty doesn't get a pair)
+    assert len(tg_messages) == 3
+    assert "Ozon Auto-Reply" in tg_messages[0]
+    assert "Отвечено: <b>2</b>" in tg_messages[0]
+
+    qa_bodies = "\n".join(tg_messages[1:])
+    assert "Щётка слишком жёсткая" in qa_bodies
+    assert "Паста супер" in qa_bodies
+    assert "Ответ для r-1" in qa_bodies
+    assert "Ответ для r-2" in qa_bodies
+    # HTML-escaped structure
+    assert "<b>Отзыв:</b>" in tg_messages[1]
+    assert "<b>Ответ Das Experten:</b>" in tg_messages[1]
+
+
 def test_auto_reply_continues_when_claude_fails_for_one_review(monkeypatch, capsys):
     seller_db.init_schema()
     posted: list[dict] = []
