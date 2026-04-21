@@ -206,7 +206,7 @@ python cli.py sync-reviews --max 50       # только первые 50 (для
 python cli.py mark-reviews --status PROCESSED rev-id-1 rev-id-2
 python cli.py draft-reply <review_id>     # черновик Claude в stdout (без POST)
 python cli.py post-reply <id> "<text>" --confirm YES    # ручной POST ответа
-python cli.py auto-reply [--max-per-run 50]             # END-TO-END: sync UNPROCESSED → Claude → POST
+python cli.py auto-reply [--max-per-run 10]             # END-TO-END: sync UNPROCESSED → Claude → POST
 ```
 
 ## Ozon Auto-Reply (полная автоматика)
@@ -215,7 +215,7 @@ Workflow `.github/workflows/auto-reply.yml` — каждый час 09:00–21:0
 плюс кнопка в Actions. Алгоритм (`cmd_auto_reply` в cli.py):
 
 1. Тянет все `UNPROCESSED` отзывы (`reviews_iter`).
-2. Стоп-кран: если их больше `--max-per-run` (по умолчанию 50) — **не
+2. Стоп-кран: если их больше `--max-per-run` (по умолчанию 10) — **не
    постит ничего**, пишет в Telegram и выходит с кодом 2. Защита от бага
    в пагинации/статусах, чтобы не улететь в массовый постинг.
 3. Для каждого отзыва с непустым `text`:

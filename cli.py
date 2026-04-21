@@ -544,8 +544,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="END-TO-END: fetch UNPROCESSED reviews, draft via Claude, post automatically",
     )
     ar.add_argument(
-        "--max-per-run", type=int, default=50,
-        help="Safety stop: if more UNPROCESSED reviews than this, abort without posting (default: 50)",
+        "--max-per-run", type=int, default=10,
+        help="Safety stop: if more UNPROCESSED reviews than this, abort without posting (default: 10)",
     )
     ar.set_defaults(func=cmd_auto_reply)
 
