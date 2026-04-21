@@ -46,6 +46,58 @@ def cmd_sync_reviews(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_draft_reply(args: argparse.Namespace) -> int:
+    from ozon_seller.replier import draft_reply
+    with OzonSellerClient() as c:
+        info = SellerAPI(c).review_info(args.review_id)
+    review = info.get("result") if isinstance(info.get("result"), dict) else info
+    if not review or "id" not in review:
+        review = {**(review or {}), "id": args.review_id}
+    print("=" * 70)
+    print(f"Review {args.review_id}")
+    print("=" * 70)
+    print(f"Author: {review.get('author') or review.get('name') or '(anonymous)'}")
+    print(f"Rating: {review.get('rating')}/5   SKU: {review.get('sku')}")
+    print(f"Published: {review.get('published_at')}")
+    print("-" * 70)
+    print(review.get("text") or "(empty review text)")
+    print("=" * 70)
+    print()
+    draft = draft_reply(review)
+    print("DRAFT REPLY:")
+    print("-" * 70)
+    print(draft.text)
+    print("-" * 70)
+    print(
+        f"[{draft.model}] in={draft.input_tokens} out={draft.output_tokens} "
+        f"cache_read={draft.cache_read_input_tokens} cache_write={draft.cache_creation_input_tokens} "
+        f"stop={draft.stop_reason} chars={len(draft.text)}"
+    )
+    print()
+    print("To post this draft as-is, run:")
+    print(f"  python cli.py post-reply {args.review_id} \"<paste approved text here>\"")
+    return 0
+
+
+def cmd_post_reply(args: argparse.Namespace) -> int:
+    if not args.text.strip():
+        print("error: empty reply text", file=sys.stderr)
+        return 1
+    if args.confirm != "YES":
+        print("refusing to post without --confirm YES (safety guard)", file=sys.stderr)
+        print("the reply is public and cannot be edited after sending.", file=sys.stderr)
+        return 1
+    with OzonSellerClient() as c:
+        result = SellerAPI(c).comment_create(
+            review_id=args.review_id,
+            text=args.text,
+            mark_review_as_processed=not args.keep_unprocessed,
+        )
+    print("posted:")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
 def cmd_mark_reviews(args: argparse.Namespace) -> int:
     if not args.review_ids:
         print("no review_ids given")
@@ -295,6 +347,27 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("--status", choices=["PROCESSED", "UNPROCESSED"], required=True)
     mr.add_argument("review_ids", nargs="+")
     mr.set_defaults(func=cmd_mark_reviews)
+
+    dr = sub.add_parser(
+        "draft-reply",
+        help="Fetch a review and generate a draft reply via Claude API (no POST)",
+    )
+    dr.add_argument("review_id")
+    dr.set_defaults(func=cmd_draft_reply)
+
+    pr = sub.add_parser(
+        "post-reply",
+        help="PUBLICLY post an approved reply to Ozon. Requires --confirm YES.",
+    )
+    pr.add_argument("review_id")
+    pr.add_argument("text", help="The exact approved reply text to publish")
+    pr.add_argument("--confirm", default="", help='Pass "YES" to acknowledge the reply is public and irreversible')
+    pr.add_argument(
+        "--keep-unprocessed",
+        action="store_true",
+        help="Do NOT mark review as processed after posting (default: mark as processed)",
+    )
+    pr.set_defaults(func=cmd_post_reply)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")

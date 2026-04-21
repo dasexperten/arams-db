@@ -101,3 +101,27 @@ class SellerAPI:
             if len(comments) < page_size:
                 return
             offset += len(comments)
+
+    def comment_create(
+        self,
+        review_id: str,
+        text: str,
+        mark_review_as_processed: bool = True,
+        parent_comment_id: int = 0,
+    ) -> dict:
+        text = (text or "").strip()
+        if not text:
+            raise ValueError("comment_create: text must be non-empty")
+        if len(text) > 1000:
+            raise ValueError(
+                f"comment_create: text too long ({len(text)} chars, max 1000 per Ozon limits)"
+            )
+        return self.c.post(
+            "/v1/review/comment/create",
+            {
+                "review_id": str(review_id),
+                "text": text,
+                "mark_review_as_processed": bool(mark_review_as_processed),
+                "parent_comment_id": int(parent_comment_id or 0),
+            },
+        )
