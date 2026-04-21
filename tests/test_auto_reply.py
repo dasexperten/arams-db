@@ -1,0 +1,193 @@
+"""Tests for `cli.py auto-reply`: end-to-end fetch → draft → post cycle.
+
+The Claude API call is monkeypatched; Ozon calls go through httpx.MockTransport.
+"""
+import argparse
+import json
+from dataclasses import dataclass
+
+import httpx
+
+import cli
+from ozon_seller import db as seller_db
+from ozon_seller.client import OzonSellerClient
+
+
+def _first_json_object(s: str) -> dict:
+    """Extract and parse the first balanced {...} JSON object from text."""
+    start = s.index("{")
+    depth = 0
+    for i in range(start, len(s)):
+        ch = s[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return json.loads(s[start:i + 1])
+    raise ValueError("no balanced JSON object found")
+
+
+@dataclass
+class _FakeDraft:
+    text: str = "Готовый ответ от бренда."
+    input_tokens: int = 10
+    output_tokens: int = 5
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
+    stop_reason: str = "end_turn"
+    model: str = "fake"
+
+
+def _args(max_per_run: int = 50) -> argparse.Namespace:
+    return argparse.Namespace(max_per_run=max_per_run)
+
+
+def _review(rid: str, text: str = "Хороший продукт", rating: int = 5) -> dict:
+    return {
+        "id": rid,
+        "sku": 100500,
+        "rating": rating,
+        "text": text,
+        "status": "UNPROCESSED",
+        "published_at": "2026-04-20T10:00:00Z",
+    }
+
+
+def _make_client_factory(handler):
+    def _factory():
+        c = OzonSellerClient()
+        c._http = httpx.Client(
+            transport=httpx.MockTransport(handler),
+            base_url=c.base_url,
+            headers={
+                "Client-Id": str(c.client_id),
+                "Api-Key": c.api_key,
+                "Content-Type": "application/json",
+            },
+        )
+        return c
+    return _factory
+
+
+def test_auto_reply_posts_for_reviews_with_text_and_marks_no_text_reviews(monkeypatch, capsys):
+    seller_db.init_schema()
+    posted: list[dict] = []
+    status_changes: list[dict] = []
+
+    reviews = [
+        _review("r-with-text", text="Понравилось"),
+        _review("r-empty", text=""),
+        _review("r-ratingonly", text="   "),
+    ]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        path = req.url.path
+        body = json.loads(req.read()) if req.read() else {}
+        if path == "/v1/review/list":
+            return httpx.Response(200, json={
+                "reviews": reviews, "has_next": False, "last_id": "",
+            })
+        if path == "/v1/review/comment/create":
+            posted.append(body)
+            return httpx.Response(200, json={"comment_id": f"cid-{body['review_id']}"})
+        if path == "/v1/review/change-status":
+            status_changes.append(body)
+            return httpx.Response(200, json={"result": "ok"})
+        return httpx.Response(404)
+
+    monkeypatch.setattr(cli, "OzonSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr("ozon_seller.replier.draft_reply", lambda review: _FakeDraft())
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    rc = cli.cmd_auto_reply(_args())
+    assert rc == 0
+
+    assert len(posted) == 1
+    assert posted[0]["review_id"] == "r-with-text"
+    assert posted[0]["mark_review_as_processed"] is True
+    assert posted[0]["text"] == "Готовый ответ от бренда."
+
+    marked = [rid for ch in status_changes for rid in ch["review_ids"]]
+    assert set(marked) == {"r-empty", "r-ratingonly"}
+    assert all(ch["status"] == "PROCESSED" for ch in status_changes)
+
+    out = capsys.readouterr().out
+    summary = _first_json_object(out)
+    assert summary["status"] == "ok"
+    assert summary["replied"] == 1
+    assert summary["no_text_marked"] == 2
+    assert summary["errors"] == 0
+
+
+def test_auto_reply_aborts_when_over_max_per_run(monkeypatch, capsys):
+    seller_db.init_schema()
+    posted: list[dict] = []
+
+    reviews = [_review(f"r-{i}") for i in range(5)]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/v1/review/list":
+            return httpx.Response(200, json={
+                "reviews": reviews, "has_next": False, "last_id": "",
+            })
+        if req.url.path == "/v1/review/comment/create":
+            posted.append(json.loads(req.read()))
+            return httpx.Response(200, json={"comment_id": "c"})
+        return httpx.Response(404)
+
+    monkeypatch.setattr(cli, "OzonSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr("ozon_seller.replier.draft_reply", lambda review: _FakeDraft())
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    rc = cli.cmd_auto_reply(_args(max_per_run=3))
+    assert rc == 2
+    assert posted == []  # nothing posted when aborted
+
+    out = capsys.readouterr().out
+    summary = _first_json_object(out)
+    assert summary["status"] == "aborted"
+
+
+def test_auto_reply_continues_when_claude_fails_for_one_review(monkeypatch, capsys):
+    seller_db.init_schema()
+    posted: list[dict] = []
+
+    reviews = [
+        _review("r-ok", text="Хорошо"),
+        _review("r-fail", text="Плохо"),
+    ]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        path = req.url.path
+        if path == "/v1/review/list":
+            return httpx.Response(200, json={
+                "reviews": reviews, "has_next": False, "last_id": "",
+            })
+        if path == "/v1/review/comment/create":
+            body = json.loads(req.read())
+            posted.append(body)
+            return httpx.Response(200, json={"comment_id": f"c-{body['review_id']}"})
+        return httpx.Response(404)
+
+    def fake_draft(review):
+        if review["id"] == "r-fail":
+            raise RuntimeError("claude boom")
+        return _FakeDraft()
+
+    monkeypatch.setattr(cli, "OzonSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr("ozon_seller.replier.draft_reply", fake_draft)
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    rc = cli.cmd_auto_reply(_args())
+    assert rc == 1  # partial (one error)
+    assert [p["review_id"] for p in posted] == ["r-ok"]
+
+    out = capsys.readouterr().out
+    summary = _first_json_object(out)
+    assert summary["status"] == "partial"
+    assert summary["replied"] == 1
+    assert summary["errors"] == 1
