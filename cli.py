@@ -290,9 +290,9 @@ def cmd_notify_telegram(args: argparse.Namespace) -> int:
         totals = analyze.totals(date_from, date_to)
 
         def fmt_money(v):
-            return f"{v:,.0f}".replace(",", "\u202f") if v else "0"
+            return f"{v:,.0f}".replace(",", " ") if v else "0"
         def fmt_int(v):
-            return f"{v:,}".replace(",", "\u202f") if v else "0"
+            return f"{v:,}".replace(",", " ") if v else "0"
         def fmt_pct(v):
             return f"{v * 100:.2f}%" if v is not None else "—"
         def fmt_roas(v):
@@ -302,7 +302,7 @@ def cmd_notify_telegram(args: argparse.Namespace) -> int:
         drr_flag = "\U0001f7e2" if drr is not None and drr < 0.3 else "\U0001f534"
 
         text = (
-            f"<b>\u2705 Ozon Performance обновлён</b>\n\n"
+            f"<b>✅ Ozon Performance обновлён</b>\n\n"
             f"\U0001f4c5 <b>{date_from}…{date_to}</b> ({args.days} дней)\n"
             f"\U0001f441 Показы: <b>{fmt_int(totals.get('views') or 0)}</b>\n"
             f"\U0001f446 Клики: <b>{fmt_int(totals.get('clicks') or 0)}</b>\n"
@@ -316,7 +316,7 @@ def cmd_notify_telegram(args: argparse.Namespace) -> int:
     else:
         run_url = args.run_url or ""
         text = (
-            f"<b>\u274c Ozon Performance: ошибка синхронизации</b>\n\n"
+            f"<b>❌ Ozon Performance: ошибка синхронизации</b>\n\n"
             f"Не удалось обновить данные. "
             + (f"<a href=\"{html.escape(run_url)}\">Посмотреть лог</a>" if run_url else "")
         )
@@ -383,7 +383,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the most recent Ozon reviews with id + preview (no DB write, no POST)",
     )
     lr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="UNPROCESSED")
-    lr.add_argument("--count", type=int, default=10, help="How many reviews to show (max 100)")
+    lr.add_argument("--count", type=int, default=20, help="How many reviews to show (Ozon requires 20-100)")
     lr.set_defaults(func=cmd_list_recent)
 
     dr = sub.add_parser(

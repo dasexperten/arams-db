@@ -47,16 +47,21 @@ def test_reviews_list_rejects_bad_status():
         api.reviews_list(status="WHATEVER")
 
 
-def test_reviews_list_clamps_limit_above_100():
-    captured = {}
+def test_reviews_list_clamps_limit_to_ozon_range():
+    # Ozon contract: ReviewListRequest.Limit must be in [20, 100]
+    seen_limits: list[int] = []
 
     def handler(req: httpx.Request) -> httpx.Response:
-        captured["body"] = json.loads(req.read())
+        seen_limits.append(json.loads(req.read())["limit"])
         return httpx.Response(200, json={"reviews": [], "has_next": False})
 
     api = _api_with(handler)
-    api.reviews_list(limit=5000)
-    assert captured["body"]["limit"] == 100
+    api.reviews_list(limit=5000)       # too high -> 100
+    api.reviews_list(limit=5)          # too low  -> 20
+    api.reviews_list(limit=50)         # in range -> 50
+    api.reviews_list(limit=20)         # boundary -> 20
+    api.reviews_list(limit=100)        # boundary -> 100
+    assert seen_limits == [100, 20, 50, 20, 100]
 
 
 def test_reviews_iter_paginates_by_last_id():
@@ -129,7 +134,7 @@ def test_change_status_validates_and_sends():
 def test_comments_iter_uses_offset_and_stops_on_short_page():
     pages = [
         {"comments": [{"id": 1}, {"id": 2}]},
-        {"comments": [{"id": 3}]},  # short page → stop
+        {"comments": [{"id": 3}]},  # short page -> stop
     ]
     calls = {"n": 0}
 
