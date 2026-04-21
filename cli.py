@@ -46,6 +46,36 @@ def cmd_sync_reviews(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_list_recent(args: argparse.Namespace) -> int:
+    with OzonSellerClient() as c:
+        page = SellerAPI(c).reviews_list(
+            status=args.status, limit=args.count, sort_dir="DESC",
+        )
+    reviews = page.get("reviews") or []
+    if not reviews:
+        print(f"(no reviews found with status={args.status})")
+        return 0
+    print(f"{len(reviews)} most recent reviews (status={args.status}):")
+    print("=" * 90)
+    for r in reviews:
+        rid = r.get("id", "")
+        rating = r.get("rating", "?")
+        sku = r.get("sku", "")
+        author = r.get("author") or r.get("name") or "(anonymous)"
+        published = (r.get("published_at") or "")[:19]
+        text = (r.get("text") or "").strip().replace("\n", " ")
+        preview = text[:120] + ("…" if len(text) > 120 else "")
+        if not preview:
+            preview = "(no text, rating-only review)"
+        print(f"id: {rid}")
+        print(f"    ⭐ {rating}/5   SKU: {sku}   by: {author}   on: {published}")
+        print(f"    “{preview}”")
+        print("-" * 90)
+    print()
+    print("Pick an id and run: python cli.py draft-reply <id>")
+    return 0
+
+
 def cmd_draft_reply(args: argparse.Namespace) -> int:
     from ozon_seller.replier import draft_reply
     with OzonSellerClient() as c:
@@ -347,6 +377,14 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("--status", choices=["PROCESSED", "UNPROCESSED"], required=True)
     mr.add_argument("review_ids", nargs="+")
     mr.set_defaults(func=cmd_mark_reviews)
+
+    lr = sub.add_parser(
+        "list-recent",
+        help="Print the most recent Ozon reviews with id + preview (no DB write, no POST)",
+    )
+    lr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="UNPROCESSED")
+    lr.add_argument("--count", type=int, default=10, help="How many reviews to show (max 100)")
+    lr.set_defaults(func=cmd_list_recent)
 
     dr = sub.add_parser(
         "draft-reply",
