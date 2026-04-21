@@ -1,0 +1,66 @@
+name: Post Reply (PUBLIC — Ozon review)
+
+on:
+  workflow_dispatch:
+    inputs:
+      review_id:
+        description: "Ozon review_id (UUID)"
+        required: true
+      text:
+        description: "Exact approved reply text (will be posted verbatim, publicly, irreversibly)"
+        required: true
+      confirm:
+        description: "Type YES to confirm you have reviewed the draft"
+        required: true
+        default: "NO"
+      keep_unprocessed:
+        description: "Do NOT mark review as processed after posting (rarely needed)"
+        required: false
+        default: "false"
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+      REVIEW_ID: ${{ github.event.inputs.review_id }}
+      REPLY_TEXT: ${{ github.event.inputs.text }}
+      CONFIRM: ${{ github.event.inputs.confirm }}
+      KEEP_UNPROCESSED: ${{ github.event.inputs.keep_unprocessed }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          if [ -z "$OZON_SELLER_CLIENT_ID" ] || [ -z "$OZON_SELLER_API_KEY" ]; then
+            echo "::error::Missing OZON_SELLER_CLIENT_ID or OZON_SELLER_API_KEY"
+            exit 1
+          fi
+
+      - name: Hard-confirm input
+        run: |
+          if [ "$CONFIRM" != "YES" ]; then
+            echo "::error::confirm input must be exactly YES (got '$CONFIRM'). Reply NOT posted."
+            exit 1
+          fi
+
+      - name: Post reply to Ozon
+        run: |
+          args=( "$REVIEW_ID" "$REPLY_TEXT" --confirm YES )
+          if [ "$KEEP_UNPROCESSED" = "true" ]; then
+            args+=( --keep-unprocessed )
+          fi
+          python cli.py post-reply "${args[@]}"
