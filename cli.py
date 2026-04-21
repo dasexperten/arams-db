@@ -383,7 +383,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the most recent Ozon reviews with id + preview (no DB write, no POST)",
     )
     lr.add_argument("--status", choices=["UNPROCESSED", "PROCESSED", "ALL"], default="UNPROCESSED")
-    lr.add_argument("--count", type=int, default=10, help="How many reviews to show (max 100)")
+    lr.add_argument("--count", type=int, default=20, help="How many reviews to show (Ozon requires 20-100)")
     lr.set_defaults(func=cmd_list_recent)
 
     dr = sub.add_parser(
