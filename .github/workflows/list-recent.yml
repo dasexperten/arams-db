@@ -1,0 +1,51 @@
+name: List Recent Reviews
+
+on:
+  workflow_dispatch:
+    inputs:
+      status:
+        description: "Status filter"
+        required: true
+        default: "UNPROCESSED"
+        type: choice
+        options:
+          - UNPROCESSED
+          - PROCESSED
+          - ALL
+      count:
+        description: "How many reviews to show (max 100)"
+        required: false
+        default: "10"
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+      STATUS: ${{ github.event.inputs.status }}
+      COUNT: ${{ github.event.inputs.count || '10' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          if [ -z "$OZON_SELLER_CLIENT_ID" ] || [ -z "$OZON_SELLER_API_KEY" ]; then
+            echo "::error::Missing OZON_SELLER_CLIENT_ID or OZON_SELLER_API_KEY"
+            exit 1
+          fi
+
+      - name: List recent reviews
+        run: python cli.py list-recent --status "$STATUS" --count "$COUNT"
