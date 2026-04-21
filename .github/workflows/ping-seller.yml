@@ -1,0 +1,46 @@
+name: Ping Ozon Seller
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_reviews:
+        description: "Also sync first N reviews after ping"
+        required: false
+        default: "0"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+      OZON_SELLER_DB_PATH: data/ozon_seller.db
+      MAX_REVIEWS: ${{ github.event.inputs.sync_reviews || '0' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify Seller secrets present
+        run: |
+          if [ -z "$OZON_SELLER_CLIENT_ID" ] || [ -z "$OZON_SELLER_API_KEY" ]; then
+            echo "::error::Add repo secrets OZON_SELLER_CLIENT_ID and OZON_SELLER_API_KEY in Settings → Secrets → Actions"
+            exit 1
+          fi
+
+      - name: Ping Seller API (/v1/review/count)
+        run: python cli.py ping-seller
+
+      - name: Optional — sync first N reviews as smoke test
+        if: env.MAX_REVIEWS != '0'
+        run: python cli.py sync-reviews --max "$MAX_REVIEWS"
