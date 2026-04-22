@@ -5,6 +5,7 @@ from .client import OzonSellerClient
 
 REVIEW_STATUSES = ("UNPROCESSED", "PROCESSED", "ALL")
 COMMENT_SORT_DIRS = ("ASC", "DESC")
+QUESTION_STATUSES = ("UNANSWERED", "ANSWERED", "ALL")
 
 
 class SellerAPI:
@@ -102,6 +103,63 @@ class SellerAPI:
             if len(comments) < page_size:
                 return
             offset += len(comments)
+
+    def questions_list(
+        self,
+        status: str = "UNANSWERED",
+        limit: int = 100,
+        last_id: str = "",
+        sort_dir: str = "DESC",
+    ) -> dict:
+        if status not in QUESTION_STATUSES:
+            raise ValueError(f"status must be one of {QUESTION_STATUSES}, got {status!r}")
+        limit = max(1, min(int(limit), 100))
+        return self.c.post(
+            "/v1/product/questions/list",
+            {
+                "limit": limit,
+                "last_id": last_id or "",
+                "sort_dir": sort_dir,
+                "status": status,
+            },
+        )
+
+    def questions_iter(
+        self,
+        status: str = "UNANSWERED",
+        page_size: int = 100,
+        sort_dir: str = "DESC",
+    ) -> Iterator[dict]:
+        last_id = ""
+        while True:
+            page = self.questions_list(
+                status=status, limit=page_size, last_id=last_id, sort_dir=sort_dir,
+            )
+            questions = page.get("questions") or []
+            for question in questions:
+                yield question
+            if not page.get("has_next"):
+                return
+            next_last_id = page.get("last_id") or ""
+            if not next_last_id or next_last_id == last_id:
+                return
+            last_id = next_last_id
+
+    def question_answer_create(self, question_id: str, answer_text: str) -> dict:
+        answer_text = (answer_text or "").strip()
+        if not answer_text:
+            raise ValueError("question_answer_create: answer_text must be non-empty")
+        if len(answer_text) > 1000:
+            raise ValueError(
+                f"question_answer_create: text too long ({len(answer_text)} chars, max 1000)"
+            )
+        return self.c.post(
+            "/v1/product/questions/answer/create",
+            {
+                "question_id": str(question_id),
+                "answer_text": answer_text,
+            },
+        )
 
     def product_info_list(self, skus: list[str | int]) -> list[dict]:
         """Return product info (incl. offer_id) for a list of Ozon SKUs."""

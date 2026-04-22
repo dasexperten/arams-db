@@ -1,0 +1,54 @@
+name: Ozon Auto-Answer Questions
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_answers:
+        description: "How many answers to post in this run (default 5). Bump to clear backlog."
+        required: false
+        default: "5"
+  schedule:
+    # every 30 minutes, 09:00–21:00 MSK (06:00–18:00 UTC)
+    - cron: "*/30 6-18 * * *"
+
+jobs:
+  auto-answer:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ozon-auto-answer-questions
+      cancel-in-progress: false
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      MAX_ANSWERS: ${{ github.event.inputs.max_answers || '5' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          missing=""
+          [ -z "$OZON_SELLER_CLIENT_ID" ] && missing="$missing OZON_SELLER_CLIENT_ID"
+          [ -z "$OZON_SELLER_API_KEY" ] && missing="$missing OZON_SELLER_API_KEY"
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Run auto-answer-questions
+        run: python cli.py auto-answer-questions --max-answers "$MAX_ANSWERS"
