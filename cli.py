@@ -525,10 +525,9 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
 
     for item in (replied or []):
         stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
-        author = _extract_author(item) or "(без имени)"
         product_name = item.get("product_name") or str(item.get("sku") or "")
         published = _format_review_date(item.get("published_at") or "")
-        header = f"{stars} {html.escape(str(author))}"
+        header = stars
         if product_name:
             header += f" · {html.escape(product_name)}"
         if published:
