@@ -292,10 +292,12 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
     from ozon_seller.question_answerer import draft_answer
 
     max_answers = max(1, int(args.max_answers))
+    max_inspect = max_answers * 50  # hard stop: don't loop through more than this
     catalog = _load_catalog()
 
     answered: list[dict] = []
     errors: list[dict] = []
+    inspected = 0
 
     with OzonSellerClient() as c:
         api = SellerAPI(c)
@@ -303,6 +305,10 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
         for question in api.questions_iter(status="UNANSWERED"):
             if len(answered) >= max_answers:
                 break
+            if inspected >= max_inspect:
+                print(f"(reached max_inspect={max_inspect}, stopping)", flush=True)
+                break
+            inspected += 1
 
             question_id = str(
                 question.get("id") or question.get("question_id") or ""
@@ -315,8 +321,7 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 question.get("question_text") or question.get("text") or ""
             ).strip()
             if not text:
-                errors.append({"question_id": question_id, "stage": "validate",
-                               "error": "empty question text, skipping"})
+                print(f"  skip {question_id}: no text (fields: {list(question.keys())})", flush=True)
                 continue
 
             sku = str(question.get("sku_id") or question.get("sku") or "")
