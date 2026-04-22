@@ -148,7 +148,7 @@ class SellerAPI:
                 return
             last_id = next_last_id
 
-    def question_answer_create(self, question_id: str, answer_text: str) -> dict:
+    def question_answer_create(self, question_id: str, answer_text: str, sku: int | str = 0) -> dict:
         answer_text = (answer_text or "").strip()[:1000]
         if not answer_text:
             raise ValueError("question_answer_create: answer_text must be non-empty")
@@ -157,6 +157,7 @@ class SellerAPI:
             {
                 "question_id": str(question_id),
                 "text": answer_text,
+                "sku": int(sku) if sku else 0,
             },
         )
 

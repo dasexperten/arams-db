@@ -364,6 +364,7 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 api.question_answer_create(
                     question_id=question_id,
                     answer_text=answer_text,
+                    sku=sku,
                 )
                 answered.append({
                     "question_id": question_id,
