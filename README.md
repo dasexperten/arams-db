@@ -1,4 +1,4 @@
-# Arams Product Placement — Ozon Performance
+# arams-db  — Ozon Performance
 
 ETL и аналитика для рекламного кабинета Ozon через **Performance API**
 (`api-performance.ozon.ru`). Забирает кампании и дневную статистику,
