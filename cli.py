@@ -105,6 +105,18 @@ def cmd_ping_seller(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_debug_review(_: argparse.Namespace) -> int:
+    """Dump raw JSON of first review to stdout — used to inspect Ozon field names."""
+    with OzonSellerClient() as c:
+        page = SellerAPI(c).reviews_list(status="ALL", limit=1)
+    reviews = page.get("reviews") or []
+    if not reviews:
+        print("No reviews returned")
+        return 0
+    print(json.dumps(reviews[0], indent=2, ensure_ascii=False))
+    return 0
+
+
 def cmd_ping_questions(_: argparse.Namespace) -> int:
     with OzonSellerClient() as c:
         api = SellerAPI(c)
@@ -867,6 +879,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
     sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
         .set_defaults(func=cmd_ping_seller)
+    sub.add_parser("debug-review", help="Dump raw JSON of first review (inspect field names)")\
+        .set_defaults(func=cmd_debug_review)
     sub.add_parser("ping-questions", help="Test questions API — print first question")\
         .set_defaults(func=cmd_ping_questions)
     sub.add_parser(
