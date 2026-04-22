@@ -5,7 +5,7 @@ from .client import OzonSellerClient
 
 REVIEW_STATUSES = ("UNPROCESSED", "PROCESSED", "ALL")
 COMMENT_SORT_DIRS = ("ASC", "DESC")
-QUESTION_STATUSES = ("UNANSWERED", "ANSWERED", "ALL")
+QUESTION_STATUSES = ("UNPROCESSED", "PROCESSED", "ALL")
 
 
 class SellerAPI:
@@ -104,9 +104,12 @@ class SellerAPI:
                 return
             offset += len(comments)
 
+    def questions_count(self) -> dict:
+        return self.c.post("/v1/question/count", {})
+
     def questions_list(
         self,
-        status: str = "UNANSWERED",
+        status: str = "UNPROCESSED",
         limit: int = 100,
         last_id: str = "",
         sort_dir: str = "DESC",
@@ -115,7 +118,7 @@ class SellerAPI:
             raise ValueError(f"status must be one of {QUESTION_STATUSES}, got {status!r}")
         limit = max(1, min(int(limit), 100))
         return self.c.post(
-            "/v1/product/questions/list",
+            "/v1/question/list",
             {
                 "limit": limit,
                 "last_id": last_id or "",
@@ -126,7 +129,7 @@ class SellerAPI:
 
     def questions_iter(
         self,
-        status: str = "UNANSWERED",
+        status: str = "UNPROCESSED",
         page_size: int = 100,
         sort_dir: str = "DESC",
     ) -> Iterator[dict]:
@@ -145,19 +148,16 @@ class SellerAPI:
                 return
             last_id = next_last_id
 
-    def question_answer_create(self, question_id: str, answer_text: str) -> dict:
-        answer_text = (answer_text or "").strip()
+    def question_answer_create(self, question_id: str, answer_text: str, sku: int | str = 0) -> dict:
+        answer_text = (answer_text or "").strip()[:1000]
         if not answer_text:
             raise ValueError("question_answer_create: answer_text must be non-empty")
-        if len(answer_text) > 1000:
-            raise ValueError(
-                f"question_answer_create: text too long ({len(answer_text)} chars, max 1000)"
-            )
         return self.c.post(
-            "/v1/product/questions/answer/create",
+            "/v1/question/answer/create",
             {
                 "question_id": str(question_id),
-                "answer_text": answer_text,
+                "text": answer_text,
+                "sku": int(sku) if sku else 0,
             },
         )
 
@@ -165,6 +165,30 @@ class SellerAPI:
         """Return product info (incl. offer_id) for a list of Ozon SKUs."""
         resp = self.c.post("/v3/product/info/list", {"sku": [str(s) for s in skus]})
         return (resp.get("result") or {}).get("items") or []
+
+    def product_info_by_offer_ids(self, offer_ids: list[str]) -> list[dict]:
+        """Return product info (incl. Ozon numeric SKU) for a list of offer_ids."""
+        resp = self.c.post("/v3/product/info/list", {"offer_id": list(offer_ids)})
+        return (resp.get("result") or {}).get("items") or []
+
+    def products_list_all(self) -> Iterator[dict]:
+        """Iterate all seller products yielding {product_id, offer_id} dicts."""
+        last_id = ""
+        while True:
+            resp = self.c.post(
+                "/v2/product/list",
+                {"filter": {}, "last_id": last_id, "limit": 100},
+            )
+            result = resp.get("result") or {}
+            items = result.get("items") or []
+            for item in items:
+                yield item
+            if not items:
+                return
+            next_last_id = result.get("last_id") or ""
+            if not next_last_id or next_last_id == last_id:
+                return
+            last_id = next_last_id
 
     def comment_create(
         self,
