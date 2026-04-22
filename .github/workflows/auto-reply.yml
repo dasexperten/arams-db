@@ -8,8 +8,8 @@ on:
         required: false
         default: "5"
   schedule:
-    # every hour, 24/7
-    - cron: "0 * * * *"
+    # every 10 minutes, 24/7
+    - cron: "*/10 * * * *"
 
 jobs:
   auto-reply:
