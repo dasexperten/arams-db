@@ -299,6 +299,24 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
                   file=sys.stderr)
 
 
+def cmd_telegram_ping(args: argparse.Namespace) -> int:
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        print("Telegram not configured (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID missing)",
+              file=sys.stderr)
+        return 1
+    text = args.text or (
+        "<b>✅ Telegram подключён</b>\n\n"
+        "Это тестовое сообщение из <code>Ozon Auto-Reply</code>. "
+        "Если ты его видишь — бот и chat_id настроены правильно, "
+        "дальше сюда будут прилетать сводки и пары «отзыв + ответ»."
+    )
+    _tg_send(token, chat_id, text)
+    print("telegram: sent ok")
+    return 0
+
+
 def cmd_mark_reviews(args: argparse.Namespace) -> int:
     if not args.review_ids:
         print("no review_ids given")
@@ -587,6 +605,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Safety stop: if more UNPROCESSED reviews than this, abort without posting (default: 10)",
     )
     ar.set_defaults(func=cmd_auto_reply)
+
+    tp = sub.add_parser(
+        "telegram-ping",
+        help="Send a single test message to the Telegram chat (for smoke-testing secrets)",
+    )
+    tp.add_argument("--text", default=None,
+                    help="Custom message text (default: preset 'it works' message)")
+    tp.set_defaults(func=cmd_telegram_ping)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
