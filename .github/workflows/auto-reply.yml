@@ -3,10 +3,10 @@ name: Ozon Auto-Reply
 on:
   workflow_dispatch:
     inputs:
-      max_per_run:
-        description: "Safety stop: abort if more UNPROCESSED reviews than this"
+      max_replies:
+        description: "How many replies to post in this run (default 1). Bump to clear backlog."
         required: false
-        default: "10"
+        default: "1"
   schedule:
     # 09:00-21:00 Moscow time (UTC+3) = 06:00-18:00 UTC, every hour
     - cron: "0 6-18 * * *"
@@ -24,7 +24,7 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      MAX_PER_RUN: ${{ github.event.inputs.max_per_run || '10' }}
+      MAX_REPLIES: ${{ github.event.inputs.max_replies || '1' }}
 
     steps:
       - name: Checkout
@@ -51,4 +51,4 @@ jobs:
           fi
 
       - name: Run auto-reply
-        run: python cli.py auto-reply --max-per-run "$MAX_PER_RUN"
+        run: python cli.py auto-reply --max-replies "$MAX_REPLIES"

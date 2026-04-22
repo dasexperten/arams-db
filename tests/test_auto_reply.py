@@ -39,8 +39,8 @@ class _FakeDraft:
     model: str = "fake"
 
 
-def _args(max_per_run: int = 50) -> argparse.Namespace:
-    return argparse.Namespace(max_per_run=max_per_run)
+def _args(max_replies: int = 5) -> argparse.Namespace:
+    return argparse.Namespace(max_replies=max_replies)
 
 
 def _review(rid: str, text: str = "Хороший продукт", rating: int = 5) -> dict:
@@ -121,11 +121,13 @@ def test_auto_reply_posts_for_reviews_with_text_and_marks_no_text_reviews(monkey
     assert summary["errors"] == 0
 
 
-def test_auto_reply_aborts_when_over_max_per_run(monkeypatch, capsys):
+def test_auto_reply_stops_after_max_replies_reached(monkeypatch, capsys):
+    """Even with lots of UNPROCESSED reviews available, we only post
+    max_replies answers — the rest stay UNPROCESSED for the next run."""
     seller_db.init_schema()
     posted: list[dict] = []
 
-    reviews = [_review(f"r-{i}") for i in range(5)]
+    reviews = [_review(f"r-{i}", text=f"отзыв {i}") for i in range(5)]
 
     def handler(req: httpx.Request) -> httpx.Response:
         if req.url.path == "/v1/review/list":
@@ -142,13 +144,49 @@ def test_auto_reply_aborts_when_over_max_per_run(monkeypatch, capsys):
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
 
-    rc = cli.cmd_auto_reply(_args(max_per_run=3))
-    assert rc == 2
-    assert posted == []  # nothing posted when aborted
+    rc = cli.cmd_auto_reply(_args(max_replies=2))
+    assert rc == 0
+    # Only the first two reviews get posted; the rest remain UNPROCESSED.
+    assert [p["review_id"] for p in posted] == ["r-0", "r-1"]
 
     out = capsys.readouterr().out
     summary = _first_json_object(out)
-    assert summary["status"] == "aborted"
+    assert summary["status"] == "ok"
+    assert summary["replied"] == 2
+    assert summary["max_replies"] == 2
+
+
+def test_auto_reply_default_posts_one_reply_only(monkeypatch, capsys):
+    """The hourly cron path: default max_replies=1 → exactly one reply per run."""
+    seller_db.init_schema()
+    posted: list[dict] = []
+
+    reviews = [
+        _review("r-a", text="первый"),
+        _review("r-b", text="второй"),
+        _review("r-c", text="третий"),
+    ]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/v1/review/list":
+            return httpx.Response(200, json={
+                "reviews": reviews, "has_next": False, "last_id": "",
+            })
+        if req.url.path == "/v1/review/comment/create":
+            posted.append(json.loads(req.read()))
+            return httpx.Response(200, json={"comment_id": "c"})
+        return httpx.Response(404)
+
+    monkeypatch.setattr(cli, "OzonSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr("ozon_seller.replier.draft_reply", lambda review: _FakeDraft())
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    # argparse default for --max-replies is 1; emulate that here.
+    rc = cli.cmd_auto_reply(argparse.Namespace(max_replies=1))
+    assert rc == 0
+    assert len(posted) == 1
+    assert posted[0]["review_id"] == "r-a"
 
 
 def test_auto_reply_telegram_sends_summary_plus_one_message_per_reply(monkeypatch, capsys):
@@ -194,6 +232,7 @@ def test_auto_reply_telegram_sends_summary_plus_one_message_per_reply(monkeypatc
     assert len(tg_messages) == 3
     assert "Ozon Auto-Reply" in tg_messages[0]
     assert "Отвечено: <b>2</b>" in tg_messages[0]
+    assert "лимита 5" in tg_messages[0]
 
     qa_bodies = "\n".join(tg_messages[1:])
     assert "Щётка слишком жёсткая" in qa_bodies
