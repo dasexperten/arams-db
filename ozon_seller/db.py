@@ -40,6 +40,12 @@ CREATE TABLE IF NOT EXISTS review_comments (
 
 CREATE INDEX IF NOT EXISTS idx_comments_review ON review_comments(review_id);
 
+CREATE TABLE IF NOT EXISTS product_skus (
+    ozon_sku    TEXT PRIMARY KEY,
+    offer_id    TEXT NOT NULL,
+    synced_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS seller_runs (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     job             TEXT NOT NULL,
@@ -131,6 +137,31 @@ def upsert_comments(conn: sqlite3.Connection, review_id: str, comments: list[dic
         return 0
     conn.executemany(sql, payload)
     return len(payload)
+
+
+def upsert_product_skus(conn: sqlite3.Connection, rows: list[dict]) -> int:
+    """Cache ozon_sku → offer_id mappings."""
+    sql = """
+    INSERT INTO product_skus (ozon_sku, offer_id, synced_at)
+    VALUES (:ozon_sku, :offer_id, datetime('now'))
+    ON CONFLICT(ozon_sku) DO UPDATE SET
+        offer_id=excluded.offer_id,
+        synced_at=datetime('now')
+    """
+    payload = [r for r in rows if r.get("ozon_sku") and r.get("offer_id")]
+    if not payload:
+        return 0
+    conn.executemany(sql, payload)
+    return len(payload)
+
+
+def sku_to_offer_id(conn: sqlite3.Connection) -> dict[str, str]:
+    """Return full {ozon_sku: offer_id} mapping from cache."""
+    try:
+        rows = conn.execute("SELECT ozon_sku, offer_id FROM product_skus").fetchall()
+        return {r["ozon_sku"]: r["offer_id"] for r in rows}
+    except Exception:
+        return {}
 
 
 def log_run(

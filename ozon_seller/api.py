@@ -103,6 +103,11 @@ class SellerAPI:
                 return
             offset += len(comments)
 
+    def product_info_list(self, skus: list[str | int]) -> list[dict]:
+        """Return product info (incl. offer_id) for a list of Ozon SKUs."""
+        resp = self.c.post("/v3/product/info/list", {"sku": [str(s) for s in skus]})
+        return (resp.get("result") or {}).get("items") or []
+
     def comment_create(
         self,
         review_id: str,

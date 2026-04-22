@@ -16,12 +16,23 @@ from ozon_seller import etl as seller_etl
 
 
 def _load_catalog() -> dict[str, str]:
-    """Load offer_id -> name mapping from data/products.csv."""
+    """Build {ozon_sku: name} + {offer_id: name} from products.csv + DB cache."""
+    offer_names: dict[str, str] = {}
     path = Path(__file__).parent / "data" / "products.csv"
-    if not path.exists():
-        return {}
-    with path.open(encoding="utf-8") as f:
-        return {row["offer_id"]: row["name"] for row in csv.DictReader(f) if row.get("offer_id")}
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            offer_names = {row["offer_id"]: row["name"]
+                          for row in csv.DictReader(f) if row.get("offer_id")}
+    catalog: dict[str, str] = dict(offer_names)
+    try:
+        with seller_db.connect() as conn:
+            for ozon_sku, offer_id in seller_db.sku_to_offer_id(conn).items():
+                name = offer_names.get(offer_id)
+                if name:
+                    catalog[ozon_sku] = name
+    except Exception:
+        pass
+    return catalog
 
 
 def _sku_label(catalog: dict[str, str], sku: str) -> str:
@@ -185,6 +196,23 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 continue
 
             sku = str(review.get("sku") or "")
+            if sku and sku not in catalog:
+                try:
+                    items = api.product_info_list([sku])
+                    new_rows = []
+                    for item in items:
+                        ozon_sku = str(item.get("sku") or item.get("id") or "")
+                        offer_id = str(item.get("offer_id") or "")
+                        if ozon_sku and offer_id:
+                            new_rows.append({"ozon_sku": ozon_sku, "offer_id": offer_id})
+                            name = catalog.get(offer_id)
+                            if name:
+                                catalog[ozon_sku] = name
+                    if new_rows:
+                        with seller_db.connect() as _conn:
+                            seller_db.upsert_product_skus(_conn, new_rows)
+                except Exception:
+                    pass
             review = {**review, "product_name": _sku_label(catalog, sku)}
 
             try:
