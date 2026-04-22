@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       max_replies:
-        description: "How many replies to post in this run (default 1). Bump to clear backlog."
+        description: "How many replies to post in this run (default 5). Bump to clear backlog."
         required: false
-        default: "1"
+        default: "5"
   schedule:
-    # every 5 minutes, 24/7 (GitHub minimum interval)
-    - cron: "*/5 * * * *"
+    # every hour, 24/7
+    - cron: "0 * * * *"
 
 jobs:
   auto-reply:
@@ -24,7 +24,7 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      MAX_REPLIES: ${{ github.event.inputs.max_replies || '1' }}
+      MAX_REPLIES: ${{ github.event.inputs.max_replies || '5' }}
 
     steps:
       - name: Checkout
