@@ -464,13 +464,17 @@ def _telegram_autoanswer(summary: dict, errors: list[dict],
     if not token or not chat_id:
         return
 
+    answered_count = summary.get("answered", 0)
+    error_count = summary.get("errors", 0)
+    if answered_count == 0 and error_count == 0:
+        return
+
     status = summary.get("status")
     flag = "✅" if status == "ok" else "⚠️"
-    answered_count = summary.get("answered", 0)
     text = (
         f"<b>{flag} Ozon Auto-Answer (вопросы)</b>\n\n"
         f"Отвечено: <b>{answered_count}</b> из лимита {summary.get('max_answers')}\n"
-        f"Ошибок: <b>{summary.get('errors')}</b>"
+        f"Ошибок: <b>{error_count}</b>"
     )
     if errors:
         preview = errors[:3]
