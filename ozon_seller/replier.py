@@ -131,7 +131,7 @@ def draft_reply(
     reuse the ~3KB of rules without paying for reprocessing.
     """
     model = model or os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL
-    client = client or Anthropic()
+    client = client or Anthropic(timeout=90.0)
     user_body = _format_review(review)
 
     resp = client.messages.create(
