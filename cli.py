@@ -487,7 +487,7 @@ def _telegram_autoanswer(summary: dict, errors: list[dict],
     if errors:
         preview = errors[:3]
         text += "\n\nПервые ошибки:\n" + "\n".join(
-            f"• {e.get('question_id', '?')} [{e.get('stage')}]: {e.get('error', '')[:100]}"
+            f"• {e.get('question_id', '?')} [{e.get('stage')}]: {e.get('error', '')[:300]}"
             for e in preview
         )
 
