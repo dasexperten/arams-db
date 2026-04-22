@@ -195,6 +195,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     "rating": review.get("rating"),
                     "author": review.get("author") or review.get("name") or "",
                     "sku": review.get("sku"),
+                    "published_at": review.get("published_at") or "",
                 })
             except Exception as e:
                 errors.append({"review_id": review_id, "stage": "post",
@@ -261,9 +262,12 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
         stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
         author = item.get("author") or "(без имени)"
         sku = item.get("sku") or ""
+        published = _format_review_date(item.get("published_at") or "")
         header = f"{stars} {html.escape(str(author))}"
         if sku:
             header += f" · SKU {html.escape(str(sku))}"
+        if published:
+            header += f" · {html.escape(published)}"
         question = html.escape((item.get("question") or "").strip())
         answer = html.escape((item.get("answer") or "").strip())
         # Telegram hard limit is 4096; keep a safety margin for the formatting.
@@ -281,6 +285,21 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
         except Exception as e:
             print(f"(telegram Q/A send failed for {item.get('review_id')}: {e})",
                   file=sys.stderr)
+
+
+def _format_review_date(raw: str) -> str:
+    """Convert Ozon's ISO timestamp like '2026-04-20T10:00:00.000Z' to
+    '2026-04-20 10:00 МСК' for display. Falls back to the raw string if
+    parsing fails."""
+    if not raw:
+        return ""
+    try:
+        s = raw.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(s)
+        msk = dt + timedelta(hours=3)
+        return msk.strftime("%Y-%m-%d %H:%M МСК")
+    except Exception:
+        return raw
 
 
 def cmd_telegram_ping(args: argparse.Namespace) -> int:

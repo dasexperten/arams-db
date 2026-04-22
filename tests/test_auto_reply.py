@@ -193,9 +193,11 @@ def test_auto_reply_telegram_sends_summary_plus_one_message_per_reply(monkeypatc
     seller_db.init_schema()
 
     reviews = [
-        _review("r-1", text="Щётка слишком жёсткая, дёсны кровят."),
+        {**_review("r-1", text="Щётка слишком жёсткая, дёсны кровят."),
+         "published_at": "2026-04-18T07:30:00.000Z"},
         _review("r-empty", text=""),
-        _review("r-2", text="Паста супер, зубы стали белее.", rating=5),
+        {**_review("r-2", text="Паста супер, зубы стали белее.", rating=5),
+         "published_at": "2026-04-19T15:45:00.000Z"},
     ]
 
     def handler(req: httpx.Request) -> httpx.Response:
@@ -242,6 +244,9 @@ def test_auto_reply_telegram_sends_summary_plus_one_message_per_reply(monkeypatc
     # HTML-escaped structure
     assert "<b>Отзыв:</b>" in tg_messages[1]
     assert "<b>Ответ Das Experten:</b>" in tg_messages[1]
+    # Dates in MSK should appear in the Q/A headers (+3h from UTC in fixture).
+    assert "2026-04-18 10:30 МСК" in tg_messages[1]
+    assert "2026-04-19 18:45 МСК" in tg_messages[2]
 
 
 def test_auto_reply_continues_when_claude_fails_for_one_review(monkeypatch, capsys):
