@@ -303,6 +303,57 @@ def test_auto_reply_wb_telegram_sends_summary_plus_one_message_per_reply(monkeyp
     assert "лимита 5" in summary
 
 
+def test_auto_reply_wb_skips_draft_with_denial_phrase(monkeypatch, capsys):
+    """Safety net: if Claude drafts a reply that denies the product exists
+    («отсутствует в линейке» etc.) — we must NOT publish it. The brand-
+    damaging reply to Валерий re DE123AAAA was exactly this shape."""
+    wb_db.init_schema()
+    posted: list[dict] = []
+
+    feedbacks = [
+        _feedback("f-pack", text="Хорошая щётка")
+        | {"productDetails": {"nmId": 42, "supplierArticle": "DE123AAAA",
+                              "productName": "Биоразлагаемая щётка BIO 4 шт",
+                              "brandName": "Das Experten"}},
+        _feedback("f-ok", text="Отличная паста", rating=5),
+    ]
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 2, "countUnansweredToday": 0}})
+        if req.url.path == "/api/v1/feedbacks":
+            skip = int(req.url.params.get("skip", "0"))
+            return httpx.Response(200, json=_wb_response(feedbacks if skip == 0 else []))
+        if req.url.path == "/api/v1/feedbacks/answer":
+            posted.append(json.loads(req.read()))
+            return httpx.Response(200, json={"error": False})
+        return httpx.Response(404)
+
+    def fake_draft(feedback):
+        if feedback["id"] == "f-pack":
+            # The exact shape of the bad Валерий reply — claude hallucinating
+            # that DE123AAAA is not in the lineup.
+            return _FakeDraft(text="Артикул DE123AAAA отсутствует в линейке Das Experten. Попробуйте ETALON.")
+        return _FakeDraft(text="Спасибо за отзыв!")
+
+    monkeypatch.setattr(cli, "WBSellerClient", _make_client_factory(handler))
+    monkeypatch.setattr("wb_seller.replier.draft_reply", fake_draft)
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    rc = cli.cmd_auto_reply_wb(_args())
+    # Exit code 1 because the denial-guard rejection is counted as an error.
+    assert rc == 1
+
+    # Only the clean feedback got posted — NOT the denial draft.
+    assert [p["id"] for p in posted] == ["f-ok"]
+
+    out = capsys.readouterr().out
+    summary = _first_json_object(out)
+    assert summary["replied"] == 1
+    assert summary["errors"] == 1
+
+
 def test_auto_reply_wb_continues_when_claude_fails_for_one_feedback(monkeypatch, capsys):
     wb_db.init_schema()
     posted: list[dict] = []

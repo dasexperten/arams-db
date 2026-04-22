@@ -892,6 +892,18 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
                                "error": "empty draft text"})
                 continue
 
+            # Safety net: never publish a draft that denies the product exists.
+            # These slip through when Claude doesn't recognize a pack-suffix
+            # SKU (DE123AAAA) as a valid base SKU (DE123). The prompt already
+            # forbids this, but a regex guard is cheaper than a public apology.
+            denial_hit = _wb_denial_phrase(draft_text)
+            if denial_hit:
+                print(f"  ✗ denial phrase detected: «{denial_hit}» — NOT posting",
+                      flush=True)
+                errors.append({"feedback_id": feedback_id, "stage": "denial-guard",
+                               "error": f"denial phrase in draft: {denial_hit!r}"})
+                continue
+
             reply_item = {
                 "feedback_id": feedback_id,
                 "chars": len(draft_text),
@@ -962,6 +974,43 @@ def _compose_wb_question(text: str, pros: str, cons: str) -> str:
     if cons:
         parts.append(f"[Недостатки] {cons}")
     return "\n".join(parts)
+
+
+_WB_DENIAL_PATTERNS = (
+    "отсутствует в линейке",
+    "отсутствует в ассортименте",
+    "отсутствует в нашем ассортимент",
+    "нет в линейке",
+    "нет в нашей линейке",
+    "нет в нашем ассортимент",
+    "нет в ассортимент",
+    "не в линейке",
+    "такого артикула нет",
+    "такого sku нет",
+    "такого товара нет",
+    "такого артикула не существует",
+    "такого sku не существует",
+    "не наш продукт",
+    "не наш товар",
+    "не из нашей линейки",
+)
+
+
+def _wb_denial_phrase(text: str) -> str | None:
+    """Return the first matched denial phrase, or None if clean.
+
+    Catches «отсутствует в линейке»-style disclaimers that Claude sometimes
+    outputs when it fails to map a pack-suffix WB article (DE123AAAA) back
+    to a base SKU (DE123). Such replies are brand-damaging and must not be
+    published.
+    """
+    if not text:
+        return None
+    low = text.lower()
+    for phrase in _WB_DENIAL_PATTERNS:
+        if phrase in low:
+            return phrase
+    return None
 
 
 def _fmt_wb_response(resp: dict | None) -> str:

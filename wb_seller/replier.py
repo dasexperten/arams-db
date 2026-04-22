@@ -8,11 +8,30 @@ feedback-formatter (WB has different field names than Ozon).
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from anthropic import Anthropic
+
+
+def _normalize_wb_sku(supplier_article: str) -> tuple[str, int]:
+    """Das Experten WB/Ozon articles encode pack size as trailing 'A's:
+        DE101      → (DE101, 1)
+        DE203AA    → (DE203, 2)
+        DE123AAAA  → (DE123, 4)
+
+    Returns `(base_sku, pack_size)`. If the article has no trailing A's,
+    pack_size defaults to 1.
+    """
+    if not supplier_article:
+        return "", 1
+    article = supplier_article.strip()
+    m = re.match(r"^(.+?)(A+)$", article)
+    if m and m.group(1):
+        return m.group(1), len(m.group(2))
+    return article, 1
 
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -43,6 +62,27 @@ SYSTEM_PROMPT = """Ты — отвечающий от имени бренда Da
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """ + _PRODUCT_KNOWLEDGE + """
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+АРТИКУЛ НА WB ≠ ВСЕГДА БАЗОВЫЙ SKU — ОБЯЗАТЕЛЬНО К ПРОЧТЕНИЮ
+
+Артикул продавца на маркетплейсе кодирует размер упаковки через хвост из букв «A»:
+  DE123         → базовый SKU DE123, 1 шт
+  DE123AA       → базовый SKU DE123, 2 шт
+  DE123AAAA     → базовый SKU DE123, 4 шт
+  DE203AA       → базовый SKU DE203, 2 шт (набор)
+  DE203AAAA     → базовый SKU DE203, 4 шт
+
+В данных отзыва ниже ты получишь уже нормализованные поля «Базовый SKU» и «Упаковка: N шт» — используй ИХ (а не «Артикул продавца» с хвостом) для поиска в СПРАВОЧНИКЕ выше.
+
+АБСОЛЮТНЫЙ ЗАПРЕТ:
+- НИКОГДА не пиши «такого артикула нет в линейке», «такого SKU у нас не существует», «нет такого товара в ассортименте», «отсутствует в нашем ассортименте», «не наш продукт».
+- Если покупатель купил DE###AAAA — это НАШ продукт с базовым SKU DE###, просто в пачке на N штук. Точка.
+- Если базовый SKU присутствует в СПРАВОЧНИКЕ выше — продукт в линейке, отвечай по справочнику.
+- Если базового SKU НЕТ в СПРАВОЧНИКЕ (редкий случай — возможно новинка не подгружена) — НЕ отрицай существование, отвечай только по тому что известно из названия товара и отзыва, без жёстких клинических цифр.
+
+Когда упаковка > 1 шт — это признак лояльности или подарка («взяли сразу четыре — значит нравится» / «набор на семью»). Можешь мягко упомянуть, если это усиливает ответ.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -143,7 +183,14 @@ def _format_feedback(feedback: dict) -> str:
     if brand:
         parts.append(f"Бренд: {brand}")
     if supplier_article:
-        parts.append(f"Артикул продавца: {supplier_article}")
+        base_sku, pack_size = _normalize_wb_sku(supplier_article)
+        parts.append(f"Артикул продавца (как на WB): {supplier_article}")
+        if base_sku and base_sku != supplier_article:
+            parts.append(f"Базовый SKU: {base_sku}")
+            parts.append(f"Упаковка: {pack_size} шт")
+        elif base_sku:
+            parts.append(f"Базовый SKU: {base_sku}")
+            parts.append(f"Упаковка: 1 шт")
     if nm_id:
         parts.append(f"nmId: {nm_id}")
     if photos or has_video:
