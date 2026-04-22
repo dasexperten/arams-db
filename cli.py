@@ -13,6 +13,9 @@ from ozon_perf import analyze, dashboard, db, etl
 from ozon_seller import OzonSellerClient, SellerAPI
 from ozon_seller import db as seller_db
 from ozon_seller import etl as seller_etl
+from wb_seller import WBSellerClient, WBFeedbacksAPI
+from wb_seller import db as wb_db
+from wb_seller import etl as wb_etl
 
 
 def _load_catalog() -> dict[str, str]:
@@ -92,8 +95,10 @@ def _parse_date(s: str) -> date:
 def cmd_init(_: argparse.Namespace) -> int:
     db.init_schema()
     seller_db.init_schema()
+    wb_db.init_schema()
     print("perf schema ready:  ", db._db_path())
     print("seller schema ready:", seller_db._db_path())
+    print("wb schema ready:    ", wb_db._db_path())
     return 0
 
 
@@ -653,6 +658,303 @@ def cmd_mark_reviews(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ping_wb(_: argparse.Namespace) -> int:
+    with WBSellerClient() as c:
+        data = WBFeedbacksAPI(c).count_unanswered()
+    print("wb feedbacks auth ok, count-unanswered:")
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_debug_wb_feedback(_: argparse.Namespace) -> int:
+    """Dump raw JSON of first unanswered feedback — used to inspect WB field names."""
+    with WBSellerClient() as c:
+        page = WBFeedbacksAPI(c).feedbacks_list(is_answered=False, take=1)
+    feedbacks = ((page.get("data") or {}).get("feedbacks")) or []
+    if not feedbacks:
+        print("No unanswered feedbacks returned")
+        return 0
+    print(json.dumps(feedbacks[0], indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_wb_feedbacks(args: argparse.Namespace) -> int:
+    wb_db.init_schema()
+    with WBSellerClient() as c:
+        result = wb_etl.sync_feedbacks(
+            c,
+            is_answered=args.answered,
+            max_feedbacks=args.max,
+        )
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_list_wb_recent(args: argparse.Namespace) -> int:
+    with WBSellerClient() as c:
+        page = WBFeedbacksAPI(c).feedbacks_list(
+            is_answered=args.answered, take=args.count, order="dateDesc",
+        )
+    feedbacks = ((page.get("data") or {}).get("feedbacks")) or []
+    if not feedbacks:
+        answered_label = "answered" if args.answered else "unanswered"
+        print(f"(no feedbacks found, is_answered={answered_label})")
+        return 0
+    answered_label = "answered" if args.answered else "unanswered"
+    print(f"{len(feedbacks)} most recent WB feedbacks ({answered_label}):")
+    print("=" * 90)
+    for f in feedbacks:
+        fid = f.get("id", "")
+        rating = f.get("productValuation", "?")
+        prod = f.get("productDetails") or {}
+        nm_id = prod.get("nmId", "")
+        product_name = prod.get("productName") or prod.get("supplierArticle", "")
+        author = (f.get("userName") or "").strip() or "(anonymous)"
+        created = (f.get("createdDate") or "")[:19]
+        text = (f.get("text") or "").strip().replace("\n", " ")
+        preview = text[:120] + ("…" if len(text) > 120 else "")
+        if not preview:
+            preview = "(no text, rating-only)"
+        print(f"id: {fid}")
+        print(f"    ⭐ {rating}/5   nmId: {nm_id}   «{product_name}»   by: {author}   on: {created}")
+        print(f"    “{preview}”")
+        print("-" * 90)
+    print()
+    print("Pick an id and run: python cli.py draft-wb-reply <id>")
+    return 0
+
+
+def _fetch_wb_feedback(api: WBFeedbacksAPI, feedback_id: str) -> dict | None:
+    """WB has no /feedback/info endpoint — stream both answered and unanswered
+    lists and find the target by id. Slow for big backlogs but fine for a
+    one-off draft; the auto-reply loop doesn't use this.
+    """
+    target = str(feedback_id)
+    for is_answered in (False, True):
+        for f in api.feedbacks_iter(is_answered=is_answered, page_size=1000):
+            if str(f.get("id") or "") == target:
+                return f
+    return None
+
+
+def cmd_draft_wb_reply(args: argparse.Namespace) -> int:
+    from wb_seller.replier import draft_reply
+    with WBSellerClient() as c:
+        api = WBFeedbacksAPI(c)
+        feedback = _fetch_wb_feedback(api, args.feedback_id)
+    if not feedback:
+        print(f"error: feedback {args.feedback_id} not found in either answered or unanswered lists",
+              file=sys.stderr)
+        return 1
+    prod = feedback.get("productDetails") or {}
+    print("=" * 70)
+    print(f"Feedback {args.feedback_id}")
+    print("=" * 70)
+    print(f"Author: {feedback.get('userName') or '(anonymous)'}")
+    print(f"Rating: {feedback.get('productValuation')}/5   nmId: {prod.get('nmId')}")
+    print(f"Product: {prod.get('productName') or prod.get('supplierArticle', '')}")
+    print(f"Created: {feedback.get('createdDate')}")
+    print("-" * 70)
+    if feedback.get("pros"):
+        print(f"Достоинства: {feedback.get('pros')}")
+    if feedback.get("cons"):
+        print(f"Недостатки: {feedback.get('cons')}")
+    print(feedback.get("text") or "(empty feedback text)")
+    print("=" * 70)
+    print()
+    draft = draft_reply(feedback)
+    print("DRAFT REPLY:")
+    print("-" * 70)
+    print(draft.text)
+    print("-" * 70)
+    print(
+        f"[{draft.model}] in={draft.input_tokens} out={draft.output_tokens} "
+        f"cache_read={draft.cache_read_input_tokens} cache_write={draft.cache_creation_input_tokens} "
+        f"stop={draft.stop_reason} chars={len(draft.text)}"
+    )
+    print()
+    print("To post this draft as-is, run:")
+    print(f"  python cli.py post-wb-reply {args.feedback_id} \"<paste approved text here>\"")
+    return 0
+
+
+def cmd_post_wb_reply(args: argparse.Namespace) -> int:
+    if not args.text.strip():
+        print("error: empty reply text", file=sys.stderr)
+        return 1
+    if args.confirm != "YES":
+        print("refusing to post without --confirm YES (safety guard)", file=sys.stderr)
+        print("the reply is public and cannot be edited after WB moderation window.", file=sys.stderr)
+        return 1
+    with WBSellerClient() as c:
+        result = WBFeedbacksAPI(c).answer_create(
+            feedback_id=args.feedback_id,
+            text=args.text,
+        )
+    print("posted:")
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
+    """Reply to unanswered WB feedbacks one at a time: stream through
+    unanswered, skip rating-only (no text) feedbacks (we can't answer what
+    isn't there), and for each feedback with text — draft via Claude and
+    POST the answer. Stops after --max-replies successfully posted replies.
+
+    Default: 1 reply per run, so 10-minute cron = up to 6 per hour.
+    To clear a backlog, dispatch manually with a larger max-replies.
+    """
+    from wb_seller.replier import draft_reply
+
+    max_replies = max(1, int(args.max_replies))
+    wb_db.init_schema()
+
+    replied: list[dict] = []
+    rating_only_skipped: list[str] = []
+    errors: list[dict] = []
+
+    with WBSellerClient() as c:
+        api = WBFeedbacksAPI(c)
+
+        for feedback in api.feedbacks_iter(is_answered=False):
+            if len(replied) >= max_replies:
+                break
+
+            feedback_id = str(feedback.get("id") or "").strip()
+            if not feedback_id:
+                errors.append({"stage": "validate", "error": "feedback missing id"})
+                continue
+
+            text = (feedback.get("text") or "").strip()
+            pros = (feedback.get("pros") or "").strip()
+            cons = (feedback.get("cons") or "").strip()
+            # WB: treat feedback as "no meaningful text" only if all three
+            # free-text fields are empty. Pros/cons often contain the real
+            # content even when `text` itself is blank.
+            if not text and not pros and not cons:
+                rating_only_skipped.append(feedback_id)
+                continue
+
+            try:
+                draft = draft_reply(feedback)
+            except Exception as e:
+                errors.append({"feedback_id": feedback_id, "stage": "draft",
+                               "error": str(e)})
+                continue
+
+            draft_text = (draft.text or "").strip()
+            if not draft_text:
+                errors.append({"feedback_id": feedback_id, "stage": "draft",
+                               "error": "empty draft text"})
+                continue
+
+            try:
+                api.answer_create(feedback_id=feedback_id, text=draft_text)
+                prod = feedback.get("productDetails") or {}
+                replied.append({
+                    "feedback_id": feedback_id,
+                    "chars": len(draft_text),
+                    "question": _compose_wb_question(text, pros, cons),
+                    "answer": draft_text,
+                    "rating": feedback.get("productValuation"),
+                    "author": (feedback.get("userName") or "").strip(),
+                    "nm_id": prod.get("nmId"),
+                    "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
+                    "created_at": feedback.get("createdDate") or "",
+                })
+            except Exception as e:
+                errors.append({"feedback_id": feedback_id, "stage": "post",
+                               "error": str(e)})
+
+    summary = {
+        "status": "ok" if not errors else "partial",
+        "max_replies": max_replies,
+        "replied": len(replied),
+        "rating_only_skipped": len(rating_only_skipped),
+        "errors": len(errors),
+    }
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    if errors:
+        print("errors:")
+        print(json.dumps(errors, indent=2, ensure_ascii=False))
+
+    _telegram_autoreply_wb(summary, errors=errors, replied=replied)
+
+    return 0 if not errors else 1
+
+
+def _compose_wb_question(text: str, pros: str, cons: str) -> str:
+    """Concatenate WB's three review text fields into one blob for Telegram."""
+    parts = []
+    if text:
+        parts.append(text)
+    if pros:
+        parts.append(f"[Достоинства] {pros}")
+    if cons:
+        parts.append(f"[Недостатки] {cons}")
+    return "\n".join(parts)
+
+
+def _telegram_autoreply_wb(summary: dict, errors: list[dict],
+                           replied: list[dict] | None = None) -> None:
+    import html
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return
+
+    status = summary.get("status")
+    flag = "✅" if status == "ok" else "⚠️"
+    replied_count = summary.get("replied", 0)
+    text = (
+        f"<b>{flag} Wildberries Auto-Reply</b>\n\n"
+        f"Отвечено: <b>{replied_count}</b> из лимита {summary.get('max_replies')}\n"
+        f"Без текста (пропущены): <b>{summary.get('rating_only_skipped')}</b>\n"
+        f"Ошибок: <b>{summary.get('errors')}</b>"
+    )
+    if errors:
+        preview = errors[:3]
+        text += "\n\nПервые ошибки:\n" + "\n".join(
+            f"• {e.get('feedback_id', '?')} [{e.get('stage')}]: {e.get('error', '')[:100]}"
+            for e in preview
+        )
+
+    try:
+        _tg_send(token, chat_id, text)
+    except Exception as e:
+        print(f"(telegram notify failed: {e})", file=sys.stderr)
+
+    for item in (replied or []):
+        stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
+        product_name = item.get("product_name") or ""
+        if not product_name and item.get("nm_id"):
+            product_name = f"nmId {item.get('nm_id')}"
+        created = _format_review_date(item.get("created_at") or "")
+        header = stars
+        if product_name:
+            header += f" · {html.escape(product_name)}"
+        if created:
+            header += f" · {html.escape(created)}"
+        question = html.escape((item.get("question") or "").strip())
+        answer = html.escape((item.get("answer") or "").strip())
+        if len(question) > 1500:
+            question = question[:1500] + "…"
+        if len(answer) > 1500:
+            answer = answer[:1500] + "…"
+        msg = (
+            f"{header}\n\n"
+            f"<b>Отзыв (WB):</b>\n<i>{question or '(пустой)'}</i>\n\n"
+            f"<b>Ответ Das Experten:</b>\n{answer}"
+        )
+        try:
+            _tg_send(token, chat_id, msg)
+        except Exception as e:
+            print(f"(telegram Q/A send failed for {item.get('feedback_id')}: {e})",
+                  file=sys.stderr)
+
+
 def cmd_ping(_: argparse.Namespace) -> int:
     with OzonPerformanceClient() as c:
         c._auth_header()
@@ -959,6 +1261,62 @@ def build_parser() -> argparse.ArgumentParser:
     tp.add_argument("--text", default=None,
                     help="Custom message text (default: preset 'it works' message)")
     tp.set_defaults(func=cmd_telegram_ping)
+
+    sub.add_parser(
+        "ping-wb",
+        help="Test WB Feedbacks API credentials (calls /feedbacks/count-unanswered)",
+    ).set_defaults(func=cmd_ping_wb)
+
+    sub.add_parser(
+        "debug-wb-feedback",
+        help="Dump raw JSON of first unanswered WB feedback (inspect field names)",
+    ).set_defaults(func=cmd_debug_wb_feedback)
+
+    swb = sub.add_parser("sync-wb-feedbacks", help="Fetch WB feedbacks into SQLite")
+    swb.add_argument(
+        "--answered", action="store_true",
+        help="Fetch already-answered feedbacks (default: only unanswered)",
+    )
+    swb.add_argument("--max", type=int, default=None,
+                     help="Stop after N feedbacks (default: all)")
+    swb.set_defaults(func=cmd_sync_wb_feedbacks)
+
+    lrwb = sub.add_parser(
+        "list-wb-recent",
+        help="Print the most recent WB feedbacks with id + preview (no DB write, no POST)",
+    )
+    lrwb.add_argument("--answered", action="store_true",
+                      help="Show already-answered (default: show unanswered)")
+    lrwb.add_argument("--count", type=int, default=20, help="How many feedbacks to show (1..5000)")
+    lrwb.set_defaults(func=cmd_list_wb_recent)
+
+    drwb = sub.add_parser(
+        "draft-wb-reply",
+        help="Fetch a WB feedback and generate a draft reply via Claude API (no POST)",
+    )
+    drwb.add_argument("feedback_id")
+    drwb.set_defaults(func=cmd_draft_wb_reply)
+
+    prwb = sub.add_parser(
+        "post-wb-reply",
+        help="PUBLICLY post an approved reply to WB. Requires --confirm YES.",
+    )
+    prwb.add_argument("feedback_id")
+    prwb.add_argument("text", help="The exact approved reply text to publish")
+    prwb.add_argument("--confirm", default="",
+                      help='Pass "YES" to acknowledge the reply is public and irreversible')
+    prwb.set_defaults(func=cmd_post_wb_reply)
+
+    arwb = sub.add_parser(
+        "auto-reply-wb",
+        help="END-TO-END: stream unanswered WB feedbacks one by one, draft via Claude, post reply",
+    )
+    arwb.add_argument(
+        "--max-replies", type=int, default=1,
+        help="How many replies to post in this run (default: 1). "
+             "Rating-only (no text/pros/cons) feedbacks are skipped and don't count.",
+    )
+    arwb.set_defaults(func=cmd_auto_reply_wb)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
