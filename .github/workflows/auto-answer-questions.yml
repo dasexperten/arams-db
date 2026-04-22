@@ -1,4 +1,4 @@
-name: Answers
+name: Ozon-Answer
 
 on:
   workflow_dispatch:
@@ -8,8 +8,8 @@ on:
         required: false
         default: "1"
   schedule:
-    # every 30 minutes, 09:00–21:00 MSK (06:00–18:00 UTC)
-    - cron: "*/30 6-18 * * *"
+    # every 10 minutes, 24/7
+    - cron: "*/10 * * * *"
 
 jobs:
   auto-answer:
