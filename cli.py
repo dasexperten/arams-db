@@ -496,6 +496,10 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 errors.append({"question_id": question_id, "stage": "post",
                                "error": str(e)})
 
+    if not answered and not errors:
+        print("no new questions to answer")
+        return 0
+
     summary = {
         "status": "ok" if not errors else "partial",
         "max_answers": max_answers,
