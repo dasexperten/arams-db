@@ -61,17 +61,18 @@ def cmd_ping_seller(_: argparse.Namespace) -> int:
 
 def cmd_ping_questions(_: argparse.Namespace) -> int:
     with OzonSellerClient() as c:
-        page = SellerAPI(c).questions_list(status="UNANSWERED", limit=1)
-    total = page.get("total") or page.get("count") or "?"
-    has_next = page.get("has_next")
+        api = SellerAPI(c)
+        counts = api.questions_count()
+        page = api.questions_list(status="UNANSWERED", limit=1)
+    print("questions API ok, counts:")
+    print(json.dumps(counts, indent=2, ensure_ascii=False))
     questions = page.get("questions") or []
-    print(f"questions API ok — unanswered: {total}, has_next: {has_next}")
     if questions:
         q = questions[0]
-        print("first question fields:", list(q.keys()))
+        print("\nfirst unanswered question fields:", list(q.keys()))
         print(json.dumps(q, indent=2, ensure_ascii=False))
     else:
-        print("(no unanswered questions right now)")
+        print("\n(no unanswered questions right now)")
     return 0
 
 

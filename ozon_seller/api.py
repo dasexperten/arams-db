@@ -104,6 +104,9 @@ class SellerAPI:
                 return
             offset += len(comments)
 
+    def questions_count(self) -> dict:
+        return self.c.post("/v1/question/count", {})
+
     def questions_list(
         self,
         status: str = "UNANSWERED",
@@ -115,7 +118,7 @@ class SellerAPI:
             raise ValueError(f"status must be one of {QUESTION_STATUSES}, got {status!r}")
         limit = max(1, min(int(limit), 100))
         return self.c.post(
-            "/v1/product/questions/list",
+            "/v1/question/list",
             {
                 "limit": limit,
                 "last_id": last_id or "",
@@ -154,7 +157,7 @@ class SellerAPI:
                 f"question_answer_create: text too long ({len(answer_text)} chars, max 1000)"
             )
         return self.c.post(
-            "/v1/product/questions/answer/create",
+            "/v1/question/answer/create",
             {
                 "question_id": str(question_id),
                 "answer_text": answer_text,
