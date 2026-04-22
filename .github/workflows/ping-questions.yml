@@ -1,0 +1,21 @@
+name: Ping Questions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      OZON_SELLER_BASE_URL: https://api-seller.ozon.ru
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python cli.py ping-questions
