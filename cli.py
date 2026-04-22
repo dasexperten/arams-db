@@ -16,22 +16,55 @@ from ozon_seller import etl as seller_etl
 
 
 def _load_catalog() -> dict[str, str]:
-    """Build {ozon_sku: name} + {offer_id: name} from products.csv + DB cache."""
+    """Build {ozon_sku: name} + {offer_id: name} from products.csv + Excel + DB cache."""
+    import re
+
     offer_names: dict[str, str] = {}
-    path = Path(__file__).parent / "data" / "products.csv"
-    if path.exists():
-        with path.open(encoding="utf-8") as f:
+    csv_path = Path(__file__).parent / "data" / "products.csv"
+    if csv_path.exists():
+        with csv_path.open(encoding="utf-8") as f:
             offer_names = {row["offer_id"]: row["name"]
                           for row in csv.DictReader(f) if row.get("offer_id")}
+
     catalog: dict[str, str] = dict(offer_names)
+
+    # Read Ozon SKU → offer_id mapping from the Excel flat file.
+    xlsx_path = Path(__file__).parent / "ozon_seller" / "Ozon Products.xlsx"
+    if xlsx_path.exists():
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+            ws = wb.active
+            header_found = False
+            for row in ws.iter_rows(values_only=True):
+                if not header_found:
+                    if row and str(row[0] or "").strip() == "Артикул":
+                        header_found = True
+                    continue
+                raw_offer = str(row[0] or "").lstrip("'").strip()
+                sku_val = row[2]
+                if not raw_offer or not sku_val:
+                    continue
+                base_offer = re.sub(r"A+$", "", raw_offer)
+                ozon_sku = str(int(sku_val))
+                name = offer_names.get(base_offer)
+                if name:
+                    catalog[ozon_sku] = name
+            wb.close()
+        except Exception:
+            pass
+
+    # Also merge any additional entries from the DB cache.
     try:
         with seller_db.connect() as conn:
             for ozon_sku, offer_id in seller_db.sku_to_offer_id(conn).items():
-                name = offer_names.get(offer_id)
-                if name:
-                    catalog[ozon_sku] = name
+                if ozon_sku not in catalog:
+                    name = offer_names.get(offer_id)
+                    if name:
+                        catalog[ozon_sku] = name
     except Exception:
         pass
+
     return catalog
 
 
@@ -65,8 +98,7 @@ def cmd_ping_questions(_: argparse.Namespace) -> int:
         counts = api.questions_count()
         print("questions API ok, counts:")
         print(json.dumps(counts, indent=2, ensure_ascii=False))
-        # Try to get any question (answered or not) to inspect the structure
-        for status in ("UNANSWERED", "ANSWERED", "ALL"):
+        for status in ("UNPROCESSED", "PROCESSED", "ALL"):
             page = api.questions_list(status=status, limit=1)
             questions = page.get("questions") or []
             if questions:
@@ -76,6 +108,54 @@ def cmd_ping_questions(_: argparse.Namespace) -> int:
                 break
         else:
             print("\n(no questions found in any status)")
+    return 0
+
+
+def cmd_sync_product_skus(_: argparse.Namespace) -> int:
+    """Parse Ozon Products.xlsx and save ozon_sku → offer_id mapping to DB."""
+    import re
+    import openpyxl
+
+    xlsx_path = Path(__file__).parent / "ozon_seller" / "Ozon Products.xlsx"
+    if not xlsx_path.exists():
+        print(f"error: {xlsx_path} not found", file=sys.stderr)
+        return 1
+
+    seller_db.init_schema()
+
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
+    ws = wb.active
+    rows: list[dict] = []
+    header_found = False
+    for row in ws.iter_rows(values_only=True):
+        if not header_found:
+            if row and str(row[0] or "").strip() == "Артикул":
+                header_found = True
+            continue
+        raw_offer = str(row[0] or "").lstrip("'").strip()
+        sku_val = row[2]
+        if not raw_offer or not sku_val:
+            continue
+        base_offer = re.sub(r"A+$", "", raw_offer)
+        ozon_sku = str(int(sku_val))
+        rows.append({"ozon_sku": ozon_sku, "offer_id": base_offer})
+    wb.close()
+
+    print(f"parsed {len(rows)} rows from {xlsx_path.name}")
+
+    if rows:
+        with seller_db.connect() as conn:
+            n = seller_db.upsert_product_skus(conn, rows)
+        print(f"saved {n} ozon_sku → offer_id mappings to DB")
+
+    print("\nFull mapping (ozon_sku → offer_id):")
+    with seller_db.connect() as conn:
+        db_rows = conn.execute(
+            "SELECT ozon_sku, offer_id, synced_at FROM product_skus ORDER BY offer_id"
+        ).fetchall()
+    for row in db_rows:
+        print(f"  {row['ozon_sku']:>15}  →  {row['offer_id']}")
+
     return 0
 
 
@@ -287,15 +367,15 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
 
 
 def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
-    """Stream UNANSWERED questions, draft answer via Claude, post to Ozon.
+    """Stream UNPROCESSED questions, draft answer via Claude, post to Ozon.
 
-    Default: 1 answer per run, so hourly cron = 1 answer per hour.
+    Default: 1 answer per run, so every-30min cron = up to 48 per day.
     To clear a backlog, dispatch manually with a larger --max-answers.
     """
     from ozon_seller.question_answerer import draft_answer
 
     max_answers = max(1, int(args.max_answers))
-    max_inspect = max_answers * 50  # hard stop: don't loop through more than this
+    max_inspect = max_answers * 50  # hard stop: never loop through more than this
     catalog = _load_catalog()
 
     answered: list[dict] = []
@@ -306,9 +386,6 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
         api = SellerAPI(c)
 
         for question in api.questions_iter(status="UNPROCESSED"):
-            if inspected == 0:
-                print(f"DEBUG first question keys: {list(question.keys())}", flush=True)
-                print(f"DEBUG first question: {json.dumps(question, ensure_ascii=False, default=str)[:500]}", flush=True)
             if len(answered) >= max_answers:
                 break
             if inspected >= max_inspect:
@@ -327,27 +404,10 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 question.get("question_text") or question.get("text") or ""
             ).strip()
             if not text:
-                print(f"  skip {question_id}: no text (fields: {list(question.keys())})", flush=True)
+                print(f"  skip {question_id}: no text", flush=True)
                 continue
 
             sku = str(question.get("sku_id") or question.get("sku") or "")
-            if sku and sku not in catalog:
-                try:
-                    items = api.product_info_list([sku])
-                    new_rows = []
-                    for item in items:
-                        ozon_sku = str(item.get("sku") or item.get("id") or "")
-                        offer_id = str(item.get("offer_id") or "")
-                        if ozon_sku and offer_id:
-                            new_rows.append({"ozon_sku": ozon_sku, "offer_id": offer_id})
-                            name = catalog.get(offer_id)
-                            if name:
-                                catalog[ozon_sku] = name
-                    if new_rows:
-                        with seller_db.connect() as _conn:
-                            seller_db.upsert_product_skus(_conn, new_rows)
-                except Exception:
-                    pass
             question = {**question, "product_name": _sku_label(catalog, sku)}
 
             try:
@@ -479,7 +539,7 @@ def _telegram_autoanswer(summary: dict, errors: list[dict],
     answered_count = summary.get("answered", 0)
     error_count = summary.get("errors", 0)
     if answered_count == 0 and error_count == 0:
-        return
+        return  # silent when nothing happened
 
     status = summary.get("status")
     flag = "✅" if status == "ok" else "⚠️"
@@ -794,8 +854,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
     sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
         .set_defaults(func=cmd_ping_seller)
-    sub.add_parser("ping-questions", help="Test questions API — print first unanswered question")\
+    sub.add_parser("ping-questions", help="Test questions API — print first question")\
         .set_defaults(func=cmd_ping_questions)
+    sub.add_parser(
+        "sync-product-skus",
+        help="Parse ozon_seller/Ozon Products.xlsx and save ozon_sku → offer_id mapping to DB",
+    ).set_defaults(func=cmd_sync_product_skus)
     sub.add_parser("sync-campaigns", help="Fetch campaign list").set_defaults(func=cmd_sync_campaigns)
 
     sr = sub.add_parser("sync-reviews", help="Fetch reviews from Seller API into SQLite")

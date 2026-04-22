@@ -50,5 +50,8 @@ jobs:
             exit 1
           fi
 
+      - name: Load product SKU mapping
+        run: python cli.py sync-product-skus
+
       - name: Run auto-answer-questions
         run: python cli.py auto-answer-questions --max-answers "$MAX_ANSWERS"

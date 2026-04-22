@@ -166,6 +166,30 @@ class SellerAPI:
         resp = self.c.post("/v3/product/info/list", {"sku": [str(s) for s in skus]})
         return (resp.get("result") or {}).get("items") or []
 
+    def product_info_by_offer_ids(self, offer_ids: list[str]) -> list[dict]:
+        """Return product info (incl. Ozon numeric SKU) for a list of offer_ids."""
+        resp = self.c.post("/v3/product/info/list", {"offer_id": list(offer_ids)})
+        return (resp.get("result") or {}).get("items") or []
+
+    def products_list_all(self) -> Iterator[dict]:
+        """Iterate all seller products yielding {product_id, offer_id} dicts."""
+        last_id = ""
+        while True:
+            resp = self.c.post(
+                "/v2/product/list",
+                {"filter": {}, "last_id": last_id, "limit": 100},
+            )
+            result = resp.get("result") or {}
+            items = result.get("items") or []
+            for item in items:
+                yield item
+            if not items:
+                return
+            next_last_id = result.get("last_id") or ""
+            if not next_last_id or next_last_id == last_id:
+                return
+            last_id = next_last_id
+
     def comment_create(
         self,
         review_id: str,
