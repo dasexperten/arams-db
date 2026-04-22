@@ -1,4 +1,4 @@
-name: Ozon Auto-Answer Questions
+name: Answers
 
 on:
   workflow_dispatch:
