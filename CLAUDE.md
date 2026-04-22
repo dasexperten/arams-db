@@ -206,35 +206,42 @@ python cli.py sync-reviews --max 50       # только первые 50 (для
 python cli.py mark-reviews --status PROCESSED rev-id-1 rev-id-2
 python cli.py draft-reply <review_id>     # черновик Claude в stdout (без POST)
 python cli.py post-reply <id> "<text>" --confirm YES    # ручной POST ответа
-python cli.py auto-reply [--max-per-run 10]             # END-TO-END: sync UNPROCESSED → Claude → POST
+python cli.py auto-reply [--max-replies 1]              # END-TO-END: один отзыв за прогон → Claude → POST
 ```
 
 ## Ozon Auto-Reply (полная автоматика)
 
 Workflow `.github/workflows/auto-reply.yml` — каждый час 09:00–21:00 МСК
-плюс кнопка в Actions. Алгоритм (`cmd_auto_reply` в cli.py):
+плюс кнопка в Actions. Модель **«один прогон = один ответ»**.
 
-1. Тянет все `UNPROCESSED` отзывы (`reviews_iter`).
-2. Стоп-кран: если их больше `--max-per-run` (по умолчанию 10) — **не
-   постит ничего**, пишет в Telegram и выходит с кодом 2. Защита от бага
-   в пагинации/статусах, чтобы не улететь в массовый постинг.
-3. Для каждого отзыва с непустым `text`:
+Алгоритм (`cmd_auto_reply` в cli.py):
+
+1. Стримит `UNPROCESSED` через `reviews_iter(status="UNPROCESSED")`.
+2. Отзыв без текста (только звёзды) — `change_status(..., PROCESSED)`
+   и идём к следующему (не тратит лимит на ответы).
+3. Отзыв с текстом:
    - Claude пишет ответ (`replier.draft_reply`, system-prompt закеширован).
    - `comment_create(..., mark_review_as_processed=True)` — Ozon публикует
-     ответ и помечает отзыв PROCESSED атомарно.
-4. Отзывы без текста (только звёзды) — просто `change_status(..., PROCESSED)`,
-   отвечать нечего.
-5. Сводка в Telegram: всего / отвечено / без текста / ошибок + первые
-   3 ошибки с `review_id` и стадией (`draft` / `post` / `mark_no_text`).
-6. После сводки — отдельное сообщение на **каждый** отвеченный отзыв с
-   парой «отзыв + наш ответ» (★рейтинг, автор, SKU, escaped HTML, обрезка
-   по 1500 символов). Удобно читать в Telegram как журнал.
+     ответ и атомарно помечает отзыв PROCESSED.
+4. Останавливаемся, когда отвечено `--max-replies` раз (по умолчанию `1`).
+   Хвост остаётся UNPROCESSED для следующего прогона.
 
-Возвращает: `0` — всё ок, `1` — partial (были ошибки, но не фатал),
-`2` — aborted (сработал стоп-кран).
+Таким образом дефолтный cron каждый час = 1 ответ в час (до 13 в день в
+окне 09–21 МСК). Чтобы разгрести накопленный backlog — вручную дёрнуть
+`Run workflow` с `max_replies=50` (или сколько нужно).
 
-Тесты: `tests/test_auto_reply.py` — покрывают три ветки (текст/без текста,
-стоп-кран, фейл Claude для одного отзыва не ломает остальные).
+Telegram:
+- Одно сводочное сообщение: отвечено `X из N лимита` / без текста `K` /
+  ошибок `L` + первые 3 ошибки с `review_id` и стадией
+  (`draft` / `post` / `mark_no_text`).
+- После сводки — отдельное сообщение на **каждый** отвеченный отзыв
+  с парой «отзыв + наш ответ» (★рейтинг, автор, SKU, escaped HTML,
+  обрезка по 1500 символов).
+
+Exit codes: `0` — всё ок, `1` — partial (были per-review ошибки).
+
+Тесты: `tests/test_auto_reply.py` — normal path (с/без текста),
+стоп после `max_replies`, дефолт = 1, фейл Claude не ломает остальное.
 
 ## Схема SQLite
 
