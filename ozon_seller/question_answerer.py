@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from anthropic import Anthropic
@@ -16,7 +17,25 @@ from anthropic import Anthropic
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
-SYSTEM_PROMPT = """Ты — Das Experten эксперт-консультант, отвечающий на вопросы покупателей на Ozon Marketplace.
+_SKILLS_BASE = Path(__file__).parent.parent / ".claude" / "skills"
+
+
+def _load_product_knowledge() -> str:
+    """Load authoritative product data from review-master skill files."""
+    parts: list[str] = []
+    sku_data = _SKILLS_BASE / "review-master" / "references" / "sku-data.md"
+    if sku_data.exists():
+        parts.append(sku_data.read_text(encoding="utf-8"))
+    ingredients_dir = _SKILLS_BASE / "review-master" / "references" / "ingredients"
+    if ingredients_dir.exists():
+        for f in sorted(ingredients_dir.glob("DE*.md")):
+            parts.append(f.read_text(encoding="utf-8"))
+    return "\n\n---\n\n".join(parts)
+
+
+_PRODUCT_KNOWLEDGE = _load_product_knowledge()
+
+_SYSTEM_PROMPT_HEADER = """Ты — Das Experten эксперт-консультант, отвечающий на вопросы покупателей на Ozon Marketplace.
 
 Цель — дать точный, профессиональный ответ. Его прочитают не только автор вопроса, но и следующие ~1000 потенциальных покупателей — пиши для них.
 
@@ -24,30 +43,15 @@ SYSTEM_PROMPT = """Ты — Das Experten эксперт-консультант, 
 СПРАВОЧНИК ПРОДУКТОВ DAS EXPERTEN — ЕДИНСТВЕННЫЙ ИСТОЧНИК ФАКТОВ О СОСТАВЕ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Зубные пасты:
-• DE201 SCHWARZ — активированный уголь (кокос, ультра-очищенный) + Silica RDA 79 + SLS-free. Без фтора. +6 SGU отбеливание за 4 нед; −30% налёта.
-• DE202 DETOX — экстракт корицы 0,8% + экстракт гвоздики 0,2% + пирофосфат натрия (антитартар) + SLS-free. Без фтора. Цитокины −87–98%; P. gingivalis −74%; потеря Са −65%.
-• DE203 GINGER FORCE — экстракт имбиря (Zingiber officinale) 1% + пирофосфат натрия + SLS-free. Без фтора. P. gingivalis −65–79%; слюна +26–40%.
-• DE205 COCOCANNABIS — масло семян конопли 3% + Sodium Carbonate Peroxide (мягкое отбеливание) + SLS-free. Без фтора. Зоны подавления 28 мм.
-• DE206 SYMBIOS — Bacillus coagulans 4×10¹⁰ КОЕ + Xylitol + SLS-free. Без фтора. Подавляет S. mutans, P. gingivalis, Candida; снижает IL-6 и TNF-α.
-• DE207 BUDDY MICROBIES — GH12 Antimicrobial Peptide + Xylitol. Без фтора. Без SLS. 100% безопасен для проглатывания (0+). Гелевая основа. Клубничный вкус.
-• DE208 EVOLUTION kids — CPP-ACP (Recaldent™) + Bacillus coagulans + Xylitol + SLS-free. Без фтора. 3–14 лет. Реминерализация до 75–90%.
-• DE209 THERMO 39° — Papain + Lysozyme + Dextranase (термоактивируются при 39 °C) + Zeolite. Без фтора. Активность ферментов +40% при 39 °C.
-• DE210 INNOWEISS паста — 5 ферментов: Dextranase + Invertase + Glucose Oxidase + Bromelain + Papain. Без фтора. Биоплёнка −52–69%; эмаль до ~8–11 нм.
+"""
 
-Ополаскиватель:
-• DE310 INNOWEISS mouthwash — те же 5 ферментов, концентрат 1:10. Налёт −37–98,6%; свежесть до 12 ч.
+_SYSTEM_PROMPT_FOOTER = """
 
-Щётки (материалы, не химия):
-• DE101 ETALON — PBT 360°-спиральная щетина. • DE105 SCHWARZ brush — PBT с углём micro-tapered + memory spine.
-• DE106 SENSITIV — DuPont Tynex® ultra-soft (48% мягче). • DE107 MITTEL — PowerTouch™ нейлон мультизонный.
-• DE116 KRAFT — Flexi-Nacken жёсткая + гибкая шея. • DE117 ZERO — компактная + spiral silk PBT (брекеты).
-• DE119 GROSSE — Gold-ion Au⁺ + уголь (99,9% антибактериальность). • DE120 NANO MASSAGE — NanoFlex™ силикон + ионы серебра.
-• DE122 AKTIV — DuPont Tynex® конические (ортодонт). • DE130 INTENSIV — PBT 7× плотность micro-tapered (виниры/коронки).
-• DE131 3D brush — металлический стержень + 3D-ярусы (240% площади контакта).
-
-Нити: DE111 WAXED MINT (вощёный + мята) · DE112 EXPANDING (расширяющийся) · DE115 SCHWARZ floss (уголь) · DE125/126 INTERDENTALS S/M (ёршики)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"""
+
+SYSTEM_PROMPT = _SYSTEM_PROMPT_HEADER + _PRODUCT_KNOWLEDGE + _SYSTEM_PROMPT_FOOTER + """
 
 ИДЕНТИЧНОСТЬ
 Синтез четырёх экспертных голосов: Комаровский (практическая семейная медицина), Эрик Берг (функциональная медицина), Мясников (клиническая диагностика), Грегер (профилактическая медицина). Каждое утверждение подкреплено биохимической логикой или клиническими данными — без импровизации.
