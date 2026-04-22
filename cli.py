@@ -59,6 +59,22 @@ def cmd_ping_seller(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ping_questions(_: argparse.Namespace) -> int:
+    with OzonSellerClient() as c:
+        page = SellerAPI(c).questions_list(status="UNANSWERED", limit=1)
+    total = page.get("total") or page.get("count") or "?"
+    has_next = page.get("has_next")
+    questions = page.get("questions") or []
+    print(f"questions API ok — unanswered: {total}, has_next: {has_next}")
+    if questions:
+        q = questions[0]
+        print("first question fields:", list(q.keys()))
+        print(json.dumps(q, indent=2, ensure_ascii=False))
+    else:
+        print("(no unanswered questions right now)")
+    return 0
+
+
 def cmd_sync_reviews(args: argparse.Namespace) -> int:
     seller_db.init_schema()
     with OzonSellerClient() as c:
@@ -266,6 +282,109 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
     return 0 if not errors else 1
 
 
+def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
+    """Stream UNANSWERED questions, draft answer via Claude, post to Ozon.
+
+    Default: 1 answer per run, so hourly cron = 1 answer per hour.
+    To clear a backlog, dispatch manually with a larger --max-answers.
+    """
+    from ozon_seller.question_answerer import draft_answer
+
+    max_answers = max(1, int(args.max_answers))
+    catalog = _load_catalog()
+
+    answered: list[dict] = []
+    errors: list[dict] = []
+
+    with OzonSellerClient() as c:
+        api = SellerAPI(c)
+
+        for question in api.questions_iter(status="UNANSWERED"):
+            if len(answered) >= max_answers:
+                break
+
+            question_id = str(
+                question.get("id") or question.get("question_id") or ""
+            ).strip()
+            if not question_id:
+                errors.append({"stage": "validate", "error": "question missing id"})
+                continue
+
+            text = (
+                question.get("question_text") or question.get("text") or ""
+            ).strip()
+            if not text:
+                errors.append({"question_id": question_id, "stage": "validate",
+                               "error": "empty question text, skipping"})
+                continue
+
+            sku = str(question.get("sku_id") or question.get("sku") or "")
+            if sku and sku not in catalog:
+                try:
+                    items = api.product_info_list([sku])
+                    new_rows = []
+                    for item in items:
+                        ozon_sku = str(item.get("sku") or item.get("id") or "")
+                        offer_id = str(item.get("offer_id") or "")
+                        if ozon_sku and offer_id:
+                            new_rows.append({"ozon_sku": ozon_sku, "offer_id": offer_id})
+                            name = catalog.get(offer_id)
+                            if name:
+                                catalog[ozon_sku] = name
+                    if new_rows:
+                        with seller_db.connect() as _conn:
+                            seller_db.upsert_product_skus(_conn, new_rows)
+                except Exception:
+                    pass
+            question = {**question, "product_name": _sku_label(catalog, sku)}
+
+            try:
+                answer = draft_answer(question)
+            except Exception as e:
+                errors.append({"question_id": question_id, "stage": "draft",
+                               "error": str(e)})
+                continue
+
+            answer_text = (answer.text or "").strip()
+            if not answer_text:
+                errors.append({"question_id": question_id, "stage": "draft",
+                               "error": "empty answer text"})
+                continue
+
+            try:
+                api.question_answer_create(
+                    question_id=question_id,
+                    answer_text=answer_text,
+                )
+                answered.append({
+                    "question_id": question_id,
+                    "chars": len(answer_text),
+                    "question": text,
+                    "answer": answer_text,
+                    "sku": sku,
+                    "product_name": question.get("product_name") or "",
+                    "created_at": question.get("created_at") or question.get("question_date") or "",
+                })
+            except Exception as e:
+                errors.append({"question_id": question_id, "stage": "post",
+                               "error": str(e)})
+
+    summary = {
+        "status": "ok" if not errors else "partial",
+        "max_answers": max_answers,
+        "answered": len(answered),
+        "errors": len(errors),
+    }
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    if errors:
+        print("errors:")
+        print(json.dumps(errors, indent=2, ensure_ascii=False))
+
+    _telegram_autoanswer(summary, errors=errors, answered=answered)
+
+    return 0 if not errors else 1
+
+
 def _tg_send(token: str, chat_id: str, text: str) -> None:
     import httpx
     httpx.post(
@@ -332,6 +451,61 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
             _tg_send(token, chat_id, msg)
         except Exception as e:
             print(f"(telegram Q/A send failed for {item.get('review_id')}: {e})",
+                  file=sys.stderr)
+
+
+def _telegram_autoanswer(summary: dict, errors: list[dict],
+                         answered: list[dict] | None = None) -> None:
+    import html
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return
+
+    status = summary.get("status")
+    flag = "✅" if status == "ok" else "⚠️"
+    answered_count = summary.get("answered", 0)
+    text = (
+        f"<b>{flag} Ozon Auto-Answer (вопросы)</b>\n\n"
+        f"Отвечено: <b>{answered_count}</b> из лимита {summary.get('max_answers')}\n"
+        f"Ошибок: <b>{summary.get('errors')}</b>"
+    )
+    if errors:
+        preview = errors[:3]
+        text += "\n\nПервые ошибки:\n" + "\n".join(
+            f"• {e.get('question_id', '?')} [{e.get('stage')}]: {e.get('error', '')[:100]}"
+            for e in preview
+        )
+
+    try:
+        _tg_send(token, chat_id, text)
+    except Exception as e:
+        print(f"(telegram notify failed: {e})", file=sys.stderr)
+
+    for item in (answered or []):
+        product_name = item.get("product_name") or str(item.get("sku") or "")
+        created = _format_review_date(item.get("created_at") or "")
+        header = "❓"
+        if product_name:
+            header += f" {html.escape(product_name)}"
+        if created:
+            header += f" · {html.escape(created)}"
+        question_text = html.escape((item.get("question") or "").strip())
+        answer_text = html.escape((item.get("answer") or "").strip())
+        if len(question_text) > 1500:
+            question_text = question_text[:1500] + "…"
+        if len(answer_text) > 1500:
+            answer_text = answer_text[:1500] + "…"
+        msg = (
+            f"{header}\n\n"
+            f"<b>Вопрос:</b>\n<i>{question_text or '(пустой)'}</i>\n\n"
+            f"<b>Ответ Das Experten:</b>\n{answer_text}"
+        )
+        try:
+            _tg_send(token, chat_id, msg)
+        except Exception as e:
+            print(f"(telegram Q/A send failed for {item.get('question_id')}: {e})",
                   file=sys.stderr)
 
 
@@ -603,6 +777,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
     sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
         .set_defaults(func=cmd_ping_seller)
+    sub.add_parser("ping-questions", help="Test questions API — print first unanswered question")\
+        .set_defaults(func=cmd_ping_questions)
     sub.add_parser("sync-campaigns", help="Fetch campaign list").set_defaults(func=cmd_sync_campaigns)
 
     sr = sub.add_parser("sync-reviews", help="Fetch reviews from Seller API into SQLite")
@@ -657,6 +833,17 @@ def build_parser() -> argparse.ArgumentParser:
              "Reviews with no text are marked PROCESSED and don't count.",
     )
     ar.set_defaults(func=cmd_auto_reply)
+
+    aq = sub.add_parser(
+        "auto-answer-questions",
+        help="END-TO-END: stream UNANSWERED questions, draft answer via Claude, post to Ozon",
+    )
+    aq.add_argument(
+        "--max-answers", type=int, default=1,
+        help="How many answers to post in this run (default: 1). "
+             "Increase to clear a backlog.",
+    )
+    aq.set_defaults(func=cmd_auto_answer_questions)
 
     tp = sub.add_parser(
         "telegram-ping",
