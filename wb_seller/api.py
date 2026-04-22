@@ -6,6 +6,10 @@ from .client import WBSellerClient
 ORDER_DIRS = ("dateAsc", "dateDesc")
 
 
+class WBAnswerRejected(Exception):
+    """Raised when WB returns 2xx but with `error: true` in the envelope."""
+
+
 class WBFeedbacksAPI:
     """Wildberries Feedbacks API (`feedbacks-api.wildberries.ru`).
 
@@ -107,6 +111,11 @@ class WBFeedbacksAPI:
         """Publish a new answer to a feedback. The reply becomes public on the
         product page after WB moderation (usually minutes).
 
+        WB v1 contract: `POST /api/v1/feedbacks/answer` with body `{id, text}`.
+        On success returns 204 No Content (empty body) OR a JSON envelope
+        `{"data":null, "error":false, "errorText":""}`. On business errors WB
+        returns 2xx with `error: true` — we surface that as an exception.
+
         `text` — до 5000 символов (WB не даёт строгого лимита в API, но
         модерация может отклонить слишком длинные простыни).
         """
@@ -117,10 +126,15 @@ class WBFeedbacksAPI:
             raise ValueError(
                 f"answer_create: text too long ({len(text)} chars, keep under 5000)"
             )
-        return self.c.post(
+        resp = self.c.post(
             "/api/v1/feedbacks/answer",
             {"id": str(feedback_id), "text": text},
         )
+        # Envelope with explicit error flag.
+        if isinstance(resp, dict) and resp.get("error") is True:
+            err = resp.get("errorText") or resp.get("additionalErrors") or "unknown"
+            raise WBAnswerRejected(f"WB rejected feedback {feedback_id}: {err}")
+        return resp
 
     def answer_edit(self, feedback_id: str, text: str) -> dict:
         """Edit an already-published answer. Only works while `answer.editable`
