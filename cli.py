@@ -808,18 +808,43 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
     from wb_seller.replier import draft_reply
 
     max_replies = max(1, int(args.max_replies))
+    # Hard cap on how many feedbacks we SCAN per run even if most are
+    # rating-only / can't-reply — protects us from infinite pagination.
+    max_inspect = max_replies * 100
     wb_db.init_schema()
+
+    print(f"[auto-reply-wb] start max_replies={max_replies} max_inspect={max_inspect}",
+          flush=True)
 
     replied: list[dict] = []
     rating_only_skipped: list[str] = []
     errors: list[dict] = []
+    inspected = 0
 
     with WBSellerClient() as c:
         api = WBFeedbacksAPI(c)
 
-        for feedback in api.feedbacks_iter(is_answered=False):
+        # Upfront sanity ping — if token is bad or WB is down, we fail here
+        # in seconds rather than hanging later.
+        try:
+            count = api.count_unanswered() or {}
+            data = count.get("data") or {}
+            total = data.get("countUnanswered", "?")
+            today = data.get("countUnansweredToday", "?")
+            print(f"[auto-reply-wb] count-unanswered ok: total={total} today={today}",
+                  flush=True)
+        except Exception as e:
+            print(f"[auto-reply-wb] count-unanswered FAILED: {e}", flush=True)
+            raise
+
+        for feedback in api.feedbacks_iter(is_answered=False, page_size=100):
             if len(replied) >= max_replies:
                 break
+            if inspected >= max_inspect:
+                print(f"[auto-reply-wb] reached max_inspect={max_inspect}, stopping",
+                      flush=True)
+                break
+            inspected += 1
 
             feedback_id = str(feedback.get("id") or "").strip()
             if not feedback_id:
@@ -829,55 +854,74 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
             text = (feedback.get("text") or "").strip()
             pros = (feedback.get("pros") or "").strip()
             cons = (feedback.get("cons") or "").strip()
+            rating = feedback.get("productValuation")
             # WB: treat feedback as "no meaningful text" only if all three
             # free-text fields are empty. Pros/cons often contain the real
             # content even when `text` itself is blank.
             if not text and not pros and not cons:
                 rating_only_skipped.append(feedback_id)
+                if inspected <= 5 or inspected % 50 == 0:
+                    print(f"[{inspected}] skip {feedback_id}: rating-only ({rating}★)",
+                          flush=True)
                 continue
+
+            prod = feedback.get("productDetails") or {}
+            product_name = prod.get("productName") or prod.get("supplierArticle") or "?"
+            content_len = len(text) + len(pros) + len(cons)
+            print(f"[{inspected}] feedback {feedback_id}: {rating}★ "
+                  f"«{product_name[:40]}» content={content_len} chars — drafting via Claude...",
+                  flush=True)
 
             try:
                 draft = draft_reply(feedback)
             except Exception as e:
+                print(f"  ✗ draft failed: {e}", flush=True)
                 errors.append({"feedback_id": feedback_id, "stage": "draft",
                                "error": str(e)})
                 continue
 
             draft_text = (draft.text or "").strip()
+            print(f"  draft ready: {len(draft_text)} chars, "
+                  f"in={draft.input_tokens} out={draft.output_tokens} "
+                  f"cache_read={draft.cache_read_input_tokens}",
+                  flush=True)
             if not draft_text:
                 errors.append({"feedback_id": feedback_id, "stage": "draft",
                                "error": "empty draft text"})
                 continue
 
+            print(f"  POST /feedbacks/answer for {feedback_id}...", flush=True)
             try:
                 api.answer_create(feedback_id=feedback_id, text=draft_text)
-                prod = feedback.get("productDetails") or {}
+                print(f"  ✓ posted", flush=True)
                 replied.append({
                     "feedback_id": feedback_id,
                     "chars": len(draft_text),
                     "question": _compose_wb_question(text, pros, cons),
                     "answer": draft_text,
-                    "rating": feedback.get("productValuation"),
+                    "rating": rating,
                     "author": (feedback.get("userName") or "").strip(),
                     "nm_id": prod.get("nmId"),
                     "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
                     "created_at": feedback.get("createdDate") or "",
                 })
             except Exception as e:
+                print(f"  ✗ POST failed: {e}", flush=True)
                 errors.append({"feedback_id": feedback_id, "stage": "post",
                                "error": str(e)})
 
     summary = {
         "status": "ok" if not errors else "partial",
         "max_replies": max_replies,
+        "inspected": inspected,
         "replied": len(replied),
         "rating_only_skipped": len(rating_only_skipped),
         "errors": len(errors),
     }
-    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    print(json.dumps(summary, indent=2, ensure_ascii=False), flush=True)
     if errors:
-        print("errors:")
-        print(json.dumps(errors, indent=2, ensure_ascii=False))
+        print("errors:", flush=True)
+        print(json.dumps(errors, indent=2, ensure_ascii=False), flush=True)
 
     _telegram_autoreply_wb(summary, errors=errors, replied=replied)
 

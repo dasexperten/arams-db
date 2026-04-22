@@ -106,6 +106,8 @@ def test_auto_reply_wb_posts_for_feedbacks_with_text_and_skips_rating_only(monke
     def handler(req: httpx.Request) -> httpx.Response:
         path = req.url.path
         calls.append(f"{req.method} {path}")
+        if path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 3, "countUnansweredToday": 0}})
         if path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             page = pages[0] if skip == 0 else []
@@ -148,6 +150,8 @@ def test_auto_reply_wb_treats_pros_cons_as_text(monkeypatch, capsys):
     fb = _feedback("f-proscons", text="", pros="Ментол бодрит", cons="Упаковка мятая")
 
     def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 1, "countUnansweredToday": 0}})
         if req.url.path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             return httpx.Response(200, json=_wb_response([fb] if skip == 0 else []))
@@ -178,6 +182,8 @@ def test_auto_reply_wb_stops_after_max_replies(monkeypatch, capsys):
     feedbacks = [_feedback(f"f-{i}", text=f"отзыв {i}") for i in range(5)]
 
     def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 1, "countUnansweredToday": 0}})
         if req.url.path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             return httpx.Response(200, json=_wb_response(feedbacks if skip == 0 else []))
@@ -213,6 +219,8 @@ def test_auto_reply_wb_default_posts_one_reply_only(monkeypatch, capsys):
     ]
 
     def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 1, "countUnansweredToday": 0}})
         if req.url.path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             return httpx.Response(200, json=_wb_response(feedbacks if skip == 0 else []))
@@ -244,6 +252,8 @@ def test_auto_reply_wb_telegram_sends_summary_plus_one_message_per_reply(monkeyp
     ]
 
     def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 1, "countUnansweredToday": 0}})
         if req.url.path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             return httpx.Response(200, json=_wb_response(feedbacks if skip == 0 else []))
@@ -296,6 +306,8 @@ def test_auto_reply_wb_continues_when_claude_fails_for_one_feedback(monkeypatch,
     ]
 
     def handler(req: httpx.Request) -> httpx.Response:
+        if req.url.path == "/api/v1/feedbacks/count-unanswered":
+            return httpx.Response(200, json={"data": {"countUnanswered": 1, "countUnansweredToday": 0}})
         if req.url.path == "/api/v1/feedbacks":
             skip = int(req.url.params.get("skip", "0"))
             return httpx.Response(200, json=_wb_response(feedbacks if skip == 0 else []))
