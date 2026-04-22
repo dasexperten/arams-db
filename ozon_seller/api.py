@@ -160,7 +160,7 @@ class SellerAPI:
             "/v1/question/answer/create",
             {
                 "question_id": str(question_id),
-                "answer_text": answer_text,
+                "text": answer_text,
             },
         )
 
