@@ -279,21 +279,28 @@ def test_auto_reply_wb_telegram_sends_summary_plus_one_message_per_reply(monkeyp
     rc = cli.cmd_auto_reply_wb(_args())
     assert rc == 0
 
+    # Invariant: pairs are sent inline (right after each POST), summary is
+    # sent LAST. This way a mid-run cancel still leaves a TG trail of what
+    # was actually published to WB.
     assert len(tg_messages) == 3
-    assert "Wildberries Auto-Reply" in tg_messages[0]
-    assert "Отвечено: <b>2</b>" in tg_messages[0]
-    assert "лимита 5" in tg_messages[0]
+    pair1, pair2, summary = tg_messages
 
-    qa_bodies = "\n".join(tg_messages[1:])
-    assert "Щётка слишком жёсткая" in qa_bodies
-    assert "Паста супер" in qa_bodies
-    assert "Ответ для f-1" in qa_bodies
-    assert "Ответ для f-2" in qa_bodies
-    assert "<b>Отзыв (WB):</b>" in tg_messages[1]
-    assert "<b>Ответ Das Experten:</b>" in tg_messages[1]
-    # MSK dates (+3h from UTC in fixture).
-    assert "2026-04-18 10:30 МСК" in tg_messages[1]
-    assert "2026-04-19 18:45 МСК" in tg_messages[2]
+    # Pair 1 — f-1 (the first feedback with text in iteration order).
+    assert "Щётка слишком жёсткая" in pair1
+    assert "Ответ для f-1" in pair1
+    assert "<b>Отзыв (WB):</b>" in pair1
+    assert "<b>Ответ Das Experten:</b>" in pair1
+    assert "2026-04-18 10:30 МСК" in pair1
+
+    # Pair 2 — f-2 (f-empty was skipped as rating-only, no pair sent).
+    assert "Паста супер" in pair2
+    assert "Ответ для f-2" in pair2
+    assert "2026-04-19 18:45 МСК" in pair2
+
+    # Final summary.
+    assert "Wildberries Auto-Reply" in summary
+    assert "Отвечено: <b>2</b>" in summary
+    assert "лимита 5" in summary
 
 
 def test_auto_reply_wb_continues_when_claude_fails_for_one_feedback(monkeypatch, capsys):

@@ -892,22 +892,25 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
                                "error": "empty draft text"})
                 continue
 
+            reply_item = {
+                "feedback_id": feedback_id,
+                "chars": len(draft_text),
+                "question": _compose_wb_question(text, pros, cons),
+                "answer": draft_text,
+                "rating": rating,
+                "author": (feedback.get("userName") or "").strip(),
+                "nm_id": prod.get("nmId"),
+                "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
+                "created_at": feedback.get("createdDate") or "",
+            }
+
             if dry_run:
                 print(f"  [DRY-RUN] skipping POST — would send "
                       f"{len(draft_text)} chars to feedback {feedback_id}",
                       flush=True)
-                replied.append({
-                    "feedback_id": feedback_id,
-                    "chars": len(draft_text),
-                    "question": _compose_wb_question(text, pros, cons),
-                    "answer": draft_text,
-                    "rating": rating,
-                    "author": (feedback.get("userName") or "").strip(),
-                    "nm_id": prod.get("nmId"),
-                    "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
-                    "created_at": feedback.get("createdDate") or "",
-                    "dry_run": True,
-                })
+                reply_item["dry_run"] = True
+                replied.append(reply_item)
+                _telegram_wb_reply_pair(reply_item)
                 continue
 
             print(f"  POST /feedbacks/answer for {feedback_id}...", flush=True)
@@ -920,17 +923,12 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
                     print("  WB response: " + _fmt_wb_response(post_result),
                           flush=True)
                 print(f"  ✓ posted", flush=True)
-                replied.append({
-                    "feedback_id": feedback_id,
-                    "chars": len(draft_text),
-                    "question": _compose_wb_question(text, pros, cons),
-                    "answer": draft_text,
-                    "rating": rating,
-                    "author": (feedback.get("userName") or "").strip(),
-                    "nm_id": prod.get("nmId"),
-                    "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
-                    "created_at": feedback.get("createdDate") or "",
-                })
+                replied.append(reply_item)
+                # Send to Telegram IMMEDIATELY, not at the end. Invariant: if
+                # you see a pair in TG, it's already published on WB. If the
+                # workflow gets killed mid-run, we still have a per-reply trail
+                # of exactly what went out.
+                _telegram_wb_reply_pair(reply_item)
             except Exception as e:
                 print(f"  ✗ POST failed: {e}", flush=True)
                 errors.append({"feedback_id": feedback_id, "stage": "post",
@@ -949,7 +947,7 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
         print("errors:", flush=True)
         print(json.dumps(errors, indent=2, ensure_ascii=False), flush=True)
 
-    _telegram_autoreply_wb(summary, errors=errors, replied=replied)
+    _telegram_autoreply_wb(summary, errors=errors)
 
     return 0 if not errors else 1
 
@@ -983,10 +981,50 @@ def _fmt_wb_response(resp: dict | None) -> str:
     return " ".join(pairs)
 
 
-def _telegram_autoreply_wb(summary: dict, errors: list[dict],
-                           replied: list[dict] | None = None) -> None:
+def _telegram_wb_reply_pair(item: dict) -> None:
+    """Send ONE pair (feedback + our reply) to Telegram. Called inline right
+    after each successful POST so that if the workflow dies mid-run, we still
+    have visibility on whatever was already published to WB."""
     import html
 
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return
+
+    stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
+    product_name = item.get("product_name") or ""
+    if not product_name and item.get("nm_id"):
+        product_name = f"nmId {item.get('nm_id')}"
+    created = _format_review_date(item.get("created_at") or "")
+    prefix = "[DRY-RUN] " if item.get("dry_run") else ""
+    header = prefix + stars
+    if product_name:
+        header += f" · {html.escape(product_name)}"
+    if created:
+        header += f" · {html.escape(created)}"
+    question = html.escape((item.get("question") or "").strip())
+    answer = html.escape((item.get("answer") or "").strip())
+    if len(question) > 1500:
+        question = question[:1500] + "…"
+    if len(answer) > 1500:
+        answer = answer[:1500] + "…"
+    msg = (
+        f"{header}\n\n"
+        f"<b>Отзыв (WB):</b>\n<i>{question or '(пустой)'}</i>\n\n"
+        f"<b>Ответ Das Experten:</b>\n{answer}"
+    )
+    try:
+        _tg_send(token, chat_id, msg)
+    except Exception as e:
+        print(f"(telegram Q/A send failed for {item.get('feedback_id')}: {e})",
+              file=sys.stderr)
+
+
+def _telegram_autoreply_wb(summary: dict, errors: list[dict]) -> None:
+    """Send the final summary message. Per-reply pairs are sent inline during
+    the loop via _telegram_wb_reply_pair, so this function no longer needs
+    the `replied` list."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
@@ -1012,34 +1050,6 @@ def _telegram_autoreply_wb(summary: dict, errors: list[dict],
         _tg_send(token, chat_id, text)
     except Exception as e:
         print(f"(telegram notify failed: {e})", file=sys.stderr)
-
-    for item in (replied or []):
-        stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
-        product_name = item.get("product_name") or ""
-        if not product_name and item.get("nm_id"):
-            product_name = f"nmId {item.get('nm_id')}"
-        created = _format_review_date(item.get("created_at") or "")
-        header = stars
-        if product_name:
-            header += f" · {html.escape(product_name)}"
-        if created:
-            header += f" · {html.escape(created)}"
-        question = html.escape((item.get("question") or "").strip())
-        answer = html.escape((item.get("answer") or "").strip())
-        if len(question) > 1500:
-            question = question[:1500] + "…"
-        if len(answer) > 1500:
-            answer = answer[:1500] + "…"
-        msg = (
-            f"{header}\n\n"
-            f"<b>Отзыв (WB):</b>\n<i>{question or '(пустой)'}</i>\n\n"
-            f"<b>Ответ Das Experten:</b>\n{answer}"
-        )
-        try:
-            _tg_send(token, chat_id, msg)
-        except Exception as e:
-            print(f"(telegram Q/A send failed for {item.get('feedback_id')}: {e})",
-                  file=sys.stderr)
 
 
 def cmd_ping(_: argparse.Namespace) -> int:
