@@ -430,6 +430,11 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 errors.append({"stage": "validate", "error": "question missing id"})
                 continue
 
+            with seller_db.connect() as conn:
+                if seller_db.is_question_answered(conn, question_id):
+                    print(f"  skip {question_id}: already answered", flush=True)
+                    continue
+
             text = (
                 question.get("question_text") or question.get("text") or ""
             ).strip()
@@ -459,6 +464,8 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                     answer_text=answer_text,
                     sku=sku,
                 )
+                with seller_db.connect() as conn:
+                    seller_db.mark_question_answered(conn, question_id)
                 answered.append({
                     "question_id": question_id,
                     "chars": len(answer_text),

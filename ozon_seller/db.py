@@ -46,6 +46,11 @@ CREATE TABLE IF NOT EXISTS product_skus (
     synced_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS answered_questions (
+    question_id TEXT PRIMARY KEY,
+    answered_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS seller_runs (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     job             TEXT NOT NULL,
@@ -162,6 +167,21 @@ def sku_to_offer_id(conn: sqlite3.Connection) -> dict[str, str]:
         return {r["ozon_sku"]: r["offer_id"] for r in rows}
     except Exception:
         return {}
+
+
+def is_question_answered(conn: sqlite3.Connection, question_id: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM answered_questions WHERE question_id = ?", (question_id,)
+    ).fetchone()
+    return row is not None
+
+
+def mark_question_answered(conn: sqlite3.Connection, question_id: str) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO answered_questions (question_id, answered_at) "
+        "VALUES (?, datetime('now'))",
+        (question_id,),
+    )
 
 
 def log_run(
