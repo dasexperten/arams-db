@@ -396,17 +396,35 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
     return 0 if not errors else 1
 
 
+_ANSWERED_Q_PATH = Path(__file__).parent / "ozon_seller" / "answered_questions.json"
+
+
+def _load_answered_q() -> set[str]:
+    try:
+        return set(json.loads(_ANSWERED_Q_PATH.read_text(encoding="utf-8")))
+    except Exception:
+        return set()
+
+
+def _save_answered_q(ids: set[str]) -> None:
+    _ANSWERED_Q_PATH.write_text(
+        json.dumps(sorted(ids), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
 def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
     """Stream UNPROCESSED questions, draft answer via Claude, post to Ozon.
 
-    Default: 1 answer per run, so every-30min cron = up to 48 per day.
-    To clear a backlog, dispatch manually with a larger --max-answers.
+    Default: 5 answers per run. To clear a backlog, dispatch manually with a larger --max-answers.
+    Answered question IDs are persisted in ozon_seller/answered_questions.json (committed to repo).
     """
     from ozon_seller.question_answerer import draft_answer
 
     max_answers = max(1, int(args.max_answers))
     max_inspect = max_answers * 50  # hard stop: never loop through more than this
     catalog = _load_catalog()
+    answered_ids = _load_answered_q()
 
     answered: list[dict] = []
     errors: list[dict] = []
@@ -430,10 +448,9 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                 errors.append({"stage": "validate", "error": "question missing id"})
                 continue
 
-            with seller_db.connect() as conn:
-                if seller_db.is_question_answered(conn, question_id):
-                    print(f"  skip {question_id}: already answered", flush=True)
-                    continue
+            if question_id in answered_ids:
+                print(f"  skip {question_id}: already answered", flush=True)
+                continue
 
             text = (
                 question.get("question_text") or question.get("text") or ""
@@ -464,8 +481,8 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
                     answer_text=answer_text,
                     sku=sku,
                 )
-                with seller_db.connect() as conn:
-                    seller_db.mark_question_answered(conn, question_id)
+                answered_ids.add(question_id)
+                _save_answered_q(answered_ids)
                 answered.append({
                     "question_id": question_id,
                     "chars": len(answer_text),
