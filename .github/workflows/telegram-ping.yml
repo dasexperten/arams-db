@@ -1,0 +1,48 @@
+name: Telegram Ping
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "Optional custom message (HTML allowed). Empty = preset."
+        required: false
+        default: ""
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      CUSTOM_TEXT: ${{ github.event.inputs.text }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify Telegram secrets present
+        run: |
+          missing=""
+          [ -z "$TELEGRAM_BOT_TOKEN" ] && missing="$missing TELEGRAM_BOT_TOKEN"
+          [ -z "$TELEGRAM_CHAT_ID" ] && missing="$missing TELEGRAM_CHAT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing Telegram secrets:$missing"
+            exit 1
+          fi
+
+      - name: Send test message
+        run: |
+          if [ -n "$CUSTOM_TEXT" ]; then
+            python cli.py telegram-ping --text "$CUSTOM_TEXT"
+          else
+            python cli.py telegram-ping
+          fi
