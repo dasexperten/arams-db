@@ -811,10 +811,12 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
     # Hard cap on how many feedbacks we SCAN per run even if most are
     # rating-only / can't-reply — protects us from infinite pagination.
     max_inspect = max_replies * 100
+    dry_run = bool(getattr(args, "dry_run", False))
     wb_db.init_schema()
 
-    print(f"[auto-reply-wb] start max_replies={max_replies} max_inspect={max_inspect}",
-          flush=True)
+    mode = "DRY-RUN" if dry_run else "LIVE"
+    print(f"[auto-reply-wb] start ({mode}) max_replies={max_replies} "
+          f"max_inspect={max_inspect}", flush=True)
 
     replied: list[dict] = []
     rating_only_skipped: list[str] = []
@@ -890,9 +892,33 @@ def cmd_auto_reply_wb(args: argparse.Namespace) -> int:
                                "error": "empty draft text"})
                 continue
 
+            if dry_run:
+                print(f"  [DRY-RUN] skipping POST — would send "
+                      f"{len(draft_text)} chars to feedback {feedback_id}",
+                      flush=True)
+                replied.append({
+                    "feedback_id": feedback_id,
+                    "chars": len(draft_text),
+                    "question": _compose_wb_question(text, pros, cons),
+                    "answer": draft_text,
+                    "rating": rating,
+                    "author": (feedback.get("userName") or "").strip(),
+                    "nm_id": prod.get("nmId"),
+                    "product_name": prod.get("productName") or prod.get("supplierArticle") or "",
+                    "created_at": feedback.get("createdDate") or "",
+                    "dry_run": True,
+                })
+                continue
+
             print(f"  POST /feedbacks/answer for {feedback_id}...", flush=True)
             try:
-                api.answer_create(feedback_id=feedback_id, text=draft_text)
+                post_result = api.answer_create(feedback_id=feedback_id, text=draft_text)
+                # Log shape of response for the first successful post so we can
+                # see exactly what WB returns — helps diagnose endpoint/contract
+                # issues. Formatted without curly braces to keep stdout parseable.
+                if len(replied) == 0:
+                    print("  WB response: " + _fmt_wb_response(post_result),
+                          flush=True)
                 print(f"  ✓ posted", flush=True)
                 replied.append({
                     "feedback_id": feedback_id,
@@ -938,6 +964,23 @@ def _compose_wb_question(text: str, pros: str, cons: str) -> str:
     if cons:
         parts.append(f"[Недостатки] {cons}")
     return "\n".join(parts)
+
+
+def _fmt_wb_response(resp: dict | None) -> str:
+    """Format WB response dict as key=value pairs for a single log line,
+    without `{}` so it doesn't collide with the summary-JSON that comes later.
+    """
+    if not resp:
+        return "<empty>"
+    pairs = []
+    for k, v in resp.items():
+        if isinstance(v, str):
+            pairs.append(f"{k}=\"{v[:80]}\"")
+        elif isinstance(v, (int, float, bool)) or v is None:
+            pairs.append(f"{k}={v}")
+        else:
+            pairs.append(f"{k}=<{type(v).__name__}>")
+    return " ".join(pairs)
 
 
 def _telegram_autoreply_wb(summary: dict, errors: list[dict],
@@ -1359,6 +1402,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-replies", type=int, default=1,
         help="How many replies to post in this run (default: 1). "
              "Rating-only (no text/pros/cons) feedbacks are skipped and don't count.",
+    )
+    arwb.add_argument(
+        "--dry-run", action="store_true",
+        help="Go through feedbacks and draft via Claude, but do NOT POST to WB. "
+             "Useful for verifying token + backlog + Claude output without side effects.",
     )
     arwb.set_defaults(func=cmd_auto_reply_wb)
 

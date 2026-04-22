@@ -90,7 +90,27 @@ class WBSellerClient:
         return self.request("GET", path, params=params).json()
 
     def post(self, path: str, json: dict | None = None) -> dict:
-        return self.request("POST", path, json=json or {}).json()
+        return self._parse(self.request("POST", path, json=json or {}))
 
     def patch(self, path: str, json: dict | None = None) -> dict:
-        return self.request("PATCH", path, json=json or {}).json()
+        return self._parse(self.request("PATCH", path, json=json or {}))
+
+    @staticmethod
+    def _parse(resp: httpx.Response) -> dict:
+        """Parse a non-GET response.
+
+        WB v1 endpoints are inconsistent: some return a full JSON envelope
+        (`{"data":..., "error":..., "errorText":...}`) on success, others
+        return `200/204` with an empty body. We translate both into a dict
+        the caller can inspect:
+          - success with body   → parsed JSON
+          - success without body → {"_status": <code>, "_empty": True}
+          - 2xx with non-JSON   → {"_status": <code>, "_raw": <first 500 chars>}
+        """
+        body = (resp.text or "").strip()
+        if not body:
+            return {"_status": resp.status_code, "_empty": True}
+        try:
+            return resp.json()
+        except Exception:
+            return {"_status": resp.status_code, "_raw": body[:500]}
