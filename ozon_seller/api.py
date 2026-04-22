@@ -5,7 +5,7 @@ from .client import OzonSellerClient
 
 REVIEW_STATUSES = ("UNPROCESSED", "PROCESSED", "ALL")
 COMMENT_SORT_DIRS = ("ASC", "DESC")
-QUESTION_STATUSES = ("UNANSWERED", "ANSWERED", "ALL")
+QUESTION_STATUSES = ("UNPROCESSED", "PROCESSED", "ALL")
 
 
 class SellerAPI:
@@ -109,7 +109,7 @@ class SellerAPI:
 
     def questions_list(
         self,
-        status: str = "UNANSWERED",
+        status: str = "UNPROCESSED",
         limit: int = 100,
         last_id: str = "",
         sort_dir: str = "DESC",
@@ -129,7 +129,7 @@ class SellerAPI:
 
     def questions_iter(
         self,
-        status: str = "UNANSWERED",
+        status: str = "UNPROCESSED",
         page_size: int = 100,
         sort_dir: str = "DESC",
     ) -> Iterator[dict]:

@@ -305,7 +305,7 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
     with OzonSellerClient() as c:
         api = SellerAPI(c)
 
-        for question in api.questions_iter(status="UNANSWERED"):
+        for question in api.questions_iter(status="UNPROCESSED"):
             if inspected == 0:
                 print(f"DEBUG first question keys: {list(question.keys())}", flush=True)
                 print(f"DEBUG first question: {json.dumps(question, ensure_ascii=False, default=str)[:500]}", flush=True)
