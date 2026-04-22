@@ -102,7 +102,10 @@ def _format_review(review: dict) -> str:
         parts.append(f"Автор: {author}")
     if rating is not None:
         parts.append(f"Рейтинг: {rating}/5")
-    if sku:
+    product_name = review.get("product_name") or ""
+    if product_name:
+        parts.append(f"Товар: {product_name}")
+    elif sku:
         parts.append(f"SKU: {sku}")
     if order_status:
         parts.append(f"Статус заказа: {order_status}")

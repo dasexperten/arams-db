@@ -1,8 +1,10 @@
 import argparse
+import csv
 import json
 import os
 import sys
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -11,6 +13,19 @@ from ozon_perf import analyze, dashboard, db, etl
 from ozon_seller import OzonSellerClient, SellerAPI
 from ozon_seller import db as seller_db
 from ozon_seller import etl as seller_etl
+
+
+def _load_catalog() -> dict[str, str]:
+    """Load offer_id -> name mapping from data/products.csv."""
+    path = Path(__file__).parent / "data" / "products.csv"
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8") as f:
+        return {row["offer_id"]: row["name"] for row in csv.DictReader(f) if row.get("offer_id")}
+
+
+def _sku_label(catalog: dict[str, str], sku: str) -> str:
+    return catalog.get(str(sku), str(sku)) if sku else ""
 
 
 def _parse_date(s: str) -> date:
@@ -141,6 +156,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
 
     max_replies = max(1, int(args.max_replies))
     seller_db.init_schema()
+    catalog = _load_catalog()
 
     replied: list[dict] = []
     no_text_marked: list[str] = []
@@ -167,6 +183,9 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     errors.append({"review_id": review_id, "stage": "mark_no_text",
                                    "error": str(e)})
                 continue
+
+            sku = str(review.get("sku") or "")
+            review = {**review, "product_name": _sku_label(catalog, sku)}
 
             try:
                 draft = draft_reply(review)
@@ -195,6 +214,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     "rating": review.get("rating"),
                     "author": review.get("author") or review.get("name") or "",
                     "sku": review.get("sku"),
+                    "product_name": review.get("product_name") or "",
                     "published_at": review.get("published_at") or "",
                 })
             except Exception as e:
@@ -261,11 +281,11 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
     for item in (replied or []):
         stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
         author = item.get("author") or "(без имени)"
-        sku = item.get("sku") or ""
+        product_name = item.get("product_name") or str(item.get("sku") or "")
         published = _format_review_date(item.get("published_at") or "")
         header = f"{stars} {html.escape(str(author))}"
-        if sku:
-            header += f" · SKU {html.escape(str(sku))}"
+        if product_name:
+            header += f" · {html.escape(product_name)}"
         if published:
             header += f" · {html.escape(published)}"
         question = html.escape((item.get("question") or "").strip())
