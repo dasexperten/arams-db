@@ -149,13 +149,9 @@ class SellerAPI:
             last_id = next_last_id
 
     def question_answer_create(self, question_id: str, answer_text: str) -> dict:
-        answer_text = (answer_text or "").strip()
+        answer_text = (answer_text or "").strip()[:1000]
         if not answer_text:
             raise ValueError("question_answer_create: answer_text must be non-empty")
-        if len(answer_text) > 1000:
-            raise ValueError(
-                f"question_answer_create: text too long ({len(answer_text)} chars, max 1000)"
-            )
         return self.c.post(
             "/v1/question/answer/create",
             {

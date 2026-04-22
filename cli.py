@@ -303,6 +303,9 @@ def cmd_auto_answer_questions(args: argparse.Namespace) -> int:
         api = SellerAPI(c)
 
         for question in api.questions_iter(status="UNANSWERED"):
+            if inspected == 0:
+                print(f"DEBUG first question keys: {list(question.keys())}", flush=True)
+                print(f"DEBUG first question: {json.dumps(question, ensure_ascii=False, default=str)[:500]}", flush=True)
             if len(answered) >= max_answers:
                 break
             if inspected >= max_inspect:
