@@ -8,8 +8,8 @@ on:
         required: false
         default: "1"
   schedule:
-    # 09:00-21:00 Moscow time (UTC+3) = 06:00-18:00 UTC, every hour
-    - cron: "0 6-18 * * *"
+    # every 5 minutes, 24/7 (GitHub minimum interval)
+    - cron: "*/5 * * * *"
 
 jobs:
   auto-reply:
