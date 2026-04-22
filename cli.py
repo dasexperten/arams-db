@@ -81,7 +81,7 @@ def _extract_author(obj: dict) -> str:
         or ""
     )
     if isinstance(raw, dict):
-        return " ".join(filter(None, [raw.get("first_name"), raw.get("last_name")])).strip()
+        return (raw.get("first_name") or "").strip()
     return str(raw).strip()
 
 

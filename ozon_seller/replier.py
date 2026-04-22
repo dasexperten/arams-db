@@ -125,7 +125,7 @@ def _extract_author(review: dict) -> str:
     """Ozon returns author as a nested dict {first_name, last_name} or as a plain string."""
     raw = review.get("author") or review.get("name") or ""
     if isinstance(raw, dict):
-        return " ".join(filter(None, [raw.get("first_name"), raw.get("last_name")])).strip()
+        return (raw.get("first_name") or "").strip()
     return str(raw).strip()
 
 
