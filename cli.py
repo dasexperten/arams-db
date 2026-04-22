@@ -72,6 +72,19 @@ def _sku_label(catalog: dict[str, str], sku: str) -> str:
     return catalog.get(str(sku), str(sku)) if sku else ""
 
 
+def _extract_author(obj: dict) -> str:
+    """Ozon returns author as a nested dict {first_name, last_name} or as a plain string."""
+    raw = (
+        obj.get("author_name")
+        or obj.get("author")
+        or obj.get("name")
+        or ""
+    )
+    if isinstance(raw, dict):
+        return " ".join(filter(None, [raw.get("first_name"), raw.get("last_name")])).strip()
+    return str(raw).strip()
+
+
 def _parse_date(s: str) -> date:
     return datetime.strptime(s, "%Y-%m-%d").date()
 
@@ -187,7 +200,7 @@ def cmd_list_recent(args: argparse.Namespace) -> int:
         rid = r.get("id", "")
         rating = r.get("rating", "?")
         sku = r.get("sku", "")
-        author = r.get("author") or r.get("name") or "(anonymous)"
+        author = _extract_author(r) or "(anonymous)"
         published = (r.get("published_at") or "")[:19]
         text = (r.get("text") or "").strip().replace("\n", " ")
         preview = text[:120] + ("…" if len(text) > 120 else "")
@@ -340,7 +353,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     "question": text,
                     "answer": draft_text,
                     "rating": review.get("rating"),
-                    "author": review.get("author") or review.get("name") or "",
+                    "author": _extract_author(review),
                     "sku": review.get("sku"),
                     "product_name": review.get("product_name") or "",
                     "published_at": review.get("published_at") or "",
@@ -500,7 +513,7 @@ def _telegram_autoreply(summary: dict, errors: list[dict],
 
     for item in (replied or []):
         stars = "⭐" * int(item.get("rating") or 0) if item.get("rating") else ""
-        author = item.get("author") or "(без имени)"
+        author = _extract_author(item) or "(без имени)"
         product_name = item.get("product_name") or str(item.get("sku") or "")
         published = _format_review_date(item.get("published_at") or "")
         header = f"{stars} {html.escape(str(author))}"

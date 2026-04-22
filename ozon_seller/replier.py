@@ -121,9 +121,17 @@ class Draft:
     model: str
 
 
+def _extract_author(review: dict) -> str:
+    """Ozon returns author as a nested dict {first_name, last_name} or as a plain string."""
+    raw = review.get("author") or review.get("name") or ""
+    if isinstance(raw, dict):
+        return " ".join(filter(None, [raw.get("first_name"), raw.get("last_name")])).strip()
+    return str(raw).strip()
+
+
 def _format_review(review: dict) -> str:
     parts = []
-    author = review.get("author") or review.get("name") or ""
+    author = _extract_author(review)
     rating = review.get("rating")
     sku = review.get("sku") or ""
     text = (review.get("text") or "").strip()

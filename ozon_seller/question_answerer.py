@@ -136,6 +136,19 @@ class Answer:
     model: str
 
 
+def _extract_author(obj: dict) -> str:
+    """Ozon returns author as a nested dict {first_name, last_name} or as a plain string."""
+    raw = (
+        obj.get("author_name")
+        or obj.get("author")
+        or obj.get("name")
+        or ""
+    )
+    if isinstance(raw, dict):
+        return " ".join(filter(None, [raw.get("first_name"), raw.get("last_name")])).strip()
+    return str(raw).strip()
+
+
 def _format_question(question: dict) -> str:
     parts = []
     # Ozon may return question_text or text; sku_id or sku
@@ -149,6 +162,7 @@ def _format_question(question: dict) -> str:
         or question.get("sku")
         or ""
     )
+    author = _extract_author(question)
     product_name = question.get("product_name") or ""
     created = question.get("created_at") or question.get("question_date") or ""
 
@@ -156,6 +170,8 @@ def _format_question(question: dict) -> str:
         parts.append(f"Товар: {product_name}")
     elif sku:
         parts.append(f"SKU: {sku}")
+    if author:
+        parts.append(f"Автор вопроса: {author}")
     if created:
         parts.append(f"Дата вопроса: {created[:19]}")
     parts.append("")
