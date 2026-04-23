@@ -609,12 +609,12 @@ async function loadStatus() {
       skuAgg[key].stock += (s.stock || 0);
       skuAgg[key].sales += (s.sales_30d || 0);
     });
-    // Aggregate K > 1.0 → red, 0.7–1.0 → neutral (white), < 0.7 → green
+    // Aggregate K: 0–0.7 → green, 0.7–2.0 → neutral (white), 2.0+ → red
     const skuColorMap = {};
     Object.entries(skuAgg).forEach(([sku, v]) => {
       if (v.sales === 0) return;
       const k = v.stock / v.sales;
-      if (k > 1.0)      skuColorMap[sku] = 'red';
+      if (k >= 2.0)     skuColorMap[sku] = 'red';
       else if (k < 0.7) skuColorMap[sku] = 'green';
       else              skuColorMap[sku] = 'neutral';
     });
