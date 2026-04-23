@@ -52,3 +52,20 @@ jobs:
 
       - name: Run auto-reply
         run: python cli.py auto-reply --max-replies "$MAX_REPLIES"
+
+      - name: Commit replied review IDs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/replied_reviews.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No new replied IDs to commit."
+          else
+            git commit -m "chore: update replied review IDs [skip ci]"
+            for i in 1 2 3 4 5; do
+              git pull --rebase origin "${GITHUB_REF_NAME}" && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep $((i * 2))
+            done
+          fi
+        continue-on-error: true

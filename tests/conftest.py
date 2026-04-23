@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -17,4 +18,6 @@ def _env(monkeypatch, tmp_path):
     monkeypatch.setenv("WB_FEEDBACKS_TOKEN", "wb-token")
     monkeypatch.setenv("WB_FEEDBACKS_BASE_URL", "https://feedbacks-api.wildberries.ru")
     monkeypatch.setenv("WB_SELLER_DB_PATH", str(tmp_path / "wb.db"))
+    import cli
+    monkeypatch.setattr(cli, "_REPLIED_PATH", tmp_path / "replied_reviews.json")
     yield

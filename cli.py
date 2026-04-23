@@ -18,6 +18,25 @@ from wb_seller import db as wb_db
 from wb_seller import etl as wb_etl
 
 
+_REPLIED_PATH = Path(__file__).parent / "data" / "replied_reviews.json"
+
+
+def _load_replied_ids() -> set[str]:
+    if _REPLIED_PATH.exists():
+        try:
+            return set(json.loads(_REPLIED_PATH.read_text(encoding="utf-8")))
+        except Exception:
+            return set()
+    return set()
+
+
+def _save_replied_ids(ids: set[str]) -> None:
+    _REPLIED_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _REPLIED_PATH.write_text(
+        json.dumps(sorted(ids), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
 def _load_catalog() -> dict[str, str]:
     """Build {ozon_sku: name} + {offer_id: name} from products.csv + Excel + DB cache."""
     import re
@@ -298,6 +317,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
     max_replies = max(1, int(args.max_replies))
     seller_db.init_schema()
     catalog = _load_catalog()
+    replied_ids = _load_replied_ids()
 
     replied: list[dict] = []
     no_text_marked: list[str] = []
@@ -315,9 +335,8 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 errors.append({"stage": "validate", "error": "review missing id"})
                 continue
 
-            with seller_db.connect() as _conn:
-                if seller_db.already_replied(_conn, review_id):
-                    continue
+            if review_id in replied_ids:
+                continue
 
             text = (review.get("text") or "").strip()
             if not text:
@@ -368,9 +387,12 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     text=draft_text,
                     mark_review_as_processed=True,
                 )
-                with seller_db.connect() as _conn:
-                    seller_db.upsert_reviews(_conn, [review])
-                    seller_db.mark_auto_replied(_conn, review_id)
+                try:
+                    api.change_status([review_id], "PROCESSED")
+                except Exception:
+                    pass
+                replied_ids.add(review_id)
+                _save_replied_ids(replied_ids)
                 replied.append({
                     "review_id": review_id,
                     "chars": len(draft_text),
