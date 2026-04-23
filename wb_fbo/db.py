@@ -5,6 +5,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
+from .clusters import region_to_cluster
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS fbo_stocks (
@@ -42,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_fbo_sales_article ON fbo_sales(supplier_article, 
 
 CREATE TABLE IF NOT EXISTS fbo_plans (
     sku         TEXT NOT NULL,
-    warehouse   TEXT NOT NULL,
+    cluster     TEXT NOT NULL,
     run_date    TEXT NOT NULL,
     stock       INTEGER,
     sales_30d   INTEGER,
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS fbo_plans (
     to_ship     INTEGER,
     flag        TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (sku, warehouse, run_date)
+    PRIMARY KEY (sku, cluster, run_date)
 );
 
 CREATE INDEX IF NOT EXISTS idx_fbo_plans_date ON fbo_plans(run_date);
@@ -153,11 +155,11 @@ def upsert_sales(conn: sqlite3.Connection, sales: list[dict]) -> int:
 
 def upsert_plans(conn: sqlite3.Connection, plans: list[dict], run_date: str) -> int:
     sql = """
-    INSERT INTO fbo_plans (sku, warehouse, run_date, stock, sales_30d, k, zone,
+    INSERT INTO fbo_plans (sku, cluster, run_date, stock, sales_30d, k, zone,
                            pack_size, to_ship, flag, created_at)
-    VALUES (:sku, :warehouse, :run_date, :stock, :sales_30d, :k, :zone,
+    VALUES (:sku, :cluster, :run_date, :stock, :sales_30d, :k, :zone,
             :pack_size, :to_ship, :flag, datetime('now'))
-    ON CONFLICT(sku, warehouse, run_date) DO UPDATE SET
+    ON CONFLICT(sku, cluster, run_date) DO UPDATE SET
         stock=excluded.stock, sales_30d=excluded.sales_30d, k=excluded.k,
         zone=excluded.zone, pack_size=excluded.pack_size, to_ship=excluded.to_ship,
         flag=excluded.flag, created_at=datetime('now')
@@ -169,10 +171,12 @@ def upsert_plans(conn: sqlite3.Connection, plans: list[dict], run_date: str) -> 
 
 
 def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> list[dict]:
-    """Aggregate stocks + sales into plan input rows.
+    """Aggregate stocks + sales into plan input rows grouped by (sku, cluster).
 
-    Uses latest run_date for stocks if not specified.
-    Filters out returns (is_return=1) from sales count.
+    Stocks are grouped using region_to_cluster(region, warehouse_name).
+    Sales are grouped using region_to_cluster(None, warehouse_name) since
+    the sales table has no region field.
+    Returns only (is_return=0) sales.
     """
     if run_date is None:
         row = conn.execute("SELECT MAX(run_date) FROM fbo_stocks").fetchone()
@@ -181,32 +185,38 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
+    # Stocks: aggregate raw rows by (vendor_code, warehouse) then group by cluster
     stocks: dict[tuple, int] = {}
     for row in conn.execute(
-        """SELECT vendor_code, warehouse_name, SUM(quantity) as qty
+        """SELECT vendor_code, warehouse_name, region, SUM(quantity) as qty
            FROM fbo_stocks WHERE run_date = ? AND vendor_code IS NOT NULL
-           GROUP BY vendor_code, warehouse_name""",
+           GROUP BY vendor_code, warehouse_name, region""",
         (run_date,),
     ):
-        stocks[(row[0], row[1])] = int(row[2] or 0)
+        cluster = region_to_cluster(row[2], row[1])
+        key = (row[0], cluster)
+        stocks[key] = stocks.get(key, 0) + int(row[3] or 0)
 
+    # Sales: no region field, use warehouse_name hint only
     sales: dict[tuple, int] = {}
     for row in conn.execute(
         """SELECT supplier_article, warehouse_name, COUNT(*) as cnt
            FROM fbo_sales WHERE is_return = 0 AND supplier_article IS NOT NULL
            GROUP BY supplier_article, warehouse_name"""
     ):
-        sales[(row[0], row[1])] = int(row[2] or 0)
+        cluster = region_to_cluster(None, row[1])
+        key = (row[0], cluster)
+        sales[key] = sales.get(key, 0) + int(row[2] or 0)
 
     all_keys = set(stocks.keys()) | set(sales.keys())
     return [
         {
             "sku": sku,
-            "warehouse": wh,
-            "stock": stocks.get((sku, wh), 0),
-            "sales_30d": sales.get((sku, wh), 0),
+            "cluster": cluster,
+            "stock": stocks.get((sku, cluster), 0),
+            "sales_30d": sales.get((sku, cluster), 0),
         }
-        for sku, wh in sorted(all_keys)
+        for sku, cluster in sorted(all_keys)
     ]
 
 

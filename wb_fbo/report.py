@@ -7,7 +7,7 @@ from openpyxl.utils import get_column_letter
 
 from .calc import ZONE_DEFICIT, ZONE_NORMAL, ZONE_OVERSTOCK
 
-HEADERS = ["Склад", "SKU", "Остаток", "Продажи", "К", "Зона", "Поставка", "Примечание"]
+HEADERS = ["Кластер", "SKU", "Остаток", "Продажи", "К", "Зона", "Поставка", "Примечание"]
 
 _ZONE_FILL = {
     ZONE_DEFICIT: PatternFill("solid", fgColor="FFE6E6"),
@@ -22,7 +22,7 @@ _COL_F = 6  # Зона
 def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
     """Generate Excel supply plan. Returns path to created file.
 
-    Column layout: A=Склад B=SKU C=Остаток D=Продажи E=К F=Зона G=Поставка H=Примечание
+    Column layout: A=Кластер B=SKU C=Остаток D=Продажи E=К F=Зона G=Поставка H=Примечание
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -32,18 +32,18 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
 
     def sort_key(p):
         is_oos = 1 if "🔴 Товар вышел" in (p.get("flag") or "") else 0
-        return (p.get("warehouse") or "", -is_oos, -(p.get("to_ship") or 0), p.get("sku") or "")
+        return (p.get("cluster") or "", -is_oos, -(p.get("to_ship") or 0), p.get("sku") or "")
 
     sorted_plans = sorted(plans, key=sort_key)
 
-    # Group by warehouse preserving sort order
-    warehouses: list[str] = []
+    # Group by cluster preserving sort order
+    clusters: list[str] = []
     groups: dict[str, list[dict]] = {}
     for p in sorted_plans:
-        wh = p.get("warehouse") or ""
+        wh = p.get("cluster") or ""
         if wh not in groups:
             groups[wh] = []
-            warehouses.append(wh)
+            clusters.append(wh)
         groups[wh].append(p)
 
     wb = Workbook()
@@ -67,7 +67,7 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
     for cell in ws[header_row]:
         cell.font = bold
 
-    for wh in warehouses:
+    for wh in clusters:
         items = groups[wh]
         total_sales = 0
         total_ship = 0
