@@ -95,9 +95,16 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             continue
 
         if sales == 0:
-            flags.append("Нет продаж за 30 дней")
             k = None
-            zone = ZONE_NORMAL
+            if stock == 0:
+                # Zero stock + zero sales: sales may be zero BECAUSE of stockout,
+                # not because of low demand. Treat as deficit, flag for manual check.
+                flags.append("🔴 Товар вышел")
+                flags.append("⚠️ Продажи=0 из-за дефицита — спрос неизвестен, нужна ручная проверка")
+                zone = ZONE_DEFICIT
+            else:
+                flags.append("Нет продаж за 30 дней")
+                zone = ZONE_NORMAL
         else:
             k = stock / sales
             zone = classify_zone(k)
