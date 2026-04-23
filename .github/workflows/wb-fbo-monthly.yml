@@ -50,11 +50,13 @@ jobs:
       - name: Run WB FBO monthly
         run: python cli.py wb-fbo-monthly
 
-      - name: Upload Excel artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wb-fbo-${{ github.run_id }}
-          path: output/wb_fbo_*.xlsx
-          retention-days: 90
-          if-no-files-found: warn
+      # Artifact upload temporarily disabled — delivery via Telegram only.
+      # Uncomment when needed:
+      # - name: Upload Excel artifact
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: wb-fbo-${{ github.run_id }}
+      #     path: output/wb_fbo_*.xlsx
+      #     retention-days: 90
+      #     if-no-files-found: warn
