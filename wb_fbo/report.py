@@ -25,7 +25,7 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
 
     Columns: A=Кластер B=SKU C=Остаток D=Продажи E=К F=Зона G=Поставка H=Примечание
     Sorted: clusters in fixed order (Центральный→Южный→Волга→Восточный→Северо-западный);
-    within cluster to_ship DESC, zeros last, then SKU alpha.
+    within cluster sales_30d DESC, zeros last, then SKU alpha.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -36,9 +36,9 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
     def sort_key(p):
         cl = p.get("cluster") or ""
         cl_pos = CLUSTER_ORDER.index(cl) if cl in CLUSTER_ORDER else len(CLUSTER_ORDER)
-        to_ship = p.get("to_ship") or 0
-        is_zero = 1 if to_ship == 0 else 0
-        return (cl_pos, is_zero, -to_ship, p.get("sku") or "")
+        sales = p.get("sales_30d") or 0
+        is_zero = 1 if sales == 0 else 0
+        return (cl_pos, is_zero, -sales, p.get("sku") or "")
 
     sorted_plans = sorted(plans, key=sort_key)
 
