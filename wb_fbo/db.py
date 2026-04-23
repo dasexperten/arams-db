@@ -203,7 +203,7 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
 
     for row in conn.execute(
         """SELECT vendor_code, nm_id, warehouse_name, region,
-                  SUM(quantity) as qty, SUM(in_way_to_client) as in_way
+                  SUM(quantity) as qty
            FROM fbo_stocks WHERE run_date = ?
            GROUP BY vendor_code, nm_id, warehouse_name""",
         (run_date,),
@@ -219,9 +219,10 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         key = (sku, cluster)
         if key not in cluster_data:
             cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
-        # qty = available for new orders; in_way = picked and being delivered.
-        # Both are our physical inventory at this warehouse — sum gives true stock level.
-        cluster_data[key]["stock"] += int(row[4] or 0) + int(row[5] or 0)
+        # quantity column stores quantityFull (total physical stock at WB warehouse,
+        # including reserved orders not yet shipped). inWayToClient is already OUT of
+        # the warehouse (handed to delivery), so we don't add it here.
+        cluster_data[key]["stock"] += int(row[4] or 0)
 
     for row in conn.execute(
         """SELECT supplier_article, oblast_okrug, warehouse_name, COUNT(*) as cnt
@@ -255,7 +256,10 @@ def _stock_row(s: dict, run_date: str) -> dict:
         "vendor_code": s.get("vendorCode") or s.get("supplierArticle"),
         "warehouse_name": s.get("warehouseName") or "",
         "region": s.get("region"),
-        "quantity": int(s.get("quantity") or 0),
+        # quantityFull = total physical stock at WB warehouse (available + reserved for
+        # existing orders not yet shipped). WB Analytics shows this number.
+        # quantity alone = 0 when all units are reserved, causing false OOS readings.
+        "quantity": int(s.get("quantityFull") or s.get("quantity") or 0),
         "in_way_to_client": int(s.get("inWayToClient") or 0),
         "in_way_from_client": int(s.get("inWayFromClient") or 0),
         "raw_payload": json.dumps(s, ensure_ascii=False),
