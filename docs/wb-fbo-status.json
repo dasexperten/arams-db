@@ -1,6 +1,6 @@
 {
   "run_date": "2026-04-23",
-  "generated_at": "2026-04-23T23:00:52Z",
+  "generated_at": "2026-04-23T23:24:42Z",
   "stocks_rows": 734,
   "sales_rows": 8231,
   "total_skus": 288,
@@ -18,31 +18,31 @@
       "deficit": 1
     },
     "Волга": {
-      "to_ship": 1944,
+      "to_ship": 4140,
       "sku_count": 50,
       "oos": 17,
       "deficit": 30
     },
     "Восточный": {
-      "to_ship": 1224,
+      "to_ship": 2628,
       "sku_count": 52,
       "oos": 3,
       "deficit": 14
     },
     "Центральный": {
-      "to_ship": 432,
+      "to_ship": 1980,
       "sku_count": 51,
       "oos": 3,
       "deficit": 11
     },
     "Южный": {
-      "to_ship": 1152,
+      "to_ship": 1944,
       "sku_count": 46,
       "oos": 10,
       "deficit": 14
     },
     "Северо-западный": {
-      "to_ship": 2088,
+      "to_ship": 4212,
       "sku_count": 40,
       "oos": 33,
       "deficit": 37
@@ -2929,17 +2929,5 @@
       "to_ship": 0,
       "flag": "⚠️ Unknown pack для SKU DE310"
     }
-  ],
-  "total": 288,
-  "normal": 95,
-  "overstock": 86,
-  "oos": 67,
-  "cluster_ship": {
-    "UNKNOWN": 0,
-    "Волга": 4140,
-    "Восточный": 2628,
-    "Центральный": 1980,
-    "Южный": 1944,
-    "Северо-западный": 4212
-  }
+  ]
 }
