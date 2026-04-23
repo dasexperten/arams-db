@@ -1,12 +1,12 @@
 {
   "run_date": "2026-04-23",
-  "generated_at": "2026-04-23T22:23:13Z",
+  "generated_at": "2026-04-23T23:00:52Z",
   "stocks_rows": 734,
   "sales_rows": 8231,
   "total_skus": 288,
   "to_ship_count": 39,
   "to_ship_units": 6840,
-  "oos_count": 66,
+  "oos_count": 67,
   "overstock_count": 86,
   "unknown_pack": 166,
   "exit_code": 0,
@@ -14,8 +14,8 @@
     "UNKNOWN": {
       "to_ship": 0,
       "sku_count": 49,
-      "oos": 0,
-      "deficit": 0
+      "oos": 1,
+      "deficit": 1
     },
     "Волга": {
       "to_ship": 1944,
@@ -2695,9 +2695,9 @@
       "stock": 0,
       "sales_30d": 0,
       "k": null,
-      "zone": "NORMAL",
+      "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE208AA"
+      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — спрос неизвестен, нужна ручная проверка; ⚠️ Unknown pack для SKU DE208AA"
     },
     {
       "sku": "DE208AA",
