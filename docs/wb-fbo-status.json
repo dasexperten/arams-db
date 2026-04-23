@@ -4,11 +4,11 @@
   "stocks_rows": 734,
   "sales_rows": 8231,
   "total_skus": 288,
-  "to_ship_count": 39,
-  "to_ship_units": 6840,
+  "to_ship_count": 93,
+  "to_ship_units": 14904,
   "oos_count": 67,
   "overstock_count": 86,
-  "unknown_pack": 166,
+  "unknown_pack": 36,
   "exit_code": 0,
   "clusters": {
     "UNKNOWN": {
@@ -107,7 +107,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE105AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE105AAAA",
@@ -117,7 +117,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE105AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE105AAAA",
@@ -126,8 +126,8 @@
       "sales_30d": 23,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE105AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE105AAAA",
@@ -137,7 +137,7 @@
       "k": 7.79,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE105AAAA"
+      "flag": ""
     },
     {
       "sku": "DE105AAAA",
@@ -146,8 +146,8 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE105AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE105AAAA",
@@ -157,7 +157,7 @@
       "k": 2.26,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE105AAAA"
+      "flag": ""
     },
     {
       "sku": "DE105AAAA",
@@ -167,7 +167,7 @@
       "k": 15.44,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE105AAAA"
+      "flag": ""
     },
     {
       "sku": "DE105DE105",
@@ -177,7 +177,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE105DE105"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE106",
@@ -247,7 +247,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE106AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE106AAAA",
@@ -257,7 +257,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE106AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE106AAAA",
@@ -266,8 +266,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE106AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE106AAAA",
@@ -276,8 +276,8 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE106AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE106AAAA",
@@ -287,7 +287,7 @@
       "k": 9.62,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE106AAAA"
+      "flag": ""
     },
     {
       "sku": "DE106AAAA",
@@ -297,7 +297,7 @@
       "k": 24.2,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE106AAAA"
+      "flag": ""
     },
     {
       "sku": "DE107",
@@ -347,7 +347,7 @@
       "k": 19.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE107AAAA"
+      "flag": ""
     },
     {
       "sku": "DE107AAAA",
@@ -357,7 +357,7 @@
       "k": 5.21,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE107AAAA"
+      "flag": ""
     },
     {
       "sku": "DE107AAAA",
@@ -367,7 +367,7 @@
       "k": 9.2,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE107AAAA"
+      "flag": ""
     },
     {
       "sku": "DE107AAAA",
@@ -376,8 +376,8 @@
       "sales_30d": 23,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE107AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE107AAAA",
@@ -387,7 +387,7 @@
       "k": 5.34,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE107AAAA"
+      "flag": ""
     },
     {
       "sku": "DE107AAAA",
@@ -397,7 +397,7 @@
       "k": 26.69,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE107AAAA"
+      "flag": ""
     },
     {
       "sku": "DE108",
@@ -577,7 +577,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE110AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE110AAAA",
@@ -586,8 +586,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE110AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE110AAAA",
@@ -597,7 +597,7 @@
       "k": 80.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE110AAAA"
+      "flag": ""
     },
     {
       "sku": "DE110AAAA",
@@ -606,8 +606,8 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE110AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE110AAAA",
@@ -617,7 +617,7 @@
       "k": 45.9,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE110AAAA"
+      "flag": ""
     },
     {
       "sku": "DE110AAAA",
@@ -627,7 +627,7 @@
       "k": 135.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE110AAAA"
+      "flag": ""
     },
     {
       "sku": "DE111",
@@ -927,7 +927,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE116AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE116AA",
@@ -937,7 +937,7 @@
       "k": 7.93,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE116AA"
+      "flag": ""
     },
     {
       "sku": "DE116AA",
@@ -946,8 +946,8 @@
       "sales_30d": 22,
       "k": 0.05,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE116AA"
+      "to_ship": 144,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE116AA",
@@ -956,8 +956,8 @@
       "sales_30d": 16,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE116AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE116AA",
@@ -967,7 +967,7 @@
       "k": 12.05,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE116AA"
+      "flag": ""
     },
     {
       "sku": "DE116AA",
@@ -976,8 +976,8 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE116AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE116AAAA",
@@ -987,7 +987,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE116AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE116AAAA",
@@ -996,8 +996,8 @@
       "sales_30d": 46,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE116AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE116AAAA",
@@ -1007,7 +1007,7 @@
       "k": 2.74,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE116AAAA"
+      "flag": ""
     },
     {
       "sku": "DE116AAAA",
@@ -1016,8 +1016,8 @@
       "sales_30d": 20,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE116AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE116AAAA",
@@ -1027,7 +1027,7 @@
       "k": 0.86,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE116AAAA"
+      "flag": ""
     },
     {
       "sku": "DE116AAAA",
@@ -1037,7 +1037,7 @@
       "k": 21.08,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE116AAAA"
+      "flag": ""
     },
     {
       "sku": "DE118",
@@ -1107,7 +1107,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE118AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE118AAAA",
@@ -1116,8 +1116,8 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE118AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE118AAAA",
@@ -1127,7 +1127,7 @@
       "k": 22.09,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE118AAAA"
+      "flag": ""
     },
     {
       "sku": "DE118AAAA",
@@ -1136,8 +1136,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE118AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE118AAAA",
@@ -1147,7 +1147,7 @@
       "k": 33.94,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE118AAAA"
+      "flag": ""
     },
     {
       "sku": "DE118AAAA",
@@ -1157,7 +1157,7 @@
       "k": 44.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE118AAAA"
+      "flag": ""
     },
     {
       "sku": "DE118DE118-светло-персиковый",
@@ -1167,7 +1167,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE118DE118-светло-персиковый"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE119",
@@ -1207,7 +1207,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE119AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE119AA",
@@ -1216,8 +1216,8 @@
       "sales_30d": 39,
       "k": 0.03,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE119AA"
+      "to_ship": 144,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE119AA",
@@ -1227,7 +1227,7 @@
       "k": 4.45,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE119AA"
+      "flag": ""
     },
     {
       "sku": "DE119AA",
@@ -1236,8 +1236,8 @@
       "sales_30d": 35,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE119AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE119AA",
@@ -1246,8 +1246,8 @@
       "sales_30d": 125,
       "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE119AA"
+      "to_ship": 288,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE119AA",
@@ -1257,7 +1257,7 @@
       "k": 0.89,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE119AA"
+      "flag": ""
     },
     {
       "sku": "DE120",
@@ -1306,8 +1306,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE120AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE120AA",
@@ -1317,7 +1317,7 @@
       "k": 1.0,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE120AA"
+      "flag": ""
     },
     {
       "sku": "DE120AA",
@@ -1326,8 +1326,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE120AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE120AA",
@@ -1336,8 +1336,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE120AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE120AAAA",
@@ -1347,7 +1347,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE120AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE120AAAA",
@@ -1356,8 +1356,8 @@
       "sales_30d": 88,
       "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE120AAAA"
+      "to_ship": 144,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE120AAAA",
@@ -1366,8 +1366,8 @@
       "sales_30d": 146,
       "k": 0.01,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE120AAAA"
+      "to_ship": 288,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE120AAAA",
@@ -1376,8 +1376,8 @@
       "sales_30d": 41,
       "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE120AAAA"
+      "to_ship": 144,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE120AAAA",
@@ -1386,8 +1386,8 @@
       "sales_30d": 212,
       "k": 0.39,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE120AAAA"
+      "to_ship": 288,
+      "flag": ""
     },
     {
       "sku": "DE120AAAA",
@@ -1397,7 +1397,7 @@
       "k": 3.34,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE120AAAA"
+      "flag": ""
     },
     {
       "sku": "DE121AAAA",
@@ -1407,7 +1407,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE121AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE121AAAA",
@@ -1416,8 +1416,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE121AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE121AAAA",
@@ -1427,7 +1427,7 @@
       "k": 135.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE121AAAA"
+      "flag": ""
     },
     {
       "sku": "DE121AAAA",
@@ -1437,7 +1437,7 @@
       "k": 307.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE121AAAA"
+      "flag": ""
     },
     {
       "sku": "DE121AAAA",
@@ -1447,7 +1447,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE121AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE122AAAA",
@@ -1457,7 +1457,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE122AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE122AAAA",
@@ -1466,8 +1466,8 @@
       "sales_30d": 7,
       "k": 0.14,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE122AAAA"
+      "to_ship": 144,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE122AAAA",
@@ -1477,7 +1477,7 @@
       "k": 21.08,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE122AAAA"
+      "flag": ""
     },
     {
       "sku": "DE122AAAA",
@@ -1486,8 +1486,8 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE122AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE122AAAA",
@@ -1497,7 +1497,7 @@
       "k": 14.21,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE122AAAA"
+      "flag": ""
     },
     {
       "sku": "DE122AAAA",
@@ -1507,7 +1507,7 @@
       "k": 44.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE122AAAA"
+      "flag": ""
     },
     {
       "sku": "DE123",
@@ -1577,7 +1577,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE123AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE123AA",
@@ -1587,7 +1587,7 @@
       "k": 110.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE123AA"
+      "flag": ""
     },
     {
       "sku": "DE123AA",
@@ -1596,8 +1596,8 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE123AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE123AA",
@@ -1606,8 +1606,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE123AA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE123AA",
@@ -1617,7 +1617,7 @@
       "k": 378.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE123AA"
+      "flag": ""
     },
     {
       "sku": "DE123AA",
@@ -1627,7 +1627,7 @@
       "k": 199.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE123AA"
+      "flag": ""
     },
     {
       "sku": "DE123AAAA",
@@ -1637,7 +1637,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE123AAAA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE123AAAA",
@@ -1646,8 +1646,8 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE123AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE123AAAA",
@@ -1656,8 +1656,8 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE123AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE123AAAA",
@@ -1666,8 +1666,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE123AAAA"
+      "to_ship": 144,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE123AAAA",
@@ -1677,7 +1677,7 @@
       "k": 110.92,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE123AAAA"
+      "flag": ""
     },
     {
       "sku": "DE123AAAA",
@@ -1687,7 +1687,7 @@
       "k": 2.41,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE123AAAA"
+      "flag": ""
     },
     {
       "sku": "DE124DE124",
@@ -1697,7 +1697,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE124DE124"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE124DE124",
@@ -1707,7 +1707,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE124DE124"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE124DE124",
@@ -1717,7 +1717,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE124DE124"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE125",
@@ -1967,7 +1967,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE201AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE201AA",
@@ -1976,8 +1976,8 @@
       "sales_30d": 38,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE201AA"
+      "to_ship": 72,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE201AA",
@@ -1987,7 +1987,7 @@
       "k": 1.85,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE201AA"
+      "flag": ""
     },
     {
       "sku": "DE201AA",
@@ -1996,8 +1996,8 @@
       "sales_30d": 37,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE201AA"
+      "to_ship": 72,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE201AA",
@@ -2006,8 +2006,8 @@
       "sales_30d": 150,
       "k": 0.67,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE201AA"
+      "to_ship": 144,
+      "flag": ""
     },
     {
       "sku": "DE201AA",
@@ -2017,7 +2017,7 @@
       "k": 10.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE201AA"
+      "flag": ""
     },
     {
       "sku": "DE202",
@@ -2087,7 +2087,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE202AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE202AA",
@@ -2096,8 +2096,8 @@
       "sales_30d": 174,
       "k": 0.03,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE202AA"
+      "to_ship": 288,
+      "flag": ""
     },
     {
       "sku": "DE202AA",
@@ -2106,8 +2106,8 @@
       "sales_30d": 353,
       "k": 0.01,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE202AA"
+      "to_ship": 540,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE202AA",
@@ -2116,8 +2116,8 @@
       "sales_30d": 104,
       "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE202AA"
+      "to_ship": 180,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE202AA",
@@ -2126,8 +2126,8 @@
       "sales_30d": 526,
       "k": 0.74,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE202AA"
+      "to_ship": 432,
+      "flag": ""
     },
     {
       "sku": "DE202AA",
@@ -2136,8 +2136,8 @@
       "sales_30d": 272,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE202AA"
+      "to_ship": 432,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE203",
@@ -2207,7 +2207,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE203AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE203AA",
@@ -2216,8 +2216,8 @@
       "sales_30d": 47,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE203AA"
+      "to_ship": 72,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE203AA",
@@ -2227,7 +2227,7 @@
       "k": 9.82,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE203AA"
+      "flag": ""
     },
     {
       "sku": "DE203AA",
@@ -2236,8 +2236,8 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE203AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE203AA",
@@ -2247,7 +2247,7 @@
       "k": 5.12,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE203AA"
+      "flag": ""
     },
     {
       "sku": "DE203AA",
@@ -2257,7 +2257,7 @@
       "k": 6.32,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE203AA"
+      "flag": ""
     },
     {
       "sku": "DE204",
@@ -2277,7 +2277,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE204DE204"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE205",
@@ -2337,7 +2337,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE205AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE205AA",
@@ -2347,7 +2347,7 @@
       "k": 1.15,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE205AA"
+      "flag": ""
     },
     {
       "sku": "DE205AA",
@@ -2357,7 +2357,7 @@
       "k": 2.84,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE205AA"
+      "flag": ""
     },
     {
       "sku": "DE205AA",
@@ -2366,8 +2366,8 @@
       "sales_30d": 28,
       "k": 0.04,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE205AA"
+      "to_ship": 72,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE205AA",
@@ -2376,8 +2376,8 @@
       "sales_30d": 110,
       "k": 0.04,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE205AA"
+      "to_ship": 180,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE205AA",
@@ -2387,7 +2387,7 @@
       "k": 4.38,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE205AA"
+      "flag": ""
     },
     {
       "sku": "DE206",
@@ -2457,7 +2457,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE206AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE206AA",
@@ -2466,8 +2466,8 @@
       "sales_30d": 54,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE206AA"
+      "to_ship": 108,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE206AA",
@@ -2477,7 +2477,7 @@
       "k": 4.21,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE206AA"
+      "flag": ""
     },
     {
       "sku": "DE206AA",
@@ -2486,8 +2486,8 @@
       "sales_30d": 59,
       "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE206AA"
+      "to_ship": 108,
+      "flag": "⚠️ Возможен дефицит — проверь вручную"
     },
     {
       "sku": "DE206AA",
@@ -2497,7 +2497,7 @@
       "k": 2.51,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE206AA"
+      "flag": ""
     },
     {
       "sku": "DE206AA",
@@ -2507,7 +2507,7 @@
       "k": 5.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE206AA"
+      "flag": ""
     },
     {
       "sku": "DE207",
@@ -2577,7 +2577,7 @@
       "k": null,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "Нет продаж за 30 дней; ⚠️ Unknown pack для SKU DE207AA"
+      "flag": "Нет продаж за 30 дней"
     },
     {
       "sku": "DE207AA",
@@ -2586,8 +2586,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE207AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE207AA",
@@ -2597,7 +2597,7 @@
       "k": 1.64,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE207AA"
+      "flag": ""
     },
     {
       "sku": "DE207AA",
@@ -2606,8 +2606,8 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE207AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE207AA",
@@ -2616,8 +2616,8 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE207AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE207AA",
@@ -2626,8 +2626,8 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE207AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE208",
@@ -2697,7 +2697,7 @@
       "k": null,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — спрос неизвестен, нужна ручная проверка; ⚠️ Unknown pack для SKU DE208AA"
+      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — спрос неизвестен, нужна ручная проверка"
     },
     {
       "sku": "DE208AA",
@@ -2706,8 +2706,8 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE208AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE208AA",
@@ -2717,7 +2717,7 @@
       "k": 3.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE208AA"
+      "flag": ""
     },
     {
       "sku": "DE208AA",
@@ -2726,8 +2726,8 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE208AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE208AA",
@@ -2736,8 +2736,8 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE208AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE208AA",
@@ -2746,8 +2746,8 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE208AA"
+      "to_ship": 36,
+      "flag": "🔴 Товар вышел"
     },
     {
       "sku": "DE209",
@@ -2929,5 +2929,17 @@
       "to_ship": 0,
       "flag": "⚠️ Unknown pack для SKU DE310"
     }
-  ]
+  ],
+  "total": 288,
+  "normal": 95,
+  "overstock": 86,
+  "oos": 67,
+  "cluster_ship": {
+    "UNKNOWN": 0,
+    "Волга": 4140,
+    "Восточный": 2628,
+    "Центральный": 1980,
+    "Южный": 1944,
+    "Северо-западный": 4212
+  }
 }
