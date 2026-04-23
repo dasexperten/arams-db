@@ -628,7 +628,7 @@ async function loadStatus() {
               <td style="color:var(--ink-60)">${fmt(s.stock)}</td>
               <td style="color:var(--ink-60)">${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
-              <td class="sku-ship">${fmt(s.to_ship)}</td>
+              <td class="sku-ship">${fmt(s.to_ship)}${s.stock === 0 ? ' <span title="Остаток 0 — спрос может быть занижен из-за дефицита" style="color:var(--warn)">⚠</span>' : ''}</td>
             </tr>`);
           });
       });
