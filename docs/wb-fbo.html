@@ -609,13 +609,14 @@ async function loadStatus() {
       skuAgg[key].stock += (s.stock || 0);
       skuAgg[key].sales += (s.sales_30d || 0);
     });
-    // Aggregate K > 1.0 → red (overstock globally), < 0.7 → green (deficit globally)
+    // Aggregate K > 1.0 → red, 0.7–1.0 → neutral (white), < 0.7 → green
     const skuColorMap = {};
     Object.entries(skuAgg).forEach(([sku, v]) => {
       if (v.sales === 0) return;
       const k = v.stock / v.sales;
       if (k > 1.0)      skuColorMap[sku] = 'red';
       else if (k < 0.7) skuColorMap[sku] = 'green';
+      else              skuColorMap[sku] = 'neutral';
     });
 
     // Supply plan table — only to_ship > 0
@@ -646,7 +647,7 @@ async function loadStatus() {
           })
           .forEach(s => {
             const skuColor = skuColorMap[s.sku || ''];
-            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : skuColor === 'neutral' ? '' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
             const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
             const aggK   = skuAgg[s.sku || ''];
             const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
