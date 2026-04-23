@@ -5,23 +5,23 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from .clusters import warehouse_to_cluster
+from .clusters import warehouse_to_cluster, oblast_okrug_to_cluster
 
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS fbo_stocks (
     nm_id           INTEGER NOT NULL,
-    warehouse_id    INTEGER NOT NULL,
+    warehouse_name  TEXT NOT NULL DEFAULT '',
     run_date        TEXT NOT NULL,
     vendor_code     TEXT,
-    warehouse_name  TEXT,
+    warehouse_id    INTEGER,
     region          TEXT,
     quantity        INTEGER DEFAULT 0,
     in_way_to_client    INTEGER DEFAULT 0,
     in_way_from_client  INTEGER DEFAULT 0,
     raw_payload     TEXT,
     synced_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (nm_id, warehouse_id, run_date)
+    PRIMARY KEY (nm_id, warehouse_name, run_date)
 );
 
 CREATE INDEX IF NOT EXISTS idx_fbo_stocks_date ON fbo_stocks(run_date);
@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS fbo_sales (
     supplier_article    TEXT,
     nm_id               INTEGER,
     warehouse_name      TEXT,
+    oblast_okrug        TEXT,
     date                TEXT,
     last_change_date    TEXT,
     for_pay             REAL,
@@ -40,11 +41,10 @@ CREATE TABLE IF NOT EXISTS fbo_sales (
     synced_at           TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_fbo_sales_article ON fbo_sales(supplier_article, warehouse_name, is_return);
+CREATE INDEX IF NOT EXISTS idx_fbo_sales_article ON fbo_sales(supplier_article, oblast_okrug, is_return);
 
 CREATE TABLE IF NOT EXISTS fbo_plans (
     sku         TEXT NOT NULL,
-    warehouse   TEXT NOT NULL,
     cluster     TEXT NOT NULL,
     run_date    TEXT NOT NULL,
     stock       INTEGER,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS fbo_plans (
     to_ship     INTEGER,
     flag        TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (sku, warehouse, run_date)
+    PRIMARY KEY (sku, cluster, run_date)
 );
 
 CREATE INDEX IF NOT EXISTS idx_fbo_plans_date ON fbo_plans(run_date);
@@ -113,9 +113,9 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
         :nm_id, :warehouse_id, :run_date, :vendor_code, :warehouse_name, :region,
         :quantity, :in_way_to_client, :in_way_from_client, :raw_payload, datetime('now')
     )
-    ON CONFLICT(nm_id, warehouse_id, run_date) DO UPDATE SET
+    ON CONFLICT(nm_id, warehouse_name, run_date) DO UPDATE SET
         vendor_code=excluded.vendor_code,
-        warehouse_name=excluded.warehouse_name,
+        warehouse_id=excluded.warehouse_id,
         region=excluded.region,
         quantity=excluded.quantity,
         in_way_to_client=excluded.in_way_to_client,
@@ -132,16 +132,17 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
 def upsert_sales(conn: sqlite3.Connection, sales: list[dict]) -> int:
     sql = """
     INSERT INTO fbo_sales (
-        sale_id, supplier_article, nm_id, warehouse_name,
+        sale_id, supplier_article, nm_id, warehouse_name, oblast_okrug,
         date, last_change_date, for_pay, is_return, raw_payload, synced_at
     ) VALUES (
-        :sale_id, :supplier_article, :nm_id, :warehouse_name,
+        :sale_id, :supplier_article, :nm_id, :warehouse_name, :oblast_okrug,
         :date, :last_change_date, :for_pay, :is_return, :raw_payload, datetime('now')
     )
     ON CONFLICT(sale_id) DO UPDATE SET
         supplier_article=excluded.supplier_article,
         nm_id=excluded.nm_id,
         warehouse_name=excluded.warehouse_name,
+        oblast_okrug=excluded.oblast_okrug,
         date=excluded.date,
         last_change_date=excluded.last_change_date,
         for_pay=excluded.for_pay,
@@ -157,12 +158,11 @@ def upsert_sales(conn: sqlite3.Connection, sales: list[dict]) -> int:
 
 def upsert_plans(conn: sqlite3.Connection, plans: list[dict], run_date: str) -> int:
     sql = """
-    INSERT INTO fbo_plans (sku, warehouse, cluster, run_date, stock, sales_30d, k, zone,
+    INSERT INTO fbo_plans (sku, cluster, run_date, stock, sales_30d, k, zone,
                            pack_size, to_ship, flag, created_at)
-    VALUES (:sku, :warehouse, :cluster, :run_date, :stock, :sales_30d, :k, :zone,
+    VALUES (:sku, :cluster, :run_date, :stock, :sales_30d, :k, :zone,
             :pack_size, :to_ship, :flag, datetime('now'))
-    ON CONFLICT(sku, warehouse, run_date) DO UPDATE SET
-        cluster=excluded.cluster,
+    ON CONFLICT(sku, cluster, run_date) DO UPDATE SET
         stock=excluded.stock, sales_30d=excluded.sales_30d, k=excluded.k,
         zone=excluded.zone, pack_size=excluded.pack_size, to_ship=excluded.to_ship,
         flag=excluded.flag, created_at=datetime('now')
@@ -174,12 +174,13 @@ def upsert_plans(conn: sqlite3.Connection, plans: list[dict], run_date: str) -> 
 
 
 def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> list[dict]:
-    """Aggregate stocks + sales into plan input rows grouped by (sku, warehouse_name).
+    """Aggregate stocks + sales into plan input rows grouped by (sku, cluster).
 
-    Stocks are aggregated per (vendor_code, warehouse_name).
-    Sales are aggregated per (supplier_article, warehouse_name).
-    Cluster is derived from warehouse name via warehouse_to_cluster().
-    Returns only (is_return=0) sales.
+    Stocks and sales per warehouse are mapped to clusters via warehouse_to_cluster()
+    and summed. Returns only (is_return=0) sales.
+
+    For stocks where vendorCode/supplierArticle is null, falls back to nmId→ sku
+    mapping built from fbo_sales (handles items where WB stocks API omits article code).
     """
     if run_date is None:
         row = conn.execute("SELECT MAX(run_date) FROM fbo_stocks").fetchone()
@@ -188,37 +189,54 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
-    # Stocks: aggregate per (vendor_code, warehouse_name) — keep raw warehouse granularity
-    stocks: dict[tuple, int] = {}
+    # Build nmId → sku mapping from sales (fallback for stocks with no vendor_code)
+    nm_to_sku: dict[int, str] = {}
     for row in conn.execute(
-        """SELECT vendor_code, warehouse_name, SUM(quantity) as qty
-           FROM fbo_stocks WHERE run_date = ? AND vendor_code IS NOT NULL
-           GROUP BY vendor_code, warehouse_name""",
+        "SELECT DISTINCT nm_id, supplier_article FROM fbo_sales "
+        "WHERE nm_id IS NOT NULL AND supplier_article IS NOT NULL"
+    ):
+        nm_id = int(row[0])
+        if nm_id not in nm_to_sku:
+            nm_to_sku[nm_id] = row[1]
+
+    cluster_data: dict[tuple, dict] = {}
+
+    for row in conn.execute(
+        """SELECT vendor_code, nm_id, warehouse_name, region,
+                  SUM(quantity) as qty
+           FROM fbo_stocks WHERE run_date = ?
+           GROUP BY vendor_code, nm_id, warehouse_name""",
         (run_date,),
     ):
-        key = (row[0], row[1] or "")
-        stocks[key] = int(row[2] or 0)
+        nm_id = int(row[1] or 0)
+        # nm_to_sku (from sales) takes priority over raw vendor_code in stocks API.
+        # This fixes mismatches where WB stores item as "DE210 Набор" in inventory
+        # but "DE210" in sales — we always use the sales article as canonical SKU.
+        sku = nm_to_sku.get(nm_id) or row[0]
+        if not sku:
+            continue
+        cluster = warehouse_to_cluster(row[2], row[3])
+        key = (sku, cluster)
+        if key not in cluster_data:
+            cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
+        # quantity column stores quantityFull (total physical stock at WB warehouse,
+        # including reserved orders not yet shipped). inWayToClient is already OUT of
+        # the warehouse (handed to delivery), so we don't add it here.
+        cluster_data[key]["stock"] += int(row[4] or 0)
 
-    # Sales: aggregate per (supplier_article, warehouse_name)
-    sales: dict[tuple, int] = {}
     for row in conn.execute(
-        """SELECT supplier_article, warehouse_name, COUNT(*) as cnt
+        """SELECT supplier_article, oblast_okrug, warehouse_name, COUNT(*) as cnt
            FROM fbo_sales WHERE is_return = 0 AND supplier_article IS NOT NULL
-           GROUP BY supplier_article, warehouse_name"""
+           GROUP BY supplier_article, oblast_okrug, warehouse_name"""
     ):
-        key = (row[0], row[1] or "")
-        sales[key] = int(row[2] or 0)
+        sku = row[0]
+        cluster = oblast_okrug_to_cluster(row[1]) or warehouse_to_cluster(row[2])
+        key = (sku, cluster)
+        if key not in cluster_data:
+            cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
+        cluster_data[key]["sales_30d"] += int(row[3] or 0)
 
-    all_keys = set(stocks.keys()) | set(sales.keys())
-    return [
-        {
-            "sku": sku,
-            "warehouse": warehouse,
-            "stock": stocks.get((sku, warehouse), 0),
-            "sales_30d": sales.get((sku, warehouse), 0),
-        }
-        for sku, warehouse in sorted(all_keys)
-    ]
+    return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
 
 def log_run(conn: sqlite3.Connection, **kwargs) -> int:
@@ -235,10 +253,13 @@ def _stock_row(s: dict, run_date: str) -> dict:
         "nm_id": s.get("nmId"),
         "warehouse_id": s.get("warehouseId") or 0,
         "run_date": run_date,
-        "vendor_code": s.get("vendorCode"),
-        "warehouse_name": s.get("warehouseName"),
+        "vendor_code": s.get("vendorCode") or s.get("supplierArticle"),
+        "warehouse_name": s.get("warehouseName") or "",
         "region": s.get("region"),
-        "quantity": int(s.get("quantity") or 0),
+        # quantityFull = total physical stock at WB warehouse (available + reserved for
+        # existing orders not yet shipped). WB Analytics shows this number.
+        # quantity alone = 0 when all units are reserved, causing false OOS readings.
+        "quantity": int(s.get("quantityFull") or s.get("quantity") or 0),
         "in_way_to_client": int(s.get("inWayToClient") or 0),
         "in_way_from_client": int(s.get("inWayFromClient") or 0),
         "raw_payload": json.dumps(s, ensure_ascii=False),
@@ -252,6 +273,7 @@ def _sale_row(s: dict) -> dict:
         "supplier_article": s.get("supplierArticle"),
         "nm_id": s.get("nmId"),
         "warehouse_name": s.get("warehouseName"),
+        "oblast_okrug": s.get("oblastOkrugName"),
         "date": s.get("date"),
         "last_change_date": s.get("lastChangeDate"),
         "for_pay": s.get("forPay"),
