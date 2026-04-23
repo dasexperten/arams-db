@@ -17,12 +17,15 @@ _ZONE_FILL = {
 _COL_SHIP = 7  # Поставка (1-indexed)
 _COL_ZONE = 6  # Зона
 
+CLUSTER_ORDER = ["Центральный", "Южный", "Волга", "Восточный", "Северо-западный"]
+
 
 def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
     """Generate Excel supply plan. Returns path to created file.
 
     Columns: A=Кластер B=SKU C=Остаток D=Продажи E=К F=Зона G=Поставка H=Примечание
-    Sorted: clusters by descending total to_ship; within cluster OOS first, then to_ship DESC, SKU alpha.
+    Sorted: clusters in fixed order (Центральный→Южный→Волга→Восточный→Северо-западный);
+    within cluster OOS first, then sales_30d DESC (оборот), SKU alpha.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -30,15 +33,11 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
 
     oos_count = sum(1 for p in plans if "🔴 Товар вышел" in (p.get("flag") or ""))
 
-    cluster_totals: dict[str, int] = {}
-    for p in plans:
-        cl = p.get("cluster") or ""
-        cluster_totals[cl] = cluster_totals.get(cl, 0) + (p.get("to_ship") or 0)
-
     def sort_key(p):
         cl = p.get("cluster") or ""
+        cl_pos = CLUSTER_ORDER.index(cl) if cl in CLUSTER_ORDER else len(CLUSTER_ORDER)
         is_oos = 1 if "🔴 Товар вышел" in (p.get("flag") or "") else 0
-        return (-cluster_totals.get(cl, 0), cl, -is_oos, -(p.get("to_ship") or 0), p.get("sku") or "")
+        return (cl_pos, -is_oos, -(p.get("sales_30d") or 0), p.get("sku") or "")
 
     sorted_plans = sorted(plans, key=sort_key)
 
