@@ -315,6 +315,10 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 errors.append({"stage": "validate", "error": "review missing id"})
                 continue
 
+            with seller_db.connect() as _conn:
+                if seller_db.already_replied(_conn, review_id):
+                    continue
+
             text = (review.get("text") or "").strip()
             if not text:
                 try:
@@ -364,6 +368,9 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                     text=draft_text,
                     mark_review_as_processed=True,
                 )
+                with seller_db.connect() as _conn:
+                    seller_db.upsert_reviews(_conn, [review])
+                    seller_db.mark_auto_replied(_conn, review_id)
                 replied.append({
                     "review_id": review_id,
                     "chars": len(draft_text),

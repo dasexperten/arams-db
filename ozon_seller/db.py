@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     comments_amount     INTEGER DEFAULT 0,
     published_at        TEXT NOT NULL,
     raw_json            TEXT,
-    fetched_at          TEXT NOT NULL DEFAULT (datetime('now'))
+    fetched_at          TEXT NOT NULL DEFAULT (datetime('now')),
+    auto_replied_at     TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_status ON reviews(status, published_at);
@@ -86,6 +87,26 @@ def connect(path: str | None = None) -> Iterator[sqlite3.Connection]:
 def init_schema(path: str | None = None) -> None:
     with connect(path) as conn:
         conn.executescript(SCHEMA)
+        # migrate existing DBs that predate auto_replied_at column
+        try:
+            conn.execute("ALTER TABLE reviews ADD COLUMN auto_replied_at TEXT")
+        except Exception:
+            pass
+
+
+def mark_auto_replied(conn: sqlite3.Connection, review_id: str) -> None:
+    conn.execute(
+        "UPDATE reviews SET auto_replied_at = datetime('now') WHERE review_id = ?",
+        (review_id,),
+    )
+
+
+def already_replied(conn: sqlite3.Connection, review_id: str) -> bool:
+    row = conn.execute(
+        "SELECT auto_replied_at FROM reviews WHERE review_id = ? AND auto_replied_at IS NOT NULL",
+        (review_id,),
+    ).fetchone()
+    return row is not None
 
 
 def upsert_reviews(conn: sqlite3.Connection, reviews: list[dict]) -> int:
