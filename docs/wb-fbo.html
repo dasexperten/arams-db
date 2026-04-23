@@ -6,163 +6,203 @@
 <title>WB-FBO · Das Experten</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:       #000;
-    --ink-900:     #141414;
-    --ink-800:     #1C1C1C;
-    --ink-700:     #242424;
-    --ink-500:     #3A3A3A;
-    --ink-300:     #8A8A8A;
-    --ink-200:     #B8B8B8;
-    --ink-100:     #E5E5E5;
-    --white:       #fff;
-    --green:       #78E825;
-    --green-hover: #86FF2B;
-    --green-ink:   #0E1F00;
-    --err:         #FB4C5C;
+    --bg-0:        #05060A;
+    --bg-1:        #0A0D14;
+    --bg-2:        #0F131C;
+    --bg-3:        #141925;
+    --line:        rgba(255,255,255,0.08);
+    --line-strong: rgba(255,255,255,0.16);
+    --line-faint:  rgba(255,255,255,0.04);
+    --ink-100: #F2F5FA;
+    --ink-80:  #C5CCD8;
+    --ink-60:  #8892A3;
+    --ink-40:  #5A6373;
+    --cyan:        #3DC5F5;
+    --cyan-ink:    #0A0D14;
+    --cyan-glow:   rgba(61,197,245,0.30);
+    --magenta:     #E91FB2;
+    --violet:      #8B5CF6;
+    --blue:        #3A7BFF;
+    --err:         #F25C6E;
+    --ok:          #34D583;
     --warn:        #F5A524;
-    --ok:          #3ECF5E;
-    --ease:        cubic-bezier(.22,.61,.36,1);
-    --ease-out:    cubic-bezier(.25,1,.5,1);
+    --grad-a: #FF1FB0;
+    --grad-b: #9333EA;
+    --grad-c: #3B82F6;
+    --grad-d: #22D3EE;
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body:    "Inter", system-ui, sans-serif;
+    --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+    --r-xs: 4px;  --r-sm: 8px;  --r-md: 12px;  --r-lg: 20px;  --r-pill: 999px;
+    --ease-out:  cubic-bezier(.2,.7,.2,1);
+    --ease-emph: cubic-bezier(.2,.9,.2,1.1);
+    --t-fast: 120ms;  --t-base: 220ms;  --t-slow: 420ms;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-    background: var(--black);
-    color: var(--white);
-    line-height: 1.5;
+    font-family: var(--font-body);
+    background: var(--bg-1);
+    color: var(--ink-100);
+    font-size: 15px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
 
   /* ── Nav ── */
   .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
-    gap: 32px;
-    background: var(--black);
-    border-bottom: 1px solid var(--ink-700);
-    padding: 18px 32px;
+    gap: 24px;
+    background: rgba(10,13,20,0.80);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line);
+    padding: 0 32px;
+    height: 56px;
   }
   .nav-brand {
-    font-size: 22px;
+    font-family: var(--font-display);
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: -0.03em;
-    text-transform: lowercase;
-    color: var(--white);
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--grad-a), var(--grad-b), var(--grad-c), var(--grad-d));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    flex-shrink: 0;
   }
+  .nav-sep { width: 1px; height: 18px; background: var(--line-strong); }
   .nav-tag {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--ink-300);
+    color: var(--ink-60);
   }
 
-  /* ── Layout ── */
-  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px 80px; }
+  /* ── Page ── */
+  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px 96px; }
 
   /* ── Hero ── */
-  .hero { padding: 56px 0 40px; }
-  .hero-eyebrow {
+  .hero { padding: 64px 0 48px; }
+  .eyebrow {
+    font-family: var(--font-mono);
     font-size: 11px;
-    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--ink-300);
-    margin-bottom: 16px;
+    color: var(--ink-60);
+    margin-bottom: 18px;
   }
   .hero-title {
-    font-size: clamp(36px, 4vw, 64px);
-    font-weight: 300;
-    line-height: 1.02;
-    letter-spacing: -0.018em;
-    color: var(--white);
+    font-family: var(--font-display);
+    font-size: clamp(32px, 3.8vw, 58px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink-100);
   }
   .hero-sub {
     margin-top: 14px;
-    font-size: 15px;
-    color: var(--ink-300);
+    font-size: 14px;
+    color: var(--ink-60);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
   }
 
   /* ── Section title ── */
   .section-title {
-    padding: 48px 0 20px;
-    font-size: 20px;
+    padding: 52px 0 6px;
+    font-family: var(--font-display);
+    font-size: 18px;
     font-weight: 600;
-    letter-spacing: -0.018em;
-    color: var(--white);
+    letter-spacing: -0.015em;
+    color: var(--ink-100);
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--ink-60);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* ── OOS Banner ── */
+  .oos-banner {
+    background: rgba(242,92,110,0.08);
+    border: 1px solid rgba(242,92,110,0.25);
+    border-radius: var(--r-md);
+    padding: 12px 18px;
+    color: var(--err);
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 20px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
   }
 
   /* ── Metric cards ── */
   .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  .metric-card {
-    background: var(--ink-900);
-    border: 1px solid var(--ink-700);
-    border-radius: 10px;
-    padding: 22px 18px;
-    display: flex;
-    flex-direction: column;
     gap: 8px;
   }
+  .metric-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .metric-value {
-    font-size: 38px;
-    font-weight: 300;
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
     line-height: 1;
     letter-spacing: -0.03em;
-    color: var(--white);
+    color: var(--ink-100);
   }
-  .metric-value.accent { color: var(--green); }
+  .metric-value.accent { color: var(--cyan); }
   .metric-value.danger { color: var(--err); }
-  .metric-value.warn   { color: var(--warn); }
   .metric-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink-300);
-  }
-
-  /* ── OOS Banner ── */
-  .oos-banner {
-    background: rgba(251,76,92,0.10);
-    border: 1px solid rgba(251,76,92,0.35);
-    border-radius: 10px;
-    padding: 13px 18px;
-    color: var(--err);
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 20px;
+    color: var(--ink-60);
   }
 
   /* ── Cluster tiles ── */
   .cluster-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
   .cluster-tile {
     position: relative;
     overflow: hidden;
-    border-radius: 16px;
-    background: var(--ink-900);
+    border-radius: var(--r-lg);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
     aspect-ratio: 1;
-    cursor: default;
-    transition: transform 220ms var(--ease-out);
+    transition: border-color var(--t-base) var(--ease-out),
+                transform var(--t-base) var(--ease-out);
   }
-  .cluster-tile:hover { transform: translateY(-2px); }
+  .cluster-tile:hover { border-color: var(--line-strong); transform: translateY(-2px); }
   .cluster-halo {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity 420ms var(--ease);
+    transition: opacity var(--t-slow) var(--ease-out);
     pointer-events: none;
   }
   .cluster-tile:hover .cluster-halo { opacity: 1; }
@@ -173,138 +213,200 @@
     flex-direction: column;
     justify-content: space-between;
     height: 100%;
-    padding: 20px;
+    padding: 18px;
   }
   .cluster-name {
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-60);
+  }
+  .cluster-num {
+    font-family: var(--font-display);
+    font-size: 42px;
     font-weight: 600;
-    color: var(--ink-200);
-    letter-spacing: -0.01em;
-  }
-  .cluster-center {
-    text-align: center;
-    padding: 8px 0;
-  }
-  .cluster-ship-num {
-    font-size: 44px;
-    font-weight: 300;
     line-height: 1;
     letter-spacing: -0.04em;
-    color: var(--white);
+    color: var(--ink-100);
+    text-align: center;
   }
-  .cluster-ship-unit {
-    font-size: 11px;
-    color: var(--ink-200);
-    margin-top: 4px;
-    letter-spacing: 0.08em;
+  .cluster-unit {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
+    color: var(--ink-60);
+    text-align: center;
+    margin-top: 4px;
   }
   .cluster-meta {
-    font-size: 11px;
-    color: var(--ink-300);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-60);
     text-align: center;
   }
   .cluster-oos { color: var(--err); margin-left: 4px; }
 
-  /* ── Action block ── */
-  .action-block {
-    background: var(--ink-900);
-    border: 1px solid var(--ink-700);
-    border-radius: 10px;
-    padding: 26px 22px;
-  }
-  .action-row {
+  /* ── Ship cluster summary ── */
+  .ship-pills {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
-    align-items: center;
+    margin-bottom: 20px;
   }
-  .action-note {
-    margin-top: 14px;
-    font-size: 13px;
-    color: var(--ink-300);
+  .ship-pill {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 14px 18px;
+    min-width: 150px;
+    flex: 1;
+    transition: border-color var(--t-fast) var(--ease-out);
   }
-
-  /* ── Buttons ── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: inherit;
+  .ship-pill:hover { border-color: var(--line-strong); }
+  .ship-pill-num {
+    font-family: var(--font-display);
+    font-size: 28px;
     font-weight: 600;
-    font-size: 15px;
+    letter-spacing: -0.03em;
+    color: var(--cyan);
     line-height: 1;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    padding: 14px 24px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
-    white-space: nowrap;
   }
-  .btn-primary {
-    background: var(--green);
-    color: var(--green-ink);
-    border-color: var(--green);
+  .ship-pill-unit {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-60);
+    margin-top: 3px;
   }
-  .btn-primary:hover { background: var(--green-hover); border-color: var(--green-hover); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--white);
-    border-color: var(--ink-500);
+  .ship-pill-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-80);
+    margin-top: 8px;
   }
-  .btn-ghost:hover { border-color: var(--white); background: rgba(255,255,255,0.04); }
 
-  /* ── Run history table ── */
-  .runs-wrap {
-    background: var(--ink-900);
-    border: 1px solid var(--ink-700);
-    border-radius: 10px;
+  /* ── Tables (shared) ── */
+  .table-wrap {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
     overflow: hidden;
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead tr { background: var(--ink-800); }
+  thead tr { background: var(--bg-3); }
   th {
     text-align: left;
-    padding: 11px 14px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink-300);
-    border-bottom: 1px solid var(--ink-700);
+    color: var(--ink-60);
+    border-bottom: 1px solid var(--line);
   }
-  td { padding: 11px 14px; border-bottom: 1px solid var(--ink-700); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--line-faint); }
   tbody tr:last-child td { border-bottom: none; }
-  .run-link { color: var(--green); text-decoration: none; font-weight: 500; }
-  .run-link:hover { color: var(--green-hover); }
-  .run-num { color: var(--ink-300); }
+  tbody tr:hover { background: var(--line-faint); }
 
-  /* ── Status badges ── */
+  /* ── SKU cluster header row ── */
+  .sku-cluster-hdr td {
+    background: var(--bg-3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-60);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ── SKU row colors ── */
+  tr.sku-good { background: rgba(61,197,245, 0.05); }
+  tr.sku-bad  { background: rgba(242,92,110, 0.05); }
+  tr.sku-good .sku-name { color: var(--cyan); }
+  tr.sku-bad  .sku-name { color: var(--err); }
+  .sku-name { font-weight: 600; font-size: 13px; }
+  tr.sku-good .sku-k { color: var(--cyan); font-weight: 600; }
+  tr.sku-bad  .sku-k { color: var(--err);  font-weight: 600; }
+  .sku-k { font-weight: 600; }
+  .sku-ship { font-weight: 700; color: var(--ink-100); }
+
+  /* ── Run table specific ── */
+  .run-num  { color: var(--ink-60); font-family: var(--font-mono); font-size: 12px; }
+  .run-link { color: var(--cyan); text-decoration: none; font-weight: 500; font-size: 13px; }
+  .run-link:hover { color: #5AD1F7; }
+
+  /* ── Badges ── */
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
   }
-  .badge-ok      { background: #78E82520; color: var(--green); }
-  .badge-fail    { background: #FB4C5C20; color: var(--err); }
-  .badge-run     { background: #F5A52420; color: var(--warn); }
-  .badge-skip    { background: var(--ink-800); color: var(--ink-300); }
+  .badge-ok   { background: rgba(52,213,131,0.12); color: var(--ok); }
+  .badge-fail { background: rgba(242,92,110,0.12); color: var(--err); }
+  .badge-run  { background: rgba(245,165,36,0.12);  color: var(--warn); }
+  .badge-skip { background: var(--bg-3); color: var(--ink-60); }
+
+  /* ── Action block ── */
+  .action-block {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: 24px 22px;
+  }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .action-note { margin-top: 14px; font-size: 13px; color: var(--ink-60); }
+
+  /* ── Pill buttons ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    border: 0;
+    transition: transform var(--t-fast) var(--ease-out),
+                box-shadow var(--t-base) var(--ease-out),
+                background var(--t-fast) var(--ease-out);
+    white-space: nowrap;
+  }
+  .pill-primary { background: var(--cyan); color: var(--cyan-ink); }
+  .pill-primary:hover { background: #5AD1F7; box-shadow: 0 0 0 6px var(--cyan-glow); }
+  .pill-primary:active { transform: scale(.98); }
+  .pill-ghost {
+    background: transparent;
+    color: var(--ink-80);
+    border: 1px solid var(--line-strong);
+  }
+  .pill-ghost:hover { border-color: rgba(255,255,255,0.32); background: var(--line-faint); }
 
   /* ── Loading / error ── */
-  .loading { color: var(--ink-300); font-size: 14px; padding: 32px 0; display: flex; align-items: center; gap: 8px; }
-  .err-msg { color: var(--err); font-size: 14px; padding: 12px 0; }
-  .hidden { display: none !important; }
+  .loading { color: var(--ink-60); font-size: 14px; padding: 32px 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); }
+  .err-msg  { color: var(--err); font-size: 14px; padding: 12px 0; }
+  .hidden   { display: none !important; }
 
   /* ── Spinner ── */
   .spinner {
     display: inline-block;
     width: 14px; height: 14px;
-    border: 2px solid currentColor;
+    border: 1.5px solid currentColor;
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin .7s linear infinite;
@@ -314,82 +416,26 @@
 
   /* ── Footer ── */
   .footer {
-    border-top: 1px solid var(--ink-700);
-    padding: 24px 32px;
+    border-top: 1px solid var(--line);
+    padding: 22px 32px;
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
-    color: var(--ink-300);
-  }
-  .footer a { color: var(--ink-300); text-decoration: none; }
-  .footer a:hover { color: var(--white); }
-
-  /* ── Ship cluster summary pills ── */
-  .ship-cl-pill {
-    background: var(--ink-900);
-    border: 1px solid var(--ink-700);
-    border-radius: 10px;
-    padding: 16px 20px;
-    min-width: 160px;
-    flex: 1;
-  }
-  .ship-cl-pill-num {
-    font-size: 32px;
-    font-weight: 300;
-    letter-spacing: -0.03em;
-    color: var(--green);
-    line-height: 1;
-  }
-  .ship-cl-pill-unit {
+    font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--ink-300);
     letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-top: 2px;
+    color: var(--ink-40);
   }
-  .ship-cl-pill-name {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ink-200);
-    margin-top: 8px;
-  }
-
-  /* ── SKU turnover table ── */
-  .sku-table-wrap {
-    background: var(--ink-900);
-    border: 1px solid var(--ink-700);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .sku-cluster-header td {
-    background: var(--ink-800);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.10em;
-    text-transform: uppercase;
-    color: var(--ink-200);
-    padding: 9px 14px;
-    border-bottom: 1px solid var(--ink-700);
-  }
-  tr.sku-good   { background: rgba(120,232,37,  0.07); }
-  tr.sku-bad    { background: rgba(251, 76, 92,  0.07); }
-  tr.sku-zero   { background: rgba(255,255,255,  0.03); }
-  tr.sku-good  .sku-name { color: var(--green); }
-  tr.sku-bad   .sku-name { color: var(--err); }
-  tr.sku-zero  .sku-name { color: var(--ink-300); }
-  .sku-name { font-weight: 600; font-size: 13px; }
-  .sku-k    { font-weight: 600; font-size: 13px; }
-  tr.sku-good .sku-k { color: var(--green); }
-  tr.sku-bad  .sku-k { color: var(--err); }
+  .footer a { color: var(--ink-40); text-decoration: none; transition: color var(--t-fast); }
+  .footer a:hover { color: var(--ink-80); }
 
   @media (max-width: 900px) {
     .metrics-grid { grid-template-columns: repeat(2, 1fr); }
     .cluster-grid { grid-template-columns: repeat(2, 1fr); }
-    .page { padding: 0 16px 60px; }
-    .nav { padding: 16px; }
+    .page { padding: 0 16px 64px; }
+    .nav { padding: 0 16px; }
   }
 </style>
 </head>
@@ -398,15 +444,16 @@
 <!-- ── Nav ── -->
 <nav class="nav">
   <span class="nav-brand">das experten</span>
-  <span class="nav-tag">WB FBO</span>
+  <div class="nav-sep"></div>
+  <span class="nav-tag">WB · FBO</span>
 </nav>
 
 <div class="page">
 
   <!-- ── Hero ── -->
   <div class="hero">
-    <div class="hero-eyebrow">Wildberries FBO · Das Experten</div>
-    <h1 class="hero-title">Пульт управления поставками</h1>
+    <div class="eyebrow">Wildberries FBO · Supply Planning</div>
+    <h1 class="hero-title">Пульт управления<br>поставками</h1>
     <p class="hero-sub" id="hero-sub"></p>
   </div>
 
@@ -414,29 +461,25 @@
   <div id="oos-banner" class="oos-banner hidden"></div>
 
   <!-- ── Metrics ── -->
-  <div id="status-loading" class="loading"><span class="spinner"></span> Загружаем данные...</div>
+  <div id="status-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем данные...</div>
   <div id="status-error" class="err-msg hidden"></div>
   <div id="metrics-grid" class="metrics-grid hidden"></div>
 
   <!-- ── Clusters ── -->
   <div id="clusters-section" class="hidden">
     <div class="section-title">По кластерам</div>
-    <div class="cluster-grid" id="cluster-grid"></div>
+    <div class="cluster-grid" id="cluster-grid" style="margin-top:16px;"></div>
   </div>
 
-  <!-- ── SKU turnover ── -->
+  <!-- ── Supply plan ── -->
   <div id="skus-section" class="hidden">
     <div class="section-title">План поставки по SKU</div>
-    <p style="font-size:13px;color:var(--ink-300);margin-bottom:20px;margin-top:-12px;">
-      🔴 Товар вышел · продажи = 0 при нулевом остатке не означают низкий спрос —
-      возможно, товар просто не было чем продавать. Коэффициент K не рассчитывается.
+    <p class="section-sub">
+      Только позиции с рекомендуемой поставкой. 🔴 Товар вышел при продажах=0 —
+      спрос неизвестен из-за дефицита, K не рассчитывается.
     </p>
-
-    <!-- Cluster totals summary -->
-    <div id="ship-cluster-summary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;"></div>
-
-    <!-- SKU table — only to_ship > 0 -->
-    <div class="sku-table-wrap">
+    <div class="ship-pills" id="ship-cluster-summary"></div>
+    <div class="table-wrap">
       <table>
         <thead><tr>
           <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
@@ -450,10 +493,10 @@
   <div class="section-title">Действия</div>
   <div class="action-block">
     <div class="action-row">
-      <a class="btn btn-primary"
+      <a class="pill pill-primary"
          href="https://github.com/dasexperten/arams-db/actions/workflows/wb-fbo-monthly.yml"
          target="_blank">Запустить расчёт в GitHub Actions →</a>
-      <button class="btn btn-ghost" onclick="loadAll()">Обновить данные</button>
+      <button class="pill pill-ghost" onclick="loadAll()">Обновить данные</button>
     </div>
     <p class="action-note">
       Нажми «Run workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
@@ -462,10 +505,10 @@
 
   <!-- ── Run history ── -->
   <div class="section-title">История прогонов</div>
-  <div id="runs-loading" class="loading"><span class="spinner"></span> Загружаем историю...</div>
+  <div id="runs-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем историю...</div>
   <div id="runs-error" class="err-msg hidden"></div>
   <div id="runs-wrap" class="hidden">
-    <div class="runs-wrap">
+    <div class="table-wrap">
       <table>
         <thead><tr>
           <th>#</th><th>Дата запуска</th><th>Статус</th><th>Длительность</th><th>Лог</th>
@@ -475,12 +518,11 @@
     </div>
   </div>
 
-</div><!-- /page -->
+</div>
 
-<!-- ── Footer ── -->
 <footer class="footer">
-  <span>© 2025 Das Experten · Wildberries FBO</span>
-  <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub →</a>
+  <span>© 2025 DAS EXPERTEN · WB-FBO</span>
+  <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub ↗</a>
 </footer>
 
 <script>
@@ -489,20 +531,19 @@ const REPO  = 'arams-db';
 const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/wb-fbo-status.json`;
 const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/wb-fbo-monthly.yml/runs?per_page=10`;
 
-const CLUSTER_ORDER = ['Центральный', 'Южный', 'Волга', 'Восточный', 'Северо-западный'];
+const CLUSTER_ORDER = ['Центральный','Южный','Волга','Восточный','Северо-западный'];
 const CLUSTER_HALOS = {
-  'Центральный':     'radial-gradient(ellipse at 50% 80%, #6D28D9 0%, #3D156E 30%, #0C0418 70%)',
-  'Южный':           'radial-gradient(ellipse at 50% 80%, #E8178A 0%, #9C0F5B 30%, #1F0110 70%)',
-  'Волга':           'radial-gradient(ellipse at 50% 80%, #F5A524 0%, #8C5B0A 30%, #1A1004 70%)',
-  'Восточный':       'radial-gradient(ellipse at 50% 80%, #00C2E8 0%, #0077A8 30%, #001520 70%)',
-  'Северо-западный': 'radial-gradient(ellipse at 50% 80%, #FB4C5C 0%, #8C1A24 30%, #1A0509 70%)',
+  'Центральный':     'radial-gradient(ellipse at 50% 85%, #8B5CF6 0%, #3D1578 35%, #0C0418 70%)',
+  'Южный':           'radial-gradient(ellipse at 50% 85%, #E91FB2 0%, #7A0F5A 35%, #1A0110 70%)',
+  'Волга':           'radial-gradient(ellipse at 50% 85%, #3A7BFF 0%, #142E8A 35%, #050A1A 70%)',
+  'Восточный':       'radial-gradient(ellipse at 50% 85%, #3DC5F5 0%, #0F6A8A 35%, #020F14 70%)',
+  'Северо-западный': 'radial-gradient(ellipse at 50% 85%, #9333EA 0%, #3D1478 35%, #08041A 70%)',
 };
 
 async function loadStatus() {
-  const loadEl  = document.getElementById('status-loading');
-  const errEl   = document.getElementById('status-error');
-  const grid    = document.getElementById('metrics-grid');
-
+  const loadEl = document.getElementById('status-loading');
+  const errEl  = document.getElementById('status-error');
+  const grid   = document.getElementById('metrics-grid');
   try {
     const r = await fetch(STATUS_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -511,91 +552,83 @@ async function loadStatus() {
     loadEl.classList.add('hidden');
     grid.classList.remove('hidden');
 
-    // Hero subtitle
     if (d.run_date) {
       document.getElementById('hero-sub').textContent =
-        `Расчёт от ${d.run_date} · ${fmt(d.stocks_rows)} позиций остатков · ${fmt(d.sales_rows)} продаж`;
+        `run_date=${d.run_date}  ·  stocks=${fmt(d.stocks_rows)}  ·  sales=${fmt(d.sales_rows)}`;
     }
 
-    // OOS banner
     if (d.oos_count > 0) {
       const b = document.getElementById('oos-banner');
-      b.textContent = `${d.oos_count} позиций в out-of-stock — требуют приоритетной отгрузки`;
+      b.textContent = `⚠ ${d.oos_count} позиций out-of-stock — приоритетная отгрузка`;
       b.classList.remove('hidden');
     }
 
-    // Metrics
     grid.innerHTML =
       metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
       metricCard(d.to_ship_count,      'SKU × кластеров', '') +
       metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
       metricCard(d.overstock_count,    'Overstock',       '');
 
-    // Clusters
+    // Cluster tiles
     const clusters = d.clusters || {};
-    const keys = CLUSTER_ORDER.filter(k => clusters[k]);
-    // append any unknown clusters not in fixed order
-    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') keys.push(k); });
-
-    if (keys.length) {
+    const clKeys = CLUSTER_ORDER.filter(k => clusters[k]);
+    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') clKeys.push(k); });
+    if (clKeys.length) {
       document.getElementById('clusters-section').classList.remove('hidden');
-      document.getElementById('cluster-grid').innerHTML = keys.map(cl => {
+      document.getElementById('cluster-grid').innerHTML = clKeys.map(cl => {
         const c = clusters[cl];
-        const halo = CLUSTER_HALOS[cl] || 'radial-gradient(ellipse at 50% 80%, #3A3A3A 0%, #141414 70%)';
+        const halo = CLUSTER_HALOS[cl] || 'radial-gradient(ellipse at 50% 85%, #3A3A5A 0%, #0A0D14 70%)';
         return `<div class="cluster-tile">
           <div class="cluster-halo" style="background:${halo}"></div>
           <div class="cluster-body">
             <div class="cluster-name">${esc(cl)}</div>
-            <div class="cluster-center">
-              <div class="cluster-ship-num">${fmt(c.to_ship || 0)}</div>
-              <div class="cluster-ship-unit">шт.</div>
+            <div style="text-align:center">
+              <div class="cluster-num">${fmt(c.to_ship || 0)}</div>
+              <div class="cluster-unit">шт.</div>
             </div>
             <div class="cluster-meta">
-              ${c.sku_count || 0} SKU${c.oos > 0 ? `<span class="cluster-oos">· ${c.oos} OOS</span>` : ''}
+              ${c.sku_count || 0} SKU${c.oos > 0 ? `<span class="cluster-oos"> · ${c.oos} OOS</span>` : ''}
             </div>
           </div>
         </div>`;
       }).join('');
     }
 
-    // SKU supply plan table — only to_ship > 0
+    // Supply plan table — only to_ship > 0
     const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
     if (skus.length) {
       document.getElementById('skus-section').classList.remove('hidden');
 
-      // Cluster totals, sorted DESC
       const clTotals = {};
       skus.forEach(s => { clTotals[s.cluster] = (clTotals[s.cluster] || 0) + (s.to_ship || 0); });
       const clByTotal = Object.entries(clTotals).sort((a, b) => b[1] - a[1]);
 
-      // Summary pills
       document.getElementById('ship-cluster-summary').innerHTML = clByTotal.map(([cl, total]) =>
-        `<div class="ship-cl-pill">
-          <div class="ship-cl-pill-num">${fmt(total)}</div>
-          <div class="ship-cl-pill-unit">шт. к поставке</div>
-          <div class="ship-cl-pill-name">${esc(cl)}</div>
+        `<div class="ship-pill">
+          <div class="ship-pill-num">${fmt(total)}</div>
+          <div class="ship-pill-unit">шт. к поставке</div>
+          <div class="ship-pill-name">${esc(cl)}</div>
         </div>`
       ).join('');
 
-      // Table grouped by cluster (same order as pills: DESC total)
       const rows = [];
       clByTotal.forEach(([cl]) => {
-        rows.push(`<tr class="sku-cluster-header"><td colspan="5">${esc(cl)}</td></tr>`);
+        rows.push(`<tr class="sku-cluster-hdr"><td colspan="5">${esc(cl)}</td></tr>`);
         skus
           .filter(s => s.cluster === cl)
           .sort((a, b) => {
-              const d = (b.to_ship || 0) - (a.to_ship || 0);
-              return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
-            })
+            const d = (b.to_ship || 0) - (a.to_ship || 0);
+            return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
+          })
           .forEach(s => {
             const rowCls = s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '';
-            const kDisp = s.k !== null && s.k !== undefined ? s.k.toFixed(2) : '—';
+            const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
             rows.push(`<tr class="${rowCls}">
               <td class="sku-name">${esc(s.sku || '')}</td>
-              <td style="color:var(--ink-200)">${fmt(s.stock)}</td>
-              <td style="color:var(--ink-200)">${fmt(s.sales_30d)}</td>
+              <td style="color:var(--ink-60)">${fmt(s.stock)}</td>
+              <td style="color:var(--ink-60)">${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
-              <td style="color:var(--white);font-weight:700">${fmt(s.to_ship)}</td>
+              <td class="sku-ship">${fmt(s.to_ship)}</td>
             </tr>`);
           });
       });
@@ -616,36 +649,29 @@ async function loadRuns() {
   const errEl  = document.getElementById('runs-error');
   const wrap   = document.getElementById('runs-wrap');
   const tbody  = document.getElementById('runs-tbody');
-
   try {
-    const r = await fetch(RUNS_URL, { headers: { 'Accept': 'application/vnd.github+json' } });
+    const r = await fetch(RUNS_URL, { headers: { Accept: 'application/vnd.github+json' } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     const runs = data.workflow_runs || [];
-
     loadEl.classList.add('hidden');
     wrap.classList.remove('hidden');
-
     if (!runs.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-300);padding:20px">Нет прогонов</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-60);padding:20px">Нет прогонов</td></tr>';
       return;
     }
-
     tbody.innerHTML = runs.map(run => {
-      const created = run.created_at ? new Date(run.created_at) : null;
-      const updated = run.updated_at ? new Date(run.updated_at) : null;
-      const dur = (created && updated)
-        ? Math.max(0, Math.round((updated - created) / 60000)) + ' мин'
-        : '—';
+      const cr = run.created_at ? new Date(run.created_at) : null;
+      const up = run.updated_at ? new Date(run.updated_at) : null;
+      const dur = cr && up ? Math.max(0, Math.round((up - cr) / 60000)) + ' мин' : '—';
       return `<tr>
         <td class="run-num">#${run.run_number}</td>
-        <td>${created ? created.toLocaleString('ru-RU') : '—'}</td>
+        <td style="color:var(--ink-80)">${cr ? cr.toLocaleString('ru-RU') : '—'}</td>
         <td>${runBadge(run.conclusion, run.status)}</td>
-        <td style="color:var(--ink-300)">${dur}</td>
-        <td><a class="run-link" href="${esc(run.html_url)}" target="_blank">→ Лог</a></td>
+        <td style="color:var(--ink-60)">${dur}</td>
+        <td><a class="run-link" href="${esc(run.html_url)}" target="_blank">↗ лог</a></td>
       </tr>`;
     }).join('');
-
   } catch (e) {
     loadEl.classList.add('hidden');
     errEl.classList.remove('hidden');
@@ -663,9 +689,9 @@ function metricCard(value, label, cls) {
 function runBadge(conclusion, status) {
   if (status === 'in_progress' || status === 'queued')
     return `<span class="badge badge-run"><span class="spinner"></span> В процессе</span>`;
-  if (conclusion === 'success')   return `<span class="badge badge-ok">Успех</span>`;
-  if (conclusion === 'failure')   return `<span class="badge badge-fail">Ошибка</span>`;
-  if (conclusion === 'cancelled') return `<span class="badge badge-skip">Отменён</span>`;
+  if (conclusion === 'success')   return `<span class="badge badge-ok">success</span>`;
+  if (conclusion === 'failure')   return `<span class="badge badge-fail">failure</span>`;
+  if (conclusion === 'cancelled') return `<span class="badge badge-skip">cancelled</span>`;
   return `<span class="badge badge-skip">${conclusion || status || '?'}</span>`;
 }
 
@@ -675,15 +701,12 @@ function esc(s) {
 }
 
 function loadAll() {
-  document.getElementById('status-loading').classList.remove('hidden');
-  document.getElementById('status-error').classList.add('hidden');
-  document.getElementById('metrics-grid').classList.add('hidden');
-  document.getElementById('oos-banner').classList.add('hidden');
-  document.getElementById('clusters-section').classList.add('hidden');
-  document.getElementById('skus-section').classList.add('hidden');
-  document.getElementById('runs-loading').classList.remove('hidden');
-  document.getElementById('runs-error').classList.add('hidden');
-  document.getElementById('runs-wrap').classList.add('hidden');
+  ['status-loading','runs-loading'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  ['status-error','metrics-grid','oos-banner','clusters-section',
+   'skus-section','runs-error','runs-wrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
   loadStatus();
   loadRuns();
 }
