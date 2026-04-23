@@ -327,6 +327,36 @@
   .footer a { color: var(--ink-300); text-decoration: none; }
   .footer a:hover { color: var(--white); }
 
+  /* ── Ship cluster summary pills ── */
+  .ship-cl-pill {
+    background: var(--ink-900);
+    border: 1px solid var(--ink-700);
+    border-radius: 10px;
+    padding: 16px 20px;
+    min-width: 160px;
+    flex: 1;
+  }
+  .ship-cl-pill-num {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: var(--green);
+    line-height: 1;
+  }
+  .ship-cl-pill-unit {
+    font-size: 11px;
+    color: var(--ink-300);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .ship-cl-pill-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-200);
+    margin-top: 8px;
+  }
+
   /* ── SKU turnover table ── */
   .sku-table-wrap {
     background: var(--ink-900);
@@ -396,7 +426,12 @@
 
   <!-- ── SKU turnover ── -->
   <div id="skus-section" class="hidden">
-    <div class="section-title">Оборачиваемость по SKU</div>
+    <div class="section-title">План поставки по SKU</div>
+
+    <!-- Cluster totals summary -->
+    <div id="ship-cluster-summary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;"></div>
+
+    <!-- SKU table — only to_ship > 0 -->
     <div class="sku-table-wrap">
       <table>
         <thead><tr>
@@ -519,29 +554,41 @@ async function loadStatus() {
       }).join('');
     }
 
-    // SKU turnover table
-    const skus = d.skus || [];
+    // SKU supply plan table — only to_ship > 0
+    const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
     if (skus.length) {
       document.getElementById('skus-section').classList.remove('hidden');
-      const clusterKeys = CLUSTER_ORDER.filter(cl => skus.some(s => s.cluster === cl));
-      Object.keys(d.clusters || {}).forEach(cl => {
-        if (!CLUSTER_ORDER.includes(cl) && cl !== 'UNKNOWN' && skus.some(s => s.cluster === cl)) clusterKeys.push(cl);
-      });
+
+      // Cluster totals, sorted DESC
+      const clTotals = {};
+      skus.forEach(s => { clTotals[s.cluster] = (clTotals[s.cluster] || 0) + (s.to_ship || 0); });
+      const clByTotal = Object.entries(clTotals).sort((a, b) => b[1] - a[1]);
+
+      // Summary pills
+      document.getElementById('ship-cluster-summary').innerHTML = clByTotal.map(([cl, total]) =>
+        `<div class="ship-cl-pill">
+          <div class="ship-cl-pill-num">${fmt(total)}</div>
+          <div class="ship-cl-pill-unit">шт. к поставке</div>
+          <div class="ship-cl-pill-name">${esc(cl)}</div>
+        </div>`
+      ).join('');
+
+      // Table grouped by cluster (same order as pills: DESC total)
       const rows = [];
-      clusterKeys.forEach(cl => {
+      clByTotal.forEach(([cl]) => {
         rows.push(`<tr class="sku-cluster-header"><td colspan="5">${esc(cl)}</td></tr>`);
         skus
           .filter(s => s.cluster === cl)
-          .sort((a, b) => (b.sales_30d || 0) - (a.sales_30d || 0))
+          .sort((a, b) => (b.to_ship || 0) - (a.to_ship || 0))
           .forEach(s => {
-            const cls = s.sales_30d === 0 ? 'sku-zero' : s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '';
+            const rowCls = s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '';
             const kDisp = s.k !== null && s.k !== undefined ? s.k.toFixed(2) : '—';
-            rows.push(`<tr class="${cls}">
+            rows.push(`<tr class="${rowCls}">
               <td class="sku-name">${esc(s.sku || '')}</td>
               <td style="color:var(--ink-200)">${fmt(s.stock)}</td>
               <td style="color:var(--ink-200)">${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
-              <td style="color:var(--ink-200);font-weight:${s.to_ship > 0 ? 700 : 400}">${s.to_ship > 0 ? fmt(s.to_ship) : '—'}</td>
+              <td style="color:var(--white);font-weight:700">${fmt(s.to_ship)}</td>
             </tr>`);
           });
       });
