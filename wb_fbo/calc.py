@@ -14,7 +14,7 @@ ZONE_OVERSTOCK = "OVERSTOCK"
 # Source: ozon-fbo-calculator SKILL.md — canonical for all packaging logic.
 _ACCESSORY_CODES = frozenset({111, 112, 115, 125, 126})
 
-_SKU_RE = re.compile(r"^DE([12])(\d{2})(?:\s+(.+))?$", re.IGNORECASE)
+_SKU_RE = re.compile(r"^DE([12])(\d{2})(?:\s*(.+))?$", re.IGNORECASE)
 
 
 def detect_pack_size(vendor_code: str) -> int | None:
