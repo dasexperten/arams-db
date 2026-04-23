@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* Canvas & ink */
+  --dy-black:         #000000;
+  --dy-near-black:    #0A0A0A;
+  --dy-ink-900:       #141414;
+  --dy-ink-800:       #1C1C1C;
+  --dy-ink-700:       #242424;
+  --dy-ink-600:       #2E2E2E;
+  --dy-ink-500:       #3A3A3A;
+  --dy-ink-400:       #5C5C5C;
+  --dy-ink-300:       #8A8A8A;
+  --dy-ink-200:       #B8B8B8;
+  --dy-ink-100:       #E5E5E5;
+  --dy-white:         #FFFFFF;
+
+  /* Light mode neutrals */
+  --dy-paper:         #FFFFFF;
+  --dy-paper-sunk:    #F5F5F5;
+  --dy-paper-tray:    #EBEBEB;
+  --dy-rule:          #DCDCDC;
+  --dy-rule-strong:   #B8B8B8;
+
+  /* Signature CTA green */
+  --dy-green:         #78E825;
+  --dy-green-hover:   #86FF2B;
+  --dy-green-press:   #62C41D;
+  --dy-green-ink:     #0E1F00;
+
+  /* Product spotlights */
+  --dy-cyan:          #00C2E8;
+  --dy-cyan-deep:     #0077A8;
+  --dy-magenta:       #E8178A;
+  --dy-magenta-deep:  #9C0F5B;
+  --dy-violet:        #6D28D9;
+  --dy-violet-deep:   #3D156E;
+  --dy-amber:         #F5A524;
+  --dy-amber-deep:    #8C5B0A;
+  --dy-rose:          #FB4C5C;
+  --dy-rose-deep:     #8C1A24;
+
+  /* Halo gradients */
+  --dy-halo-cyan:    radial-gradient(ellipse at 50% 80%, #00C2E8 0%, #0077A8 30%, #001520 70%);
+  --dy-halo-magenta: radial-gradient(ellipse at 50% 80%, #E8178A 0%, #9C0F5B 30%, #1F0110 70%);
+  --dy-halo-violet:  radial-gradient(ellipse at 50% 80%, #6D28D9 0%, #3D156E 30%, #0C0418 70%);
+  --dy-halo-amber:   radial-gradient(ellipse at 50% 80%, #F5A524 0%, #8C5B0A 30%, #1A1004 70%);
+  --dy-halo-rose:    radial-gradient(ellipse at 50% 80%, #FB4C5C 0%, #8C1A24 30%, #1A0509 70%);
+  --dy-halo-green:   radial-gradient(ellipse at 50% 80%, #78E825 0%, #2E6608 30%, #0A1500 70%);
+
+  /* Semantic */
+  --dy-fg-on-dark:    var(--dy-white);
+  --dy-fg-on-dark-2:  var(--dy-ink-200);
+  --dy-fg-on-dark-3:  var(--dy-ink-300);
+  --dy-fg-on-light:   var(--dy-black);
+  --dy-fg-link-dark:  var(--dy-green);
+
+  --dy-bg-canvas:     var(--dy-black);
+  --dy-bg-tile:       var(--dy-ink-900);
+  --dy-bg-raised:     var(--dy-ink-800);
+  --dy-bg-menu:       var(--dy-ink-900);
+
+  --dy-border-dark:   var(--dy-ink-700);
+  --dy-border-dark-2: var(--dy-ink-500);
+
+  /* Status */
+  --dy-ok:   #3ECF5E;
+  --dy-warn: #F5A524;
+  --dy-err:  #FB4C5C;
+  --dy-info: #00C2E8;
+
+  /* Spacing — 4pt grid */
+  --dy-s-1:   4px;  --dy-s-2:   8px;  --dy-s-3:  12px;
+  --dy-s-4:  16px;  --dy-s-5:  20px;  --dy-s-6:  24px;
+  --dy-s-7:  32px;  --dy-s-8:  40px;  --dy-s-9:  48px;
+  --dy-s-10: 64px;  --dy-s-11: 80px;  --dy-s-12: 120px;
+
+  /* Radii */
+  --dy-r-xs:  2px;  --dy-r-sm:  4px;  --dy-r-md:  6px;
+  --dy-r-lg: 10px;  --dy-r-xl: 16px;  --dy-r-pill: 999px;
+
+  /* Elevation */
+  --dy-sh-tile:   inset 0 0 0 1px var(--dy-ink-700), 0 1px 0 rgba(255,255,255,.02);
+  --dy-sh-raised: 0 12px 32px -12px rgba(0,0,0,.6), inset 0 0 0 1px var(--dy-ink-700);
+  --dy-sh-menu:   0 24px 48px -16px rgba(0,0,0,.8), inset 0 0 0 1px var(--dy-ink-700);
+  --dy-sh-glow-green: 0 0 0 1px var(--dy-green), 0 0 32px -4px rgba(120,232,37,.4);
+
+  /* Motion */
+  --dy-ease:      cubic-bezier(.22, .61, .36, 1);
+  --dy-ease-out:  cubic-bezier(.25, 1, .5, 1);
+  --dy-dur-fast:  120ms;
+  --dy-dur-base:  220ms;
+  --dy-dur-slow:  420ms;
+  --dy-dur-hero:  600ms;
+
+  /* Type */
+  --dy-font-display: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --dy-font-body:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --dy-font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --dy-fs-hero-xl: clamp(56px, 6vw, 96px);
+  --dy-fs-hero:    clamp(40px, 4.4vw, 72px);
+  --dy-fs-display: clamp(32px, 3.4vw, 52px);
+  --dy-fs-title:   clamp(24px, 2.4vw, 36px);
+  --dy-fs-h1: 32px;  --dy-fs-h2: 24px;  --dy-fs-h3: 20px;
+  --dy-fs-h4: 17px;  --dy-fs-body-lg: 18px; --dy-fs-body: 15px;
+  --dy-fs-body-sm: 14px; --dy-fs-caption: 12px; --dy-fs-micro: 11px;
+
+  --dy-lh-tight: 1.02;  --dy-lh-snug: 1.15;
+  --dy-lh-heading: 1.2; --dy-lh-body: 1.5;
+
+  --dy-tr-tighter: -0.03em; --dy-tr-tight: -0.018em;
+  --dy-tr-normal: 0; --dy-tr-wide: 0.02em;
+  --dy-tr-wider: 0.08em; --dy-tr-widest: 0.16em;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--dy-bg-canvas);
+  color: var(--dy-fg-on-dark);
+  font: 400 var(--dy-fs-body)/var(--dy-lh-body) var(--dy-font-body);
+  -webkit-font-smoothing: antialiased;
+}

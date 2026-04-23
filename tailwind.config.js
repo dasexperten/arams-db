@@ -1,0 +1,68 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+  theme: {
+    extend: {
+      colors: {
+        dy: {
+          black:        '#000000',
+          'near-black': '#0A0A0A',
+          'ink-900':    '#141414',
+          'ink-800':    '#1C1C1C',
+          'ink-700':    '#242424',
+          'ink-600':    '#2E2E2E',
+          'ink-500':    '#3A3A3A',
+          'ink-400':    '#5C5C5C',
+          'ink-300':    '#8A8A8A',
+          'ink-200':    '#B8B8B8',
+          'ink-100':    '#E5E5E5',
+          white:        '#FFFFFF',
+          green:        '#78E825',
+          'green-hover':'#86FF2B',
+          'green-press':'#62C41D',
+          'green-ink':  '#0E1F00',
+          cyan:         '#00C2E8',
+          magenta:      '#E8178A',
+          violet:       '#6D28D9',
+          amber:        '#F5A524',
+          rose:         '#FB4C5C',
+          ok:           '#3ECF5E',
+          warn:         '#F5A524',
+          err:          '#FB4C5C',
+          info:         '#00C2E8',
+        },
+      },
+      fontFamily: {
+        display: ['Inter', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        body:    ['Inter', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono:    ['JetBrains Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+      },
+      borderRadius: {
+        'dy-xs':   '2px',
+        'dy-sm':   '4px',
+        'dy-md':   '6px',
+        'dy-lg':   '10px',
+        'dy-xl':   '16px',
+        'dy-pill': '999px',
+      },
+      transitionTimingFunction: {
+        'dy':     'cubic-bezier(.22, .61, .36, 1)',
+        'dy-out': 'cubic-bezier(.25, 1, .5, 1)',
+        'dy-in':  'cubic-bezier(.4, 0, 1, 1)',
+      },
+      transitionDuration: {
+        fast: '120ms',
+        base: '220ms',
+        slow: '420ms',
+        hero: '600ms',
+      },
+      boxShadow: {
+        'dy-tile':       'inset 0 0 0 1px #242424, 0 1px 0 rgba(255,255,255,.02)',
+        'dy-raised':     '0 12px 32px -12px rgba(0,0,0,.6), inset 0 0 0 1px #242424',
+        'dy-menu':       '0 24px 48px -16px rgba(0,0,0,.8), inset 0 0 0 1px #242424',
+        'dy-glow-green': '0 0 0 1px #78E825, 0 0 32px -4px rgba(120,232,37,.4)',
+      },
+    },
+  },
+  plugins: [],
+}
