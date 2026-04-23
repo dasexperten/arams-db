@@ -60,6 +60,17 @@ class WBFBOAPI:
         )
         if isinstance(resp, list):
             return resp
+        if not isinstance(resp, dict):
+            from .client import WBFBOError
+            raise WBFBOError(
+                f"stocks-report вернул неожиданный тип {type(resp).__name__!r}: {str(resp)[:300]}\n"
+                f"Проверь скоупы токена WB_FEEDBACKS_TOKEN — нужны: Вопросы и отзывы + Статистика + Аналитика"
+            )
+        if resp.get("error") or resp.get("errors"):
+            from .client import WBFBOError
+            raise WBFBOError(
+                f"stocks-report ошибка WB: {resp.get('errorText') or resp.get('errors') or resp}"
+            )
         return resp.get("data") or resp.get("result") or []
 
     def stocks_report_iter(self) -> Iterator[tuple[list[dict], bool]]:

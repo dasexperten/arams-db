@@ -1269,7 +1269,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
         print(f"[wb-fbo-monthly] sales FAILED: {e}", flush=True)
         exit_code = 1
 
-    if exit_code == 1 and not stocks_result:
+    if exit_code == 1 and not stocks_result and not sales_result:
         print("[wb-fbo-monthly] both stocks and sales failed — aborting", flush=True)
         return 2
 
