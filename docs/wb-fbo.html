@@ -332,6 +332,8 @@
   tr.sku-good .sku-name { color: var(--cyan); }
   tr.sku-bad  .sku-name { color: var(--err); }
   .sku-name { font-weight: 600; font-size: 13px; }
+  tr.sku-neutral { background: rgba(255,255,255, 0.06); }
+  tr.sku-neutral .sku-name { color: var(--ink-100); }
   tr.sku-good .sku-k { color: var(--cyan); font-weight: 600; }
   tr.sku-bad  .sku-k { color: var(--err);  font-weight: 600; }
   tr.sku-global-over { background: rgba(242,92,110, 0.10); }
@@ -647,7 +649,7 @@ async function loadStatus() {
           })
           .forEach(s => {
             const skuColor = skuColorMap[s.sku || ''];
-            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : skuColor === 'neutral' ? '' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : skuColor === 'neutral' ? 'sku-neutral' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
             const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
             const aggK   = skuAgg[s.sku || ''];
             const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
