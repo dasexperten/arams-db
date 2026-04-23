@@ -178,6 +178,9 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
 
     Stocks and sales per warehouse are mapped to clusters via warehouse_to_cluster()
     and summed. Returns only (is_return=0) sales.
+
+    For stocks where vendorCode/supplierArticle is null, falls back to nmId→sku
+    mapping built from fbo_sales (handles items where WB stocks API omits article code).
     """
     if run_date is None:
         row = conn.execute("SELECT MAX(run_date) FROM fbo_stocks").fetchone()
@@ -186,20 +189,32 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
+    # Build nmId → sku mapping from sales (fallback for stocks with no vendor_code)
+    nm_to_sku: dict[int, str] = {}
+    for row in conn.execute(
+        "SELECT DISTINCT nm_id, supplier_article FROM fbo_sales "
+        "WHERE nm_id IS NOT NULL AND supplier_article IS NOT NULL"
+    ):
+        nm_id = int(row[0])
+        if nm_id not in nm_to_sku:
+            nm_to_sku[nm_id] = row[1]
+
     cluster_data: dict[tuple, dict] = {}
 
     for row in conn.execute(
-        """SELECT vendor_code, warehouse_name, region, SUM(quantity) as qty
-           FROM fbo_stocks WHERE run_date = ? AND vendor_code IS NOT NULL
-           GROUP BY vendor_code, warehouse_name""",
+        """SELECT vendor_code, nm_id, warehouse_name, region, SUM(quantity) as qty
+           FROM fbo_stocks WHERE run_date = ?
+           GROUP BY vendor_code, nm_id, warehouse_name""",
         (run_date,),
     ):
-        sku = row[0]
-        cluster = warehouse_to_cluster(row[1], row[2])
+        sku = row[0] or nm_to_sku.get(int(row[1] or 0))
+        if not sku:
+            continue
+        cluster = warehouse_to_cluster(row[2], row[3])
         key = (sku, cluster)
         if key not in cluster_data:
             cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
-        cluster_data[key]["stock"] += int(row[3] or 0)
+        cluster_data[key]["stock"] += int(row[4] or 0)
 
     for row in conn.execute(
         """SELECT supplier_article, oblast_okrug, warehouse_name, COUNT(*) as cnt
@@ -207,8 +222,6 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
            GROUP BY supplier_article, oblast_okrug, warehouse_name"""
     ):
         sku = row[0]
-        # Use customer delivery region (oblastOkrugName) for demand signal;
-        # fall back to fulfilling warehouse name for international orders (BY, KZ, etc.)
         cluster = oblast_okrug_to_cluster(row[1]) or warehouse_to_cluster(row[2])
         key = (sku, cluster)
         if key not in cluster_data:
