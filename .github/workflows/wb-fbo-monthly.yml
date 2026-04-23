@@ -1,0 +1,60 @@
+name: WB FBO Monthly Supply Plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Sales look-back window in days (default 30)"
+        required: false
+        default: "30"
+  schedule:
+    # 1st of every month at 09:00 MSK = 06:00 UTC
+    - cron: "0 6 1 * *"
+
+jobs:
+  wb-fbo-monthly:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: wb-fbo-monthly
+      cancel-in-progress: false
+    env:
+      WB_FEEDBACKS_TOKEN: ${{ secrets.WB_FEEDBACKS_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          missing=""
+          [ -z "$WB_FEEDBACKS_TOKEN" ] && missing="$missing WB_FEEDBACKS_TOKEN"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Init DB
+        run: python cli.py init-wb-fbo-db
+
+      - name: Run WB FBO monthly
+        run: python cli.py wb-fbo-monthly
+
+      - name: Upload Excel artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wb-fbo-${{ github.run_id }}
+          path: output/wb_fbo_*.xlsx
+          retention-days: 90
+          if-no-files-found: warn

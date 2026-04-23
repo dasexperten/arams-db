@@ -19,6 +19,7 @@ ETL + аналитика для **двух API Ozon** и **Feedbacks API Wildber
 
 **Полный playbook с граблями и контрактами обеих API — в
 `.claude/skills/ozon-skill/SKILL.md`.** Подтягивается автоматически по триггерам.
+**WB FBO калькулятор поставки — в `.claude/skills/wb-fbo/SKILL.md`** (зеркало `.claude/skills/ozon-fbo-calculator/SKILL.md` для WB).
 
 ## Структура
 

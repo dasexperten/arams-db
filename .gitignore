@@ -9,4 +9,5 @@ venv/
 .vscode/
 data/
 reports/
+output/
 *.log
