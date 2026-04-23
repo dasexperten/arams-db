@@ -1212,6 +1212,39 @@ def cmd_calc_wb_fbo(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_list_wb_warehouses(_: argparse.Namespace) -> int:
+    """Print all warehouse names from fbo_stocks with their current cluster mapping."""
+    from wb_fbo.clusters import warehouse_to_cluster
+    with fbo_db.connect() as conn:
+        rows = conn.execute(
+            """SELECT DISTINCT warehouse_name, region, SUM(quantity) as total_qty
+               FROM fbo_stocks GROUP BY warehouse_name, region
+               ORDER BY total_qty DESC"""
+        ).fetchall()
+    if not rows:
+        print("fbo_stocks is empty — run wb-fbo-monthly first")
+        return 1
+    unknown = []
+    print(f"{'Склад':<40} {'Регион':<25} {'Qty':>8}  Кластер")
+    print("-" * 90)
+    for r in rows:
+        wh = r[0] or ""
+        region = r[1] or ""
+        qty = r[2] or 0
+        cluster = warehouse_to_cluster(wh, region)
+        line = f"{wh:<40} {region:<25} {qty:>8}  {cluster}"
+        print(line)
+        if cluster == "UNKNOWN":
+            unknown.append(wh)
+    if unknown:
+        print(f"\n⚠️  UNMAPPED ({len(unknown)}) — добавь в CLUSTER_MAP или _WAREHOUSE_HINTS:")
+        for w in unknown:
+            print(f"  {w!r}")
+    else:
+        print("\n✅ Все склады успешно замаплены на кластеры")
+    return 0
+
+
 def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with fbo_db.connect() as conn:
@@ -1804,6 +1837,11 @@ def build_parser() -> argparse.ArgumentParser:
         "wb-fbo-monthly",
         help="END-TO-END: ping → sync stocks → sync sales → calc → excel → telegram",
     ).set_defaults(func=cmd_wb_fbo_monthly)
+
+    sub.add_parser(
+        "list-wb-warehouses",
+        help="Show all WB warehouse names from DB with their cluster mapping (debug)",
+    ).set_defaults(func=cmd_list_wb_warehouses)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
