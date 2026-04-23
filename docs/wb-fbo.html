@@ -334,6 +334,10 @@
   .sku-name { font-weight: 600; font-size: 13px; }
   tr.sku-good .sku-k { color: var(--cyan); font-weight: 600; }
   tr.sku-bad  .sku-k { color: var(--err);  font-weight: 600; }
+  tr.sku-global-deficit { background: rgba(242,92,110, 0.10); }
+  tr.sku-global-deficit .sku-name { color: var(--err); }
+  tr.sku-global-deficit .sku-k    { color: var(--err); font-weight: 600; }
+  .sku-agg-k { font-size: 11px; opacity: 0.7; font-weight: 400; }
   .sku-k { font-weight: 600; }
   .sku-ship { font-weight: 700; color: var(--ink-100); }
 
@@ -594,6 +598,21 @@ async function loadStatus() {
       }).join('');
     }
 
+    // Aggregate K per SKU across all clusters (using full skus list, not filtered)
+    const skuAgg = {};
+    (d.skus || []).forEach(s => {
+      const key = s.sku || '';
+      if (!skuAgg[key]) skuAgg[key] = { stock: 0, sales: 0 };
+      skuAgg[key].stock += (s.stock || 0);
+      skuAgg[key].sales += (s.sales_30d || 0);
+    });
+    // SKUs with aggregate K < 1 (total stock < total sales) — highlighted red
+    const skuRedSet = new Set(
+      Object.entries(skuAgg)
+        .filter(([, v]) => v.sales > 0 && v.stock / v.sales < 1)
+        .map(([k]) => k)
+    );
+
     // Supply plan table — only to_ship > 0
     const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
     if (skus.length) {
@@ -621,10 +640,16 @@ async function loadStatus() {
             return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
           })
           .forEach(s => {
-            const rowCls = s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '';
+            const isRedSku = skuRedSet.has(s.sku || '');
+            const rowCls = isRedSku ? 'sku-global-deficit' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
             const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
+            const aggK   = skuAgg[s.sku || ''];
+            const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
+            const skuLabel = isRedSku && aggKDisp
+              ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
+              : esc(s.sku || '');
             rows.push(`<tr class="${rowCls}">
-              <td class="sku-name">${esc(s.sku || '')}</td>
+              <td class="sku-name">${skuLabel}</td>
               <td style="color:var(--ink-60)">${fmt(s.stock)}</td>
               <td style="color:var(--ink-60)">${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
