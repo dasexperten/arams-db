@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: wb-fbo-monthly
-      cancel-in-progress: false
+      cancel-in-progress: true
     permissions:
       contents: write
     env:
