@@ -1,8 +1,6 @@
 import math
 import re
 
-from .clusters import warehouse_to_cluster, CLUSTER_UNKNOWN
-
 # Hard-coded — do not change without explicit instruction from Aram.
 K_LOW = 0.8
 K_HIGH = 1.2
@@ -71,36 +69,29 @@ def classify_zone(k: float) -> str:
 
 
 def calculate_plan(rows: list[dict]) -> list[dict]:
-    """Calculate supply plan for each (sku, warehouse) pair.
+    """Calculate supply plan for each (sku, cluster) pair.
 
-    Input:  [{sku, warehouse, stock, sales_30d}, ...]
-    Output: [{sku, warehouse, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag}, ...]
-
-    cluster is resolved via warehouse_to_cluster(). UNKNOWN warehouse → flag added.
+    Input:  [{sku, cluster, stock, sales_30d}, ...]
+    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag}, ...]
     """
     result = []
     for row in rows:
         sku = str(row.get("sku") or "").strip()
-        warehouse = str(row.get("warehouse") or "").strip()
+        cluster = str(row.get("cluster") or "").strip()
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
-
-        cluster = warehouse_to_cluster(warehouse)
 
         flags: list[str] = []
         k: float | None = None
         zone = ZONE_NORMAL
         to_ship = 0
 
-        if cluster == CLUSTER_UNKNOWN:
-            flags.append(f"⚠️ Unknown warehouse — добавь в CLUSTER_MAP: {warehouse!r}")
-
         if stock < 0 or sales < 0:
             flags.append("⚠️ Некорректные данные")
             pack_size = detect_pack_size(sku)
             if pack_size is None:
                 flags.append(f"⚠️ Unknown pack для SKU {sku}")
-            result.append(_row(sku, warehouse, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags))
+            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags))
             continue
 
         if sales == 0:
@@ -124,15 +115,14 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             raw = max(0.0, target - stock)
             to_ship = roundup_to_multiple(raw, pack_size) if raw > 0 else 0
 
-        result.append(_row(sku, warehouse, cluster, stock, sales, k, zone, pack_size, to_ship, flags))
+        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags))
 
     return result
 
 
-def _row(sku, warehouse, cluster, stock, sales, k, zone, pack_size, to_ship, flags):
+def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags):
     return {
         "sku": sku,
-        "warehouse": warehouse,
         "cluster": cluster,
         "stock": stock,
         "sales_30d": sales,

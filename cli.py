@@ -1216,7 +1216,7 @@ def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with fbo_db.connect() as conn:
         plans = [dict(r) for r in conn.execute(
-            "SELECT * FROM fbo_plans WHERE run_date = ? ORDER BY cluster, warehouse, sku",
+            "SELECT * FROM fbo_plans WHERE run_date = ? ORDER BY cluster, sku",
             (run_date,),
         )]
     if not plans:
@@ -1310,7 +1310,43 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             finished_at=datetime.utcnow().isoformat(),
         )
 
-    # 7. Telegram sendDocument
+    # 7. Write status JSON for dashboard (no auth required — public repo)
+    try:
+        cluster_stats: dict[str, dict] = {}
+        for p in plans:
+            cl = p.get("cluster") or "?"
+            if cl not in cluster_stats:
+                cluster_stats[cl] = {"to_ship": 0, "sku_count": 0, "oos": 0, "deficit": 0}
+            cluster_stats[cl]["sku_count"] += 1
+            cluster_stats[cl]["to_ship"] += (p.get("to_ship") or 0)
+            if "🔴 Товар вышел" in (p.get("flag") or ""):
+                cluster_stats[cl]["oos"] += 1
+            if p.get("zone") == "DEFICIT":
+                cluster_stats[cl]["deficit"] += 1
+
+        status_json = {
+            "run_date": run_date,
+            "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "stocks_rows": stocks_result.get("rows_fetched", 0),
+            "sales_rows": sales_result.get("rows_fetched", 0),
+            "total_skus": summary["total"],
+            "to_ship_count": summary["to_ship_count"],
+            "to_ship_units": summary["to_ship_units"],
+            "oos_count": summary["oos"],
+            "overstock_count": summary["overstock"],
+            "unknown_pack": summary["unknown_pack"],
+            "exit_code": exit_code,
+            "clusters": cluster_stats,
+        }
+        Path("docs").mkdir(exist_ok=True)
+        Path("docs/wb-fbo-status.json").write_text(
+            json.dumps(status_json, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print("[wb-fbo-monthly] status JSON written to docs/wb-fbo-status.json", flush=True)
+    except Exception as e:
+        print(f"[wb-fbo-monthly] status JSON FAILED: {e}", flush=True)
+
+    # 8. Telegram sendDocument
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if token and chat_id:
@@ -1321,14 +1357,13 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
         )
         caption = (
             f"<b>📦 WB-FBO план готов · {run_date}</b>\n\n"
-            f"Обработано: <b>{summary['total']}</b> SKU × склад\n"
+            f"Обработано: <b>{summary['total']}</b> SKU × кластер\n"
             f"К поставке: <b>{summary['to_ship_count']}</b> позиций, "
             f"<b>{summary['to_ship_units']}</b> шт. суммарно\n"
             f"В норме: <b>{summary['normal']}</b> позиций\n"
             f"Overstock (блок): <b>{summary['overstock']}</b> позиций\n"
             f"Out-of-stock 🔴: <b>{summary['oos']}</b> позиций\n"
-            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций\n"
-            f"Unknown warehouse ⚠️: <b>{summary.get('unknown_wh', 0)}</b> позиций"
+            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций"
             + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
         )
         try:

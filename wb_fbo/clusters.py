@@ -16,6 +16,7 @@ CLUSTER_MAP warehouse names are preliminary — update after first real API run.
 
 CLUSTER_EAST = "Восточный"
 CLUSTER_CENTRAL = "Центральный"
+CLUSTER_VOLGA = "Волга"
 CLUSTER_SOUTH = "Южный"
 CLUSTER_NW = "Северо-западный"
 CLUSTER_OTHER = "Прочие"
@@ -23,12 +24,14 @@ CLUSTER_UNKNOWN = "UNKNOWN"
 
 # Exact warehouse name → cluster.  Update after first real API run to match actual names.
 CLUSTER_MAP: dict[str, str] = {
-    # Центральный (ЦФО + ПФО)
+    # Центральный (ЦФО)
     "Коледино": CLUSTER_CENTRAL,
     "Тула (Алексин)": CLUSTER_CENTRAL,
-    "Казань": CLUSTER_CENTRAL,
     "Рязань (Тюшевское)": CLUSTER_CENTRAL,
-    "Самара (Новосемейкино)": CLUSTER_CENTRAL,
+    # Волга (ПФО)
+    "Казань": CLUSTER_VOLGA,
+    "Самара (Новосемейкино)": CLUSTER_VOLGA,
+    "Сарапул": CLUSTER_VOLGA,
     # Южный (ЮФО + СКФО)
     "Краснодар": CLUSTER_SOUTH,
     "Невинномысск": CLUSTER_SOUTH,
@@ -65,10 +68,10 @@ _REGION_MAP: dict[str, str] = {
     "центр": CLUSTER_CENTRAL,
     "центральный": CLUSTER_CENTRAL,
     "цфо": CLUSTER_CENTRAL,
-    # Приволжский ФО → Центральный
-    "поволжье": CLUSTER_CENTRAL,
-    "приволжский": CLUSTER_CENTRAL,
-    "пфо": CLUSTER_CENTRAL,
+    # Приволжский ФО → Волга
+    "поволжье": CLUSTER_VOLGA,
+    "приволжский": CLUSTER_VOLGA,
+    "пфо": CLUSTER_VOLGA,
     # Южный ФО → Южный
     "юг": CLUSTER_SOUTH,
     "южный": CLUSTER_SOUTH,
@@ -99,17 +102,22 @@ _WAREHOUSE_HINTS: list[tuple[str, str]] = [
     ("хабаровск", CLUSTER_EAST),
     ("владивосток", CLUSTER_EAST),
     ("сибирь", CLUSTER_EAST),
-    # Центральный
+    # Центральный (ЦФО)
     ("москва", CLUSTER_CENTRAL),
     ("коледино", CLUSTER_CENTRAL),
     ("электросталь", CLUSTER_CENTRAL),
     ("тула", CLUSTER_CENTRAL),
     ("подольск", CLUSTER_CENTRAL),
-    ("казань", CLUSTER_CENTRAL),
-    ("нижний новгород", CLUSTER_CENTRAL),
-    ("самара", CLUSTER_CENTRAL),
-    ("уфа", CLUSTER_CENTRAL),
-    ("пермь", CLUSTER_CENTRAL),
+    # Волга (ПФО)
+    ("казань", CLUSTER_VOLGA),
+    ("сарапул", CLUSTER_VOLGA),
+    ("нижний новгород", CLUSTER_VOLGA),
+    ("самара", CLUSTER_VOLGA),
+    ("уфа", CLUSTER_VOLGA),
+    ("пермь", CLUSTER_VOLGA),
+    ("саратов", CLUSTER_VOLGA),
+    ("ульяновск", CLUSTER_VOLGA),
+    ("оренбург", CLUSTER_VOLGA),
     # Южный
     ("краснодар", CLUSTER_SOUTH),
     ("ростов", CLUSTER_SOUTH),
@@ -169,4 +177,4 @@ def region_to_cluster(region: str | None, warehouse_name: str | None = None) -> 
     return CLUSTER_OTHER
 
 
-ALL_CLUSTERS = [CLUSTER_CENTRAL, CLUSTER_SOUTH, CLUSTER_NW, CLUSTER_EAST, CLUSTER_OTHER]
+ALL_CLUSTERS = [CLUSTER_CENTRAL, CLUSTER_VOLGA, CLUSTER_SOUTH, CLUSTER_NW, CLUSTER_EAST, CLUSTER_OTHER]
