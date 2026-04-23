@@ -376,7 +376,7 @@
       <button class="btn btn-ghost" onclick="loadAll()">Обновить данные</button>
     </div>
     <p class="action-note">
-      Нажми «Рун workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
+      Нажми «Run workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
     </p>
   </div>
 
@@ -399,7 +399,7 @@
 
 <!-- ── Footer ── -->
 <footer class="footer">
-  <span>&copy; 2025 Das Experten · Wildberries FBO</span>
+  <span>© 2025 Das Experten · Wildberries FBO</span>
   <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub →</a>
 </footer>
 
@@ -431,25 +431,30 @@ async function loadStatus() {
     loadEl.classList.add('hidden');
     grid.classList.remove('hidden');
 
+    // Hero subtitle
     if (d.run_date) {
       document.getElementById('hero-sub').textContent =
         `Расчёт от ${d.run_date} · ${fmt(d.stocks_rows)} позиций остатков · ${fmt(d.sales_rows)} продаж`;
     }
 
+    // OOS banner
     if (d.oos_count > 0) {
       const b = document.getElementById('oos-banner');
       b.textContent = `${d.oos_count} позиций в out-of-stock — требуют приоритетной отгрузки`;
       b.classList.remove('hidden');
     }
 
+    // Metrics
     grid.innerHTML =
       metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
       metricCard(d.to_ship_count,      'SKU × кластеров', '') +
       metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
       metricCard(d.overstock_count,    'Overstock',       '');
 
+    // Clusters
     const clusters = d.clusters || {};
     const keys = CLUSTER_ORDER.filter(k => clusters[k]);
+    // append any unknown clusters not in fixed order
     Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') keys.push(k); });
 
     if (keys.length) {
