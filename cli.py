@@ -1216,7 +1216,7 @@ def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with fbo_db.connect() as conn:
         plans = [dict(r) for r in conn.execute(
-            "SELECT * FROM fbo_plans WHERE run_date = ? ORDER BY warehouse, sku",
+            "SELECT * FROM fbo_plans WHERE run_date = ? ORDER BY cluster, warehouse, sku",
             (run_date,),
         )]
     if not plans:
@@ -1314,6 +1314,11 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if token and chat_id:
+        cluster_lines = "\n".join(
+            f"  {cl}: <b>{qty}</b> шт"
+            for cl, qty in sorted(summary.get("cluster_ship", {}).items(), key=lambda x: -x[1])
+            if qty > 0
+        )
         caption = (
             f"<b>📦 WB-FBO план готов · {run_date}</b>\n\n"
             f"Обработано: <b>{summary['total']}</b> SKU × склад\n"
@@ -1322,7 +1327,9 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             f"В норме: <b>{summary['normal']}</b> позиций\n"
             f"Overstock (блок): <b>{summary['overstock']}</b> позиций\n"
             f"Out-of-stock 🔴: <b>{summary['oos']}</b> позиций\n"
-            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций"
+            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций\n"
+            f"Unknown warehouse ⚠️: <b>{summary.get('unknown_wh', 0)}</b> позиций"
+            + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
         )
         try:
             _tg_send_document(token, chat_id, out_path, caption)

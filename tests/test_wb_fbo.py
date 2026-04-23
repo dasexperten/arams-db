@@ -5,9 +5,9 @@ Covers all cases from SKILL.md:
 - Packaging detection + ROUNDUP
 - Edge cases: no sales, out-of-stock, hidden deficit, negatives
 - DB aggregation: duplicates sum correctly
-- Weighted-avg K for summary rows
 - Return filter (saleID R vs S)
 - Pagination stop on < 250 000 rows
+- Cluster mapping: CLUSTER_MAP exact match + fallback + UNKNOWN flag
 """
 
 import json
@@ -23,6 +23,7 @@ from wb_fbo.calc import (
 )
 from wb_fbo import db as fbo_db
 from wb_fbo.report import build_summary
+from wb_fbo.clusters import warehouse_to_cluster, CLUSTER_MAP, CLUSTER_UNKNOWN
 
 
 # ---------------------------------------------------------------------------
@@ -74,23 +75,23 @@ def test_packaging_detection(sku, expected_pack):
 
 def test_packaging_rounding():
     # DE201 → pack=72. stock=50, sales=120 → target=180, raw=130 → ROUNDUP(130/72)*72=144
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 50, "sales_30d": 120}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 50, "sales_30d": 120}]
     plans = calculate_plan(rows)
     assert plans[0]["to_ship"] == 144
     assert plans[0]["zone"] == ZONE_DEFICIT
 
     # DE201 AA → pack=36. stock=0, sales=10 → target=15, raw=15 → ROUNDUP(15/36)*36=36
-    rows = [{"sku": "DE201 AA", "cluster": "Центральный", "stock": 0, "sales_30d": 10}]
+    rows = [{"sku": "DE201 AA", "warehouse": "Коледино", "stock": 0, "sales_30d": 10}]
     plans = calculate_plan(rows)
     assert plans[0]["to_ship"] == 36
 
     # DE119 → pack=288. stock=100, sales=200 → target=300, raw=200 → ROUNDUP(200/288)*288=288
-    rows = [{"sku": "DE119", "cluster": "Центральный", "stock": 100, "sales_30d": 200}]
+    rows = [{"sku": "DE119", "warehouse": "Коледино", "stock": 100, "sales_30d": 200}]
     plans = calculate_plan(rows)
     assert plans[0]["to_ship"] == 288
 
     # DE119 AAAA → pack=144. stock=10, sales=20 → target=30, raw=20 → ROUNDUP(20/144)*144=144
-    rows = [{"sku": "DE119 AAAA", "cluster": "Центральный", "stock": 10, "sales_30d": 20}]
+    rows = [{"sku": "DE119 AAAA", "warehouse": "Коледино", "stock": 10, "sales_30d": 20}]
     plans = calculate_plan(rows)
     assert plans[0]["to_ship"] == 144
 
@@ -100,7 +101,7 @@ def test_packaging_rounding():
 # ---------------------------------------------------------------------------
 
 def test_edge_sales_zero():
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 50, "sales_30d": 0}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 50, "sales_30d": 0}]
     plan = calculate_plan(rows)[0]
     assert plan["k"] is None
     assert plan["to_ship"] == 0
@@ -108,7 +109,7 @@ def test_edge_sales_zero():
 
 
 def test_edge_stock_zero_sales_positive():
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 0, "sales_30d": 30}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 0, "sales_30d": 30}]
     plan = calculate_plan(rows)[0]
     assert "🔴 Товар вышел" in plan["flag"]
     assert plan["zone"] == ZONE_DEFICIT
@@ -118,28 +119,28 @@ def test_edge_stock_zero_sales_positive():
 
 def test_edge_hidden_deficit():
     # stock < 5 AND K < 0.2
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 2, "sales_30d": 100}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 2, "sales_30d": 100}]
     plan = calculate_plan(rows)[0]
     assert "⚠️ Возможен дефицит — проверь вручную" in plan["flag"]
     assert plan["zone"] == ZONE_DEFICIT
 
 
 def test_edge_negative_values():
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": -1, "sales_30d": 10}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": -1, "sales_30d": 10}]
     plan = calculate_plan(rows)[0]
     assert "⚠️ Некорректные данные" in plan["flag"]
     assert plan["to_ship"] == 0
 
 
 def test_edge_unknown_pack():
-    rows = [{"sku": "UNKNOWN-SKU", "cluster": "Центральный", "stock": 0, "sales_30d": 10}]
+    rows = [{"sku": "UNKNOWN-SKU", "warehouse": "Коледино", "stock": 0, "sales_30d": 10}]
     plan = calculate_plan(rows)[0]
     assert "Unknown pack" in plan["flag"]
     assert plan["to_ship"] == 0
 
 
 def test_overstock_no_ship():
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 1000, "sales_30d": 100}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 1000, "sales_30d": 100}]
     plan = calculate_plan(rows)[0]
     assert plan["zone"] == ZONE_OVERSTOCK
     assert plan["to_ship"] == 0
@@ -147,10 +148,46 @@ def test_overstock_no_ship():
 
 def test_normal_zone_no_ship():
     # K = 100/100 = 1.0 → NORMAL
-    rows = [{"sku": "DE201", "cluster": "Центральный", "stock": 100, "sales_30d": 100}]
+    rows = [{"sku": "DE201", "warehouse": "Коледино", "stock": 100, "sales_30d": 100}]
     plan = calculate_plan(rows)[0]
     assert plan["zone"] == ZONE_NORMAL
     assert plan["to_ship"] == 0
+
+
+# ---------------------------------------------------------------------------
+# clusters.py — CLUSTER_MAP and fallback routing
+# ---------------------------------------------------------------------------
+
+def test_cluster_mapping_exact():
+    """CLUSTER_MAP exact matches."""
+    assert warehouse_to_cluster("Коледино") == "Центральный"
+    assert warehouse_to_cluster("Краснодар") == "Южный"
+    assert warehouse_to_cluster("СПб Шушары") == "Северо-западный"
+    assert warehouse_to_cluster("Екатеринбург Перспективный 14") == "Восточный"
+    assert warehouse_to_cluster("Казань") == "Центральный"
+
+
+def test_cluster_mapping_unknown_warehouse_flag():
+    """Unknown warehouse name → CLUSTER_UNKNOWN, calc adds flag."""
+    rows = [{"sku": "DE201", "warehouse": "Неизвестный склад", "stock": 10, "sales_30d": 5}]
+    plan = calculate_plan(rows)[0]
+    assert plan["cluster"] == CLUSTER_UNKNOWN
+    assert "Unknown warehouse" in plan["flag"]
+    # Should NOT fail the whole run — zone is still calculated normally
+    assert plan["zone"] in (ZONE_NORMAL, ZONE_DEFICIT, ZONE_OVERSTOCK)
+
+
+def test_cluster_mapping_region_fallback():
+    """When warehouse not in CLUSTER_MAP, region field is used."""
+    assert warehouse_to_cluster("Нет такого склада", region="цфо") == "Центральный"
+    assert warehouse_to_cluster("Нет такого склада", region="юфо") == "Южный"
+    assert warehouse_to_cluster("Нет такого склада", region="сзфо") == "Северо-западный"
+
+
+def test_cluster_mapping_warehouse_hint_fallback():
+    """When neither exact name nor region known, substring hint is used."""
+    assert warehouse_to_cluster("Москва Запад") == "Центральный"
+    assert warehouse_to_cluster("Новосибирск-2") == "Восточный"
 
 
 # ---------------------------------------------------------------------------
@@ -167,36 +204,36 @@ def mem_db():
     conn.close()
 
 
-def test_aggregation_sku_cluster(mem_db):
-    """Stocks from same SKU across multiple nm_ids in same cluster sum correctly."""
+def test_aggregation_sku_warehouse(mem_db):
+    """Stocks from same SKU+warehouse across multiple nm_ids sum correctly."""
     stocks = [
         {"nmId": 1, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE201",
-         "region": "цфо", "quantity": 30, "inWayToClient": 0, "inWayFromClient": 0},
-        {"nmId": 2, "warehouseId": 2, "warehouseName": "Москва", "vendorCode": "DE201",
-         "region": "центральный", "quantity": 20, "inWayToClient": 0, "inWayFromClient": 0},
+         "region": None, "quantity": 30, "inWayToClient": 0, "inWayFromClient": 0},
+        {"nmId": 2, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE201",
+         "region": None, "quantity": 20, "inWayToClient": 0, "inWayFromClient": 0},
     ]
     fbo_db.upsert_stocks(mem_db, stocks, "2026-04-01")
     mem_db.commit()
 
     rows = fbo_db.load_plan_inputs(mem_db, "2026-04-01")
-    de201_central = next((r for r in rows if r["sku"] == "DE201" and r["cluster"] == "Центральный"), None)
-    assert de201_central is not None
-    assert de201_central["stock"] == 50  # 30 + 20, both map to Центральный
+    de201 = next((r for r in rows if r["sku"] == "DE201" and r["warehouse"] == "Коледино"), None)
+    assert de201 is not None
+    assert de201["stock"] == 50  # 30 + 20
 
 
 def test_return_filter(mem_db):
     """R-prefixed saleIDs are excluded from sales_30d count."""
     sales = [
         {"saleID": "S001", "supplierArticle": "DE201", "nmId": 1,
-         "warehouseName": "Москва", "date": "2026-04-01", "lastChangeDate": "2026-04-01", "forPay": 100},
+         "warehouseName": "Коледино", "date": "2026-04-01", "lastChangeDate": "2026-04-01", "forPay": 100},
         {"saleID": "S002", "supplierArticle": "DE201", "nmId": 1,
-         "warehouseName": "Москва", "date": "2026-04-02", "lastChangeDate": "2026-04-02", "forPay": 100},
+         "warehouseName": "Коледино", "date": "2026-04-02", "lastChangeDate": "2026-04-02", "forPay": 100},
         {"saleID": "R003", "supplierArticle": "DE201", "nmId": 1,
-         "warehouseName": "Москва", "date": "2026-04-03", "lastChangeDate": "2026-04-03", "forPay": -100},
+         "warehouseName": "Коледино", "date": "2026-04-03", "lastChangeDate": "2026-04-03", "forPay": -100},
     ]
     fbo_db.upsert_sales(mem_db, sales)
-    stocks = [{"nmId": 1, "warehouseId": 1, "warehouseName": "Москва", "vendorCode": "DE201",
-               "region": "центральный", "quantity": 5, "inWayToClient": 0, "inWayFromClient": 0}]
+    stocks = [{"nmId": 1, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE201",
+               "region": None, "quantity": 5, "inWayToClient": 0, "inWayFromClient": 0}]
     fbo_db.upsert_stocks(mem_db, stocks, "2026-04-01")
     mem_db.commit()
 
@@ -206,17 +243,20 @@ def test_return_filter(mem_db):
 
 
 # ---------------------------------------------------------------------------
-# report.py — weighted avg K
+# report.py — build_summary counts
 # ---------------------------------------------------------------------------
 
-def test_weighted_avg_k():
-    """build_summary correctly counts zones."""
+def test_build_summary():
+    """build_summary correctly counts zones and cluster breakdown."""
     plans = [
-        {"sku": "DE201", "cluster": "Центральный", "stock": 10, "sales_30d": 100,
+        {"sku": "DE201", "warehouse": "Коледино", "cluster": "Центральный",
+         "stock": 10, "sales_30d": 100,
          "k": 0.1, "zone": ZONE_DEFICIT, "pack_size": 72, "to_ship": 144, "flag": "🔴 Товар вышел"},
-        {"sku": "DE206", "cluster": "Центральный", "stock": 100, "sales_30d": 50,
+        {"sku": "DE206", "warehouse": "Коледино", "cluster": "Центральный",
+         "stock": 100, "sales_30d": 50,
          "k": 2.0, "zone": ZONE_OVERSTOCK, "pack_size": 72, "to_ship": 0, "flag": ""},
-        {"sku": "DE210", "cluster": "Центральный", "stock": 90, "sales_30d": 100,
+        {"sku": "DE210", "warehouse": "Краснодар", "cluster": "Южный",
+         "stock": 90, "sales_30d": 100,
          "k": 0.9, "zone": ZONE_NORMAL, "pack_size": 72, "to_ship": 0, "flag": ""},
     ]
     s = build_summary(plans)
@@ -225,6 +265,8 @@ def test_weighted_avg_k():
     assert s["to_ship_units"] == 144
     assert s["overstock"] == 1
     assert s["oos"] == 1
+    assert s["cluster_ship"]["Центральный"] == 144
+    assert s["cluster_ship"].get("Южный", 0) == 0
 
 
 # ---------------------------------------------------------------------------

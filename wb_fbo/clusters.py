@@ -1,14 +1,17 @@
 """Mapping from WB region/warehouse names to Das Experten's 4 supply clusters.
 
 Source: user-defined clustering:
-  Восточный      — СФО + УФО + ДФО
+  Восточный      — СФО + УФО + ДФО + Казахстан
   Центральный    — ЦФО + ПФО
   Южный          — ЮФО + СКФО
   Северо-западный — СЗФО
 
-WB stocks API returns a `region` field per row. We normalise to lowercase
-and look up the cluster. If the region is not recognised we fall back to
-the warehouse name lookup, then to "Прочие".
+Primary lookup: CLUSTER_MAP (exact warehouse names from WB API).
+Fallback 1: region field substring matching (_REGION_MAP).
+Fallback 2: warehouse name substring hints (_WAREHOUSE_HINTS).
+Fallback 3: CLUSTER_OTHER ("Прочие").
+
+CLUSTER_MAP warehouse names are preliminary — update after first real API run.
 """
 
 CLUSTER_EAST = "Восточный"
@@ -16,6 +19,25 @@ CLUSTER_CENTRAL = "Центральный"
 CLUSTER_SOUTH = "Южный"
 CLUSTER_NW = "Северо-западный"
 CLUSTER_OTHER = "Прочие"
+CLUSTER_UNKNOWN = "UNKNOWN"
+
+# Exact warehouse name → cluster.  Update after first real API run to match actual names.
+CLUSTER_MAP: dict[str, str] = {
+    # Центральный (ЦФО + ПФО)
+    "Коледино": CLUSTER_CENTRAL,
+    "Тула (Алексин)": CLUSTER_CENTRAL,
+    "Казань": CLUSTER_CENTRAL,
+    "Рязань (Тюшевское)": CLUSTER_CENTRAL,
+    "Самара (Новосемейкино)": CLUSTER_CENTRAL,
+    # Южный (ЮФО + СКФО)
+    "Краснодар": CLUSTER_SOUTH,
+    "Невинномысск": CLUSTER_SOUTH,
+    "Волгоград": CLUSTER_SOUTH,
+    # Северо-западный (СЗФО)
+    "СПб Шушары": CLUSTER_NW,
+    # Восточный (УрФО + СФО + ДФО + Казахстан)
+    "Екатеринбург Перспективный 14": CLUSTER_EAST,
+}
 
 # WB `region` field values → cluster  (lower-cased keys)
 _REGION_MAP: dict[str, str] = {
@@ -102,6 +124,33 @@ _WAREHOUSE_HINTS: list[tuple[str, str]] = [
     ("вологда", CLUSTER_NW),
     ("калининград", CLUSTER_NW),
 ]
+
+
+def warehouse_to_cluster(warehouse_name: str | None, region: str | None = None) -> str:
+    """Map a WB warehouse name to a supply cluster.
+
+    Lookup order:
+    1. Exact match in CLUSTER_MAP (primary — update names after first real run).
+    2. Region field substring match (_REGION_MAP).
+    3. Warehouse name substring hints (_WAREHOUSE_HINTS).
+    4. CLUSTER_UNKNOWN — unknown warehouse, caller should flag it.
+    """
+    if warehouse_name:
+        if warehouse_name in CLUSTER_MAP:
+            return CLUSTER_MAP[warehouse_name]
+
+    if region:
+        key = region.strip().lower()
+        if key in _REGION_MAP:
+            return _REGION_MAP[key]
+
+    if warehouse_name:
+        wh = warehouse_name.strip().lower()
+        for hint, cluster in _WAREHOUSE_HINTS:
+            if hint in wh:
+                return cluster
+
+    return CLUSTER_UNKNOWN
 
 
 def region_to_cluster(region: str | None, warehouse_name: str | None = None) -> str:
