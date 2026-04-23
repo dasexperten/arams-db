@@ -327,6 +327,34 @@
   .footer a { color: var(--ink-300); text-decoration: none; }
   .footer a:hover { color: var(--white); }
 
+  /* ── SKU turnover table ── */
+  .sku-table-wrap {
+    background: var(--ink-900);
+    border: 1px solid var(--ink-700);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .sku-cluster-header td {
+    background: var(--ink-800);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--ink-200);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--ink-700);
+  }
+  tr.sku-good   { background: rgba(120,232,37,  0.07); }
+  tr.sku-bad    { background: rgba(251, 76, 92,  0.07); }
+  tr.sku-zero   { background: rgba(255,255,255,  0.03); }
+  tr.sku-good  .sku-name { color: var(--green); }
+  tr.sku-bad   .sku-name { color: var(--err); }
+  tr.sku-zero  .sku-name { color: var(--ink-300); }
+  .sku-name { font-weight: 600; font-size: 13px; }
+  .sku-k    { font-weight: 600; font-size: 13px; }
+  tr.sku-good .sku-k { color: var(--green); }
+  tr.sku-bad  .sku-k { color: var(--err); }
+
   @media (max-width: 900px) {
     .metrics-grid { grid-template-columns: repeat(2, 1fr); }
     .cluster-grid { grid-template-columns: repeat(2, 1fr); }
@@ -364,6 +392,19 @@
   <div id="clusters-section" class="hidden">
     <div class="section-title">По кластерам</div>
     <div class="cluster-grid" id="cluster-grid"></div>
+  </div>
+
+  <!-- ── SKU turnover ── -->
+  <div id="skus-section" class="hidden">
+    <div class="section-title">Оборачиваемость по SKU</div>
+    <div class="sku-table-wrap">
+      <table>
+        <thead><tr>
+          <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
+        </tr></thead>
+        <tbody id="skus-tbody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ── Actions ── -->
@@ -478,6 +519,35 @@ async function loadStatus() {
       }).join('');
     }
 
+    // SKU turnover table
+    const skus = d.skus || [];
+    if (skus.length) {
+      document.getElementById('skus-section').classList.remove('hidden');
+      const clusterKeys = CLUSTER_ORDER.filter(cl => skus.some(s => s.cluster === cl));
+      Object.keys(d.clusters || {}).forEach(cl => {
+        if (!CLUSTER_ORDER.includes(cl) && cl !== 'UNKNOWN' && skus.some(s => s.cluster === cl)) clusterKeys.push(cl);
+      });
+      const rows = [];
+      clusterKeys.forEach(cl => {
+        rows.push(`<tr class="sku-cluster-header"><td colspan="5">${esc(cl)}</td></tr>`);
+        skus
+          .filter(s => s.cluster === cl)
+          .sort((a, b) => (b.sales_30d || 0) - (a.sales_30d || 0))
+          .forEach(s => {
+            const cls = s.sales_30d === 0 ? 'sku-zero' : s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '';
+            const kDisp = s.k !== null && s.k !== undefined ? s.k.toFixed(2) : '—';
+            rows.push(`<tr class="${cls}">
+              <td class="sku-name">${esc(s.sku || '')}</td>
+              <td style="color:var(--ink-200)">${fmt(s.stock)}</td>
+              <td style="color:var(--ink-200)">${fmt(s.sales_30d)}</td>
+              <td class="sku-k">${kDisp}</td>
+              <td style="color:var(--ink-200);font-weight:${s.to_ship > 0 ? 700 : 400}">${s.to_ship > 0 ? fmt(s.to_ship) : '—'}</td>
+            </tr>`);
+          });
+      });
+      document.getElementById('skus-tbody').innerHTML = rows.join('');
+    }
+
   } catch (e) {
     loadEl.classList.add('hidden');
     errEl.classList.remove('hidden');
@@ -556,6 +626,7 @@ function loadAll() {
   document.getElementById('metrics-grid').classList.add('hidden');
   document.getElementById('oos-banner').classList.add('hidden');
   document.getElementById('clusters-section').classList.add('hidden');
+  document.getElementById('skus-section').classList.add('hidden');
   document.getElementById('runs-loading').classList.remove('hidden');
   document.getElementById('runs-error').classList.add('hidden');
   document.getElementById('runs-wrap').classList.add('hidden');

@@ -1357,6 +1357,20 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             if p.get("zone") == "DEFICIT":
                 cluster_stats[cl]["deficit"] += 1
 
+        sku_list = [
+            {
+                "sku": p.get("sku"),
+                "cluster": p.get("cluster"),
+                "stock": p.get("stock") or 0,
+                "sales_30d": p.get("sales_30d") or 0,
+                "k": round(p["k"], 2) if p.get("k") is not None else None,
+                "zone": p.get("zone"),
+                "to_ship": p.get("to_ship") or 0,
+                "flag": p.get("flag") or "",
+            }
+            for p in plans
+        ]
+
         status_json = {
             "run_date": run_date,
             "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -1370,6 +1384,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             "unknown_pack": summary["unknown_pack"],
             "exit_code": exit_code,
             "clusters": cluster_stats,
+            "skus": sku_list,
         }
         Path("docs").mkdir(exist_ok=True)
         Path("docs/wb-fbo-status.json").write_text(
