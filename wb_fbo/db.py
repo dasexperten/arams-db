@@ -11,17 +11,17 @@ from .clusters import warehouse_to_cluster, oblast_okrug_to_cluster
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS fbo_stocks (
     nm_id           INTEGER NOT NULL,
-    warehouse_id    INTEGER NOT NULL,
+    warehouse_name  TEXT NOT NULL DEFAULT '',
     run_date        TEXT NOT NULL,
     vendor_code     TEXT,
-    warehouse_name  TEXT,
+    warehouse_id    INTEGER,
     region          TEXT,
     quantity        INTEGER DEFAULT 0,
     in_way_to_client    INTEGER DEFAULT 0,
     in_way_from_client  INTEGER DEFAULT 0,
     raw_payload     TEXT,
     synced_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (nm_id, warehouse_id, run_date)
+    PRIMARY KEY (nm_id, warehouse_name, run_date)
 );
 
 CREATE INDEX IF NOT EXISTS idx_fbo_stocks_date ON fbo_stocks(run_date);
@@ -113,9 +113,9 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
         :nm_id, :warehouse_id, :run_date, :vendor_code, :warehouse_name, :region,
         :quantity, :in_way_to_client, :in_way_from_client, :raw_payload, datetime('now')
     )
-    ON CONFLICT(nm_id, warehouse_id, run_date) DO UPDATE SET
+    ON CONFLICT(nm_id, warehouse_name, run_date) DO UPDATE SET
         vendor_code=excluded.vendor_code,
-        warehouse_name=excluded.warehouse_name,
+        warehouse_id=excluded.warehouse_id,
         region=excluded.region,
         quantity=excluded.quantity,
         in_way_to_client=excluded.in_way_to_client,
@@ -179,7 +179,7 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     Stocks and sales per warehouse are mapped to clusters via warehouse_to_cluster()
     and summed. Returns only (is_return=0) sales.
 
-    For stocks where vendorCode/supplierArticle is null, falls back to nmId→sku
+    For stocks where vendorCode/supplierArticle is null, falls back to nmId→ sku
     mapping built from fbo_sales (handles items where WB stocks API omits article code).
     """
     if run_date is None:
@@ -253,7 +253,7 @@ def _stock_row(s: dict, run_date: str) -> dict:
         "warehouse_id": s.get("warehouseId") or 0,
         "run_date": run_date,
         "vendor_code": s.get("vendorCode") or s.get("supplierArticle"),
-        "warehouse_name": s.get("warehouseName"),
+        "warehouse_name": s.get("warehouseName") or "",
         "region": s.get("region"),
         "quantity": int(s.get("quantity") or 0),
         "in_way_to_client": int(s.get("inWayToClient") or 0),
