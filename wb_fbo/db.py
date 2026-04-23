@@ -202,19 +202,26 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     cluster_data: dict[tuple, dict] = {}
 
     for row in conn.execute(
-        """SELECT vendor_code, nm_id, warehouse_name, region, SUM(quantity) as qty
+        """SELECT vendor_code, nm_id, warehouse_name, region,
+                  SUM(quantity) as qty, SUM(in_way_to_client) as in_way
            FROM fbo_stocks WHERE run_date = ?
            GROUP BY vendor_code, nm_id, warehouse_name""",
         (run_date,),
     ):
-        sku = row[0] or nm_to_sku.get(int(row[1] or 0))
+        nm_id = int(row[1] or 0)
+        # nm_to_sku (from sales) takes priority over raw vendor_code in stocks API.
+        # This fixes mismatches where WB stores item as "DE210 Набор" in inventory
+        # but "DE210" in sales — we always use the sales article as canonical SKU.
+        sku = nm_to_sku.get(nm_id) or row[0]
         if not sku:
             continue
         cluster = warehouse_to_cluster(row[2], row[3])
         key = (sku, cluster)
         if key not in cluster_data:
             cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
-        cluster_data[key]["stock"] += int(row[4] or 0)
+        # qty = available for new orders; in_way = picked and being delivered.
+        # Both are our physical inventory at this warehouse — sum gives true stock level.
+        cluster_data[key]["stock"] += int(row[4] or 0) + int(row[5] or 0)
 
     for row in conn.execute(
         """SELECT supplier_article, oblast_okrug, warehouse_name, COUNT(*) as cnt
