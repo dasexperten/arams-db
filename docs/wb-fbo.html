@@ -334,9 +334,12 @@
   .sku-name { font-weight: 600; font-size: 13px; }
   tr.sku-good .sku-k { color: var(--cyan); font-weight: 600; }
   tr.sku-bad  .sku-k { color: var(--err);  font-weight: 600; }
-  tr.sku-global-deficit { background: rgba(242,92,110, 0.10); }
-  tr.sku-global-deficit .sku-name { color: var(--err); }
-  tr.sku-global-deficit .sku-k    { color: var(--err); font-weight: 600; }
+  tr.sku-global-over { background: rgba(242,92,110, 0.10); }
+  tr.sku-global-over .sku-name { color: var(--err); }
+  tr.sku-global-over .sku-k    { color: var(--err); font-weight: 600; }
+  tr.sku-global-def { background: rgba(61,197,245, 0.08); }
+  tr.sku-global-def .sku-name { color: var(--cyan); }
+  tr.sku-global-def .sku-k    { color: var(--cyan); font-weight: 600; }
   .sku-agg-k { font-size: 11px; opacity: 0.7; font-weight: 400; }
   .sku-k { font-weight: 600; }
   .sku-ship { font-weight: 700; color: var(--ink-100); }
@@ -606,12 +609,14 @@ async function loadStatus() {
       skuAgg[key].stock += (s.stock || 0);
       skuAgg[key].sales += (s.sales_30d || 0);
     });
-    // SKUs with aggregate K < 1 (total stock < total sales) — highlighted red
-    const skuRedSet = new Set(
-      Object.entries(skuAgg)
-        .filter(([, v]) => v.sales > 0 && v.stock / v.sales < 1)
-        .map(([k]) => k)
-    );
+    // Aggregate K > 1.0 → red (overstock globally), < 0.7 → green (deficit globally)
+    const skuColorMap = {};
+    Object.entries(skuAgg).forEach(([sku, v]) => {
+      if (v.sales === 0) return;
+      const k = v.stock / v.sales;
+      if (k > 1.0)      skuColorMap[sku] = 'red';
+      else if (k < 0.7) skuColorMap[sku] = 'green';
+    });
 
     // Supply plan table — only to_ship > 0
     const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
@@ -640,12 +645,12 @@ async function loadStatus() {
             return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
           })
           .forEach(s => {
-            const isRedSku = skuRedSet.has(s.sku || '');
-            const rowCls = isRedSku ? 'sku-global-deficit' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+            const skuColor = skuColorMap[s.sku || ''];
+            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
             const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
             const aggK   = skuAgg[s.sku || ''];
             const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
-            const skuLabel = isRedSku && aggKDisp
+            const skuLabel = aggKDisp && skuColor
               ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
               : esc(s.sku || '');
             rows.push(`<tr class="${rowCls}">
