@@ -16,6 +16,11 @@ from ozon_seller import etl as seller_etl
 from wb_seller import WBSellerClient, WBFeedbacksAPI
 from wb_seller import db as wb_db
 from wb_seller import etl as wb_etl
+from wb_fbo import WBFBOAPI
+from wb_fbo import db as fbo_db
+from wb_fbo import etl as fbo_etl
+from wb_fbo import calc as fbo_calc
+from wb_fbo import report as fbo_report
 
 
 _REPLIED_PATH = Path(__file__).parent / "data" / "replied_reviews.json"
@@ -115,9 +120,17 @@ def cmd_init(_: argparse.Namespace) -> int:
     db.init_schema()
     seller_db.init_schema()
     wb_db.init_schema()
+    fbo_db.init_schema()
     print("perf schema ready:  ", db._db_path())
     print("seller schema ready:", seller_db._db_path())
     print("wb schema ready:    ", wb_db._db_path())
+    print("wb-fbo schema ready:", fbo_db._db_path())
+    return 0
+
+
+def cmd_init_wb_fbo_db(_: argparse.Namespace) -> int:
+    fbo_db.init_schema()
+    print("wb-fbo schema ready:", fbo_db._db_path())
     return 0
 
 
@@ -1158,6 +1171,204 @@ def _telegram_autoreply_wb(summary: dict, errors: list[dict]) -> None:
         print(f"(telegram notify failed: {e})", file=sys.stderr)
 
 
+def cmd_ping_wb_fbo(_: argparse.Namespace) -> int:
+    with WBFBOAPI() as api:
+        data = api.ping()
+    print("wb-fbo token ok:", json.dumps(data, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_wb_stocks(_: argparse.Namespace) -> int:
+    fbo_db.init_schema()
+    run_date = date.today().isoformat()
+    with WBFBOAPI() as api:
+        result = fbo_etl.sync_stocks(api, run_date)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_sync_wb_sales(args: argparse.Namespace) -> int:
+    fbo_db.init_schema()
+    with WBFBOAPI() as api:
+        result = fbo_etl.sync_sales(api, days=args.days)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_calc_wb_fbo(_: argparse.Namespace) -> int:
+    fbo_db.init_schema()
+    run_date = date.today().isoformat()
+    with fbo_db.connect() as conn:
+        rows = fbo_db.load_plan_inputs(conn)
+    if not rows:
+        print("no data in fbo_stocks/fbo_sales — run sync-wb-stocks and sync-wb-sales first")
+        return 1
+    plans = fbo_calc.calculate_plan(rows)
+    with fbo_db.connect() as conn:
+        n = fbo_db.upsert_plans(conn, plans, run_date)
+    print(f"plans calculated: {n} rows for {run_date}")
+    warnings = sum(1 for p in plans if p.get("flag"))
+    print(f"warnings: {warnings}")
+    return 0
+
+
+def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
+    run_date = date.today().isoformat()
+    with fbo_db.connect() as conn:
+        plans = [dict(r) for r in conn.execute(
+            "SELECT * FROM fbo_plans WHERE run_date = ? ORDER BY cluster, warehouse, sku",
+            (run_date,),
+        )]
+    if not plans:
+        print(f"no plans for {run_date} — run calc-wb-fbo first")
+        return 1
+    out_path = fbo_report.write_excel(plans, run_date, Path("output"))
+    print(f"excel written: {out_path}")
+    return 0
+
+
+def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
+    """END-TO-END: ping → sync stocks → sync sales → calc → excel → telegram."""
+    import html as html_mod
+
+    fbo_db.init_schema()
+    run_date = date.today().isoformat()
+    started_at = datetime.utcnow().isoformat()
+    exit_code = 0
+
+    print(f"[wb-fbo-monthly] start run_date={run_date}", flush=True)
+
+    # 1. Ping
+    try:
+        with WBFBOAPI() as api:
+            api.ping()
+        print("[wb-fbo-monthly] ping ok", flush=True)
+    except Exception as e:
+        msg = f"WB-FBO: токен отклонён — {e}"
+        print(f"[wb-fbo-monthly] FATAL: {msg}", flush=True)
+        _tg_send_text(msg)
+        return 2
+
+    # 2. Sync stocks
+    stocks_result: dict = {}
+    try:
+        with WBFBOAPI() as api:
+            stocks_result = fbo_etl.sync_stocks(api, run_date)
+        print(f"[wb-fbo-monthly] stocks: {stocks_result}", flush=True)
+    except Exception as e:
+        print(f"[wb-fbo-monthly] stocks FAILED: {e}", flush=True)
+        exit_code = 1
+
+    # 3. Sync sales
+    sales_result: dict = {}
+    try:
+        with WBFBOAPI() as api:
+            sales_result = fbo_etl.sync_sales(api, days=30)
+        print(f"[wb-fbo-monthly] sales: {sales_result}", flush=True)
+    except Exception as e:
+        print(f"[wb-fbo-monthly] sales FAILED: {e}", flush=True)
+        exit_code = 1
+
+    if exit_code == 1 and not stocks_result:
+        print("[wb-fbo-monthly] both stocks and sales failed — aborting", flush=True)
+        return 2
+
+    # 4. Calc
+    with fbo_db.connect() as conn:
+        rows = fbo_db.load_plan_inputs(conn)
+    if not rows:
+        print("[wb-fbo-monthly] no data to calculate — aborting", flush=True)
+        return 2
+
+    plans = fbo_calc.calculate_plan(rows)
+    with fbo_db.connect() as conn:
+        fbo_db.upsert_plans(conn, plans, run_date)
+    print(f"[wb-fbo-monthly] plans: {len(plans)} rows", flush=True)
+
+    # 5. Excel
+    try:
+        out_path = fbo_report.write_excel(plans, run_date, Path("output"))
+        print(f"[wb-fbo-monthly] excel: {out_path}", flush=True)
+    except Exception as e:
+        print(f"[wb-fbo-monthly] excel FAILED: {e}", flush=True)
+        return 2
+
+    # 6. Log to DB
+    summary = fbo_report.build_summary(plans)
+    with fbo_db.connect() as conn:
+        fbo_db.log_run(
+            conn,
+            run_date=run_date,
+            stocks_pages=stocks_result.get("pages", 0),
+            stocks_rows=stocks_result.get("rows_fetched", 0),
+            sales_rows=sales_result.get("rows_fetched", 0),
+            plans_created=len(plans),
+            warnings=sum(1 for p in plans if p.get("flag")),
+            excel_path=str(out_path),
+            exit_code=exit_code,
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+        )
+
+    # 7. Telegram sendDocument
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if token and chat_id:
+        cluster_lines = "\n".join(
+            f"  {cl}: <b>{qty}</b> шт"
+            for cl, qty in sorted(summary.get("cluster_ship", {}).items(), key=lambda x: -x[1])
+            if qty > 0
+        )
+        caption = (
+            f"<b>📦 WB-FBO план готов · {run_date}</b>\n\n"
+            f"Обработано: <b>{summary['total']}</b> SKU × склад\n"
+            f"К поставке: <b>{summary['to_ship_count']}</b> позиций, "
+            f"<b>{summary['to_ship_units']}</b> шт. суммарно\n"
+            f"В норме: <b>{summary['normal']}</b> позиций\n"
+            f"Overstock (блок): <b>{summary['overstock']}</b> позиций\n"
+            f"Out-of-stock 🔴: <b>{summary['oos']}</b> позиций\n"
+            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций\n"
+            f"Unknown warehouse ⚠️: <b>{summary.get('unknown_wh', 0)}</b> позиций"
+            + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
+        )
+        try:
+            _tg_send_document(token, chat_id, out_path, caption)
+            print("[wb-fbo-monthly] telegram: sent ok", flush=True)
+        except Exception as e:
+            print(f"[wb-fbo-monthly] telegram FAILED: {e}", flush=True)
+
+    print(f"[wb-fbo-monthly] done exit_code={exit_code}", flush=True)
+    return exit_code
+
+
+def _tg_send_text(text: str) -> None:
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if token and chat_id:
+        try:
+            _tg_send(token, chat_id, text)
+        except Exception:
+            pass
+
+
+def _tg_send_document(token: str, chat_id: str, file_path: Path, caption: str) -> None:
+    import httpx as _httpx
+
+    with open(file_path, "rb") as f:
+        _httpx.post(
+            f"https://api.telegram.org/bot{token}/sendDocument",
+            data={"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"},
+            files={
+                "document": (
+                    file_path.name,
+                    f,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
+            timeout=60,
+        ).raise_for_status()
+
+
 def cmd_ping(_: argparse.Namespace) -> int:
     with OzonPerformanceClient() as c:
         c._auth_header()
@@ -1379,7 +1590,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="ozon-perf", description="Ozon Performance API ETL & analytics")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("init", help="Create SQLite schema (perf + seller)").set_defaults(func=cmd_init)
+    sub.add_parser("init", help="Create SQLite schema (perf + seller + wb-fbo)").set_defaults(func=cmd_init)
+    sub.add_parser("init-wb-fbo-db", help="Create wb_fbo.db schema (idempotent)").set_defaults(func=cmd_init_wb_fbo_db)
     sub.add_parser("ping", help="Test Performance credentials / token fetch").set_defaults(func=cmd_ping)
     sub.add_parser("ping-seller", help="Test Seller API credentials (calls /v1/review/count)")\
         .set_defaults(func=cmd_ping_seller)
@@ -1525,6 +1737,38 @@ def build_parser() -> argparse.ArgumentParser:
              "Useful for verifying token + backlog + Claude output without side effects.",
     )
     arwb.set_defaults(func=cmd_auto_reply_wb)
+
+    sub.add_parser(
+        "ping-wb-fbo",
+        help="Test WB FBO token (GET /ping on common-api)",
+    ).set_defaults(func=cmd_ping_wb_fbo)
+
+    sub.add_parser(
+        "sync-wb-stocks",
+        help="Fetch WB FBO stocks-report into SQLite (all pages)",
+    ).set_defaults(func=cmd_sync_wb_stocks)
+
+    sws = sub.add_parser(
+        "sync-wb-sales",
+        help="Fetch WB supplier/sales for last N days into SQLite",
+    )
+    sws.add_argument("--days", type=int, default=30, help="Look-back window (default 30)")
+    sws.set_defaults(func=cmd_sync_wb_sales)
+
+    sub.add_parser(
+        "calc-wb-fbo",
+        help="Calculate FBO supply plan from latest stocks + sales snapshot",
+    ).set_defaults(func=cmd_calc_wb_fbo)
+
+    sub.add_parser(
+        "report-wb-fbo",
+        help="Generate Excel supply plan for today's run_date into output/",
+    ).set_defaults(func=cmd_report_wb_fbo)
+
+    sub.add_parser(
+        "wb-fbo-monthly",
+        help="END-TO-END: ping → sync stocks → sync sales → calc → excel → telegram",
+    ).set_defaults(func=cmd_wb_fbo_monthly)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
