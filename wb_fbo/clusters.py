@@ -201,6 +201,38 @@ def warehouse_to_cluster(warehouse_name: str | None, region: str | None = None) 
     return CLUSTER_UNKNOWN
 
 
+# WB oblastOkrugName values → cluster  (lower-cased keys)
+_OBLAST_OKRUG_MAP: dict[str, str] = {
+    "центральный федеральный округ": CLUSTER_CENTRAL,
+    "северо-западный федеральный округ": CLUSTER_NW,
+    "южный федеральный округ": CLUSTER_SOUTH,
+    "северо-кавказский федеральный округ": CLUSTER_SOUTH,
+    "приволжский федеральный округ": CLUSTER_VOLGA,
+    "уральский федеральный округ": CLUSTER_EAST,
+    "сибирский федеральный округ": CLUSTER_EAST,
+    "дальневосточный федеральный округ": CLUSTER_EAST,
+    # Сокращения на случай если API вернёт их
+    "цфо": CLUSTER_CENTRAL,
+    "сзфо": CLUSTER_NW,
+    "юфо": CLUSTER_SOUTH,
+    "скфо": CLUSTER_SOUTH,
+    "пфо": CLUSTER_VOLGA,
+    "урфо": CLUSTER_EAST,
+    "сфо": CLUSTER_EAST,
+    "дфо": CLUSTER_EAST,
+}
+
+
+def oblast_okrug_to_cluster(oblast_okrug: str | None) -> str | None:
+    """Map WB oblastOkrugName (customer delivery federal district) to cluster.
+
+    Returns None if not recognized — caller should fall back to warehouse_to_cluster.
+    """
+    if not oblast_okrug:
+        return None
+    return _OBLAST_OKRUG_MAP.get(oblast_okrug.strip().lower())
+
+
 def region_to_cluster(region: str | None, warehouse_name: str | None = None) -> str:
     """Return one of the 4 cluster names, or CLUSTER_OTHER if unrecognised."""
     if region:

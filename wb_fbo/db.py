@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from .clusters import warehouse_to_cluster
+from .clusters import warehouse_to_cluster, oblast_okrug_to_cluster
 
 
 SCHEMA = """
@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS fbo_sales (
     supplier_article    TEXT,
     nm_id               INTEGER,
     warehouse_name      TEXT,
+    oblast_okrug        TEXT,
     date                TEXT,
     last_change_date    TEXT,
     for_pay             REAL,
@@ -40,7 +41,7 @@ CREATE TABLE IF NOT EXISTS fbo_sales (
     synced_at           TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_fbo_sales_article ON fbo_sales(supplier_article, warehouse_name, is_return);
+CREATE INDEX IF NOT EXISTS idx_fbo_sales_article ON fbo_sales(supplier_article, oblast_okrug, is_return);
 
 CREATE TABLE IF NOT EXISTS fbo_plans (
     sku         TEXT NOT NULL,
@@ -131,16 +132,17 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
 def upsert_sales(conn: sqlite3.Connection, sales: list[dict]) -> int:
     sql = """
     INSERT INTO fbo_sales (
-        sale_id, supplier_article, nm_id, warehouse_name,
+        sale_id, supplier_article, nm_id, warehouse_name, oblast_okrug,
         date, last_change_date, for_pay, is_return, raw_payload, synced_at
     ) VALUES (
-        :sale_id, :supplier_article, :nm_id, :warehouse_name,
+        :sale_id, :supplier_article, :nm_id, :warehouse_name, :oblast_okrug,
         :date, :last_change_date, :for_pay, :is_return, :raw_payload, datetime('now')
     )
     ON CONFLICT(sale_id) DO UPDATE SET
         supplier_article=excluded.supplier_article,
         nm_id=excluded.nm_id,
         warehouse_name=excluded.warehouse_name,
+        oblast_okrug=excluded.oblast_okrug,
         date=excluded.date,
         last_change_date=excluded.last_change_date,
         for_pay=excluded.for_pay,
@@ -200,16 +202,18 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         cluster_data[key]["stock"] += int(row[3] or 0)
 
     for row in conn.execute(
-        """SELECT supplier_article, warehouse_name, COUNT(*) as cnt
+        """SELECT supplier_article, oblast_okrug, warehouse_name, COUNT(*) as cnt
            FROM fbo_sales WHERE is_return = 0 AND supplier_article IS NOT NULL
-           GROUP BY supplier_article, warehouse_name"""
+           GROUP BY supplier_article, oblast_okrug, warehouse_name"""
     ):
         sku = row[0]
-        cluster = warehouse_to_cluster(row[1])
+        # Use customer delivery region (oblastOkrugName) for demand signal;
+        # fall back to fulfilling warehouse name for international orders (BY, KZ, etc.)
+        cluster = oblast_okrug_to_cluster(row[1]) or warehouse_to_cluster(row[2])
         key = (sku, cluster)
         if key not in cluster_data:
             cluster_data[key] = {"sku": sku, "cluster": cluster, "stock": 0, "sales_30d": 0}
-        cluster_data[key]["sales_30d"] += int(row[2] or 0)
+        cluster_data[key]["sales_30d"] += int(row[3] or 0)
 
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
@@ -245,6 +249,7 @@ def _sale_row(s: dict) -> dict:
         "supplier_article": s.get("supplierArticle"),
         "nm_id": s.get("nmId"),
         "warehouse_name": s.get("warehouseName"),
+        "oblast_okrug": s.get("oblastOkrugName"),
         "date": s.get("date"),
         "last_change_date": s.get("lastChangeDate"),
         "for_pay": s.get("forPay"),
