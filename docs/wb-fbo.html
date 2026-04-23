@@ -4,132 +4,404 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WB-FBO · Das Experten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --accent: #4a6cf7;
-    --danger: #e53935;
-    --warn: #f57c00;
-    --ok: #388e3c;
-    --bg: #f5f6fa;
-    --card: #fff;
-    --border: #e0e3ef;
-    --text: #1a1d2e;
-    --sub: #6b7280;
-    --deficit-bg: #fcebeb;
-    --normal-bg: #eaf3de;
-    --overstock-bg: #f1efe8;
+    --black:       #000;
+    --ink-900:     #141414;
+    --ink-800:     #1C1C1C;
+    --ink-700:     #242424;
+    --ink-500:     #3A3A3A;
+    --ink-300:     #8A8A8A;
+    --ink-200:     #B8B8B8;
+    --ink-100:     #E5E5E5;
+    --white:       #fff;
+    --green:       #78E825;
+    --green-hover: #86FF2B;
+    --green-ink:   #0E1F00;
+    --err:         #FB4C5C;
+    --warn:        #F5A524;
+    --ok:          #3ECF5E;
+    --ease:        cubic-bezier(.22,.61,.36,1);
+    --ease-out:    cubic-bezier(.25,1,.5,1);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-         background: var(--bg); color: var(--text); line-height: 1.5; }
-  .container { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
-  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
-  .subtitle { color: var(--sub); margin-bottom: 28px; font-size: .9rem; }
-  h2 { font-size: .85rem; font-weight: 700; margin-bottom: 14px; color: var(--sub);
-       text-transform: uppercase; letter-spacing: .06em; }
-  .section { margin-bottom: 36px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .card + .card { margin-top: 12px; }
-  .card-title { font-weight: 600; margin-bottom: 6px; font-size: 1rem; }
-  .metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .metric { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 14px 12px; text-align: center; }
-  .metric-value { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
-  .metric-value.ok { color: var(--ok); }
-  .metric-value.warn { color: var(--warn); }
-  .metric-value.danger { color: var(--danger); }
-  .metric-label { font-size: .73rem; color: var(--sub); margin-top: 4px; }
-  .cluster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-  .cluster-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-                  padding: 16px; }
-  .cluster-name { font-weight: 700; margin-bottom: 8px; font-size: .95rem; }
-  .cluster-ship { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-  .cluster-sub { font-size: .75rem; color: var(--sub); margin-top: 2px; }
-  .cluster-detail { margin-top: 8px; font-size: .78rem; color: var(--sub); }
-  table { width: 100%; border-collapse: collapse; font-size: .86rem; }
-  th { text-align: left; padding: 8px 10px; background: var(--bg); font-weight: 600;
-       border-bottom: 2px solid var(--border); white-space: nowrap; }
-  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  tr:last-child td { border-bottom: none; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; }
-  .badge-ok { background: #e8f5e9; color: var(--ok); }
-  .badge-fail { background: #ffebee; color: var(--danger); }
-  .badge-run { background: #fff3e0; color: var(--warn); }
-  .badge-skip { background: #f3f4f6; color: var(--sub); }
-  .banner { padding: 10px 14px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; }
-  .banner-danger { background: #ffebee; border: 1px solid #e57373; color: var(--danger); }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px;
-         border: none; border-radius: 8px; cursor: pointer; font-size: .9rem;
-         font-weight: 600; text-decoration: none; transition: opacity .15s; }
-  .btn:hover { opacity: .85; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-secondary { background: #e8eaf6; color: var(--accent); }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor;
-             border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading { color: var(--sub); font-size: .9rem; padding: 20px 0; }
-  .err-msg { color: var(--danger); font-size: .85rem; padding: 12px 0; }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--black);
+    color: var(--white);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Nav ── */
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    background: var(--black);
+    border-bottom: 1px solid var(--ink-700);
+    padding: 18px 32px;
+  }
+  .nav-brand {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    text-transform: lowercase;
+    color: var(--white);
+  }
+  .nav-tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-300);
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px 80px; }
+
+  /* ── Hero ── */
+  .hero { padding: 56px 0 40px; }
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-300);
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-size: clamp(36px, 4vw, 64px);
+    font-weight: 300;
+    line-height: 1.02;
+    letter-spacing: -0.018em;
+    color: var(--white);
+  }
+  .hero-sub {
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--ink-300);
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    padding: 48px 0 20px;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    color: var(--white);
+  }
+
+  /* ── Metric cards ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .metric-card {
+    background: var(--ink-900);
+    border: 1px solid var(--ink-700);
+    border-radius: 10px;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .metric-value {
+    font-size: 38px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--white);
+  }
+  .metric-value.accent { color: var(--green); }
+  .metric-value.danger { color: var(--err); }
+  .metric-value.warn   { color: var(--warn); }
+  .metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-300);
+  }
+
+  /* ── OOS Banner ── */
+  .oos-banner {
+    background: rgba(251,76,92,0.10);
+    border: 1px solid rgba(251,76,92,0.35);
+    border-radius: 10px;
+    padding: 13px 18px;
+    color: var(--err);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Cluster tiles ── */
+  .cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .cluster-tile {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--ink-900);
+    aspect-ratio: 1;
+    cursor: default;
+    transition: transform 220ms var(--ease-out);
+  }
+  .cluster-tile:hover { transform: translateY(-2px); }
+  .cluster-halo {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 420ms var(--ease);
+    pointer-events: none;
+  }
+  .cluster-tile:hover .cluster-halo { opacity: 1; }
+  .cluster-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    padding: 20px;
+  }
+  .cluster-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-200);
+    letter-spacing: -0.01em;
+  }
+  .cluster-center {
+    text-align: center;
+    padding: 8px 0;
+  }
+  .cluster-ship-num {
+    font-size: 44px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--white);
+  }
+  .cluster-ship-unit {
+    font-size: 11px;
+    color: var(--ink-200);
+    margin-top: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cluster-meta {
+    font-size: 11px;
+    color: var(--ink-300);
+    text-align: center;
+  }
+  .cluster-oos { color: var(--err); margin-left: 4px; }
+
+  /* ── Action block ── */
+  .action-block {
+    background: var(--ink-900);
+    border: 1px solid var(--ink-700);
+    border-radius: 10px;
+    padding: 26px 22px;
+  }
+  .action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .action-note {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink-300);
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 14px 24px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 120ms var(--ease), border-color 120ms var(--ease), color 120ms var(--ease);
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: var(--green-ink);
+    border-color: var(--green);
+  }
+  .btn-primary:hover { background: var(--green-hover); border-color: var(--green-hover); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--white);
+    border-color: var(--ink-500);
+  }
+  .btn-ghost:hover { border-color: var(--white); background: rgba(255,255,255,0.04); }
+
+  /* ── Run history table ── */
+  .runs-wrap {
+    background: var(--ink-900);
+    border: 1px solid var(--ink-700);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--ink-800); }
+  th {
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-300);
+    border-bottom: 1px solid var(--ink-700);
+  }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--ink-700); }
+  tbody tr:last-child td { border-bottom: none; }
+  .run-link { color: var(--green); text-decoration: none; font-weight: 500; }
+  .run-link:hover { color: var(--green-hover); }
+  .run-num { color: var(--ink-300); }
+
+  /* ── Status badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-ok      { background: #78E82520; color: var(--green); }
+  .badge-fail    { background: #FB4C5C20; color: var(--err); }
+  .badge-run     { background: #F5A52420; color: var(--warn); }
+  .badge-skip    { background: var(--ink-800); color: var(--ink-300); }
+
+  /* ── Loading / error ── */
+  .loading { color: var(--ink-300); font-size: 14px; padding: 32px 0; display: flex; align-items: center; gap: 8px; }
+  .err-msg { color: var(--err); font-size: 14px; padding: 12px 0; }
   .hidden { display: none !important; }
-  .run-date { font-size: .8rem; color: var(--sub); margin-top: 2px; }
-  .actions-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  .info-note { font-size: .78rem; color: var(--sub); margin-top: 10px; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--ink-700);
+    padding: 24px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--ink-300);
+  }
+  .footer a { color: var(--ink-300); text-decoration: none; }
+  .footer a:hover { color: var(--white); }
+
+  @media (max-width: 900px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .cluster-grid { grid-template-columns: repeat(2, 1fr); }
+    .page { padding: 0 16px 60px; }
+    .nav { padding: 16px; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>📦 WB-FBO Пульт управления</h1>
-  <p class="subtitle">Wildberries FBO · Das Experten · Данные обновляются автоматически</p>
 
-  <!-- ── БЛОК 1: Сводка последнего расчёта ── -->
-  <div class="section">
-    <h2>📊 Последний расчёт</h2>
-    <div id="status-loading" class="loading"><span class="spinner"></span> Загружаем данные...</div>
-    <div id="status-error" class="err-msg hidden"></div>
-    <div id="status-wrap" class="hidden">
-      <div id="oos-banner" class="banner banner-danger hidden"></div>
-      <div class="metrics" id="metrics-grid"></div>
-    </div>
+<!-- ── Nav ── -->
+<nav class="nav">
+  <span class="nav-brand">das experten</span>
+  <span class="nav-tag">WB FBO</span>
+</nav>
+
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-eyebrow">Wildberries FBO · Das Experten</div>
+    <h1 class="hero-title">Пульт управления поставками</h1>
+    <p class="hero-sub" id="hero-sub"></p>
   </div>
 
-  <!-- ── БЛОК 2: По кластерам ── -->
-  <div class="section hidden" id="clusters-section">
-    <h2>🗺️ Поставки по кластерам</h2>
+  <!-- ── OOS banner ── -->
+  <div id="oos-banner" class="oos-banner hidden"></div>
+
+  <!-- ── Metrics ── -->
+  <div id="status-loading" class="loading"><span class="spinner"></span> Загружаем данные...</div>
+  <div id="status-error" class="err-msg hidden"></div>
+  <div id="metrics-grid" class="metrics-grid hidden"></div>
+
+  <!-- ── Clusters ── -->
+  <div id="clusters-section" class="hidden">
+    <div class="section-title">По кластерам</div>
     <div class="cluster-grid" id="cluster-grid"></div>
   </div>
 
-  <!-- ── БЛОК 3: Действия ── -->
-  <div class="section">
-    <h2>⚡ Действия</h2>
-    <div class="card">
-      <div class="actions-row">
-        <a class="btn btn-primary"
-           href="https://github.com/dasexperten/arams-db/actions/workflows/wb-fbo-monthly.yml"
-           target="_blank">▶ Запустить расчёт в GitHub Actions →</a>
-        <button class="btn btn-secondary" onclick="loadAll()">🔄 Обновить страницу</button>
-      </div>
-      <p class="info-note">
-        Кнопка откроет GitHub Actions — там нажми «Run workflow». Excel-файл придёт в Telegram после завершения.
-      </p>
+  <!-- ── Actions ── -->
+  <div class="section-title">Действия</div>
+  <div class="action-block">
+    <div class="action-row">
+      <a class="btn btn-primary"
+         href="https://github.com/dasexperten/arams-db/actions/workflows/wb-fbo-monthly.yml"
+         target="_blank">Запустить расчёт в GitHub Actions →</a>
+      <button class="btn btn-ghost" onclick="loadAll()">Обновить данные</button>
+    </div>
+    <p class="action-note">
+      Нажми «Рун workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
+    </p>
+  </div>
+
+  <!-- ── Run history ── -->
+  <div class="section-title">История прогонов</div>
+  <div id="runs-loading" class="loading"><span class="spinner"></span> Загружаем историю...</div>
+  <div id="runs-error" class="err-msg hidden"></div>
+  <div id="runs-wrap" class="hidden">
+    <div class="runs-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Дата запуска</th><th>Статус</th><th>Длительность</th><th>Лог</th>
+        </tr></thead>
+        <tbody id="runs-tbody"></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- ── БЛОК 4: История прогонов ── -->
-  <div class="section">
-    <h2>📋 История прогонов GitHub Actions</h2>
-    <div id="runs-loading" class="loading"><span class="spinner"></span> Загружаем историю...</div>
-    <div id="runs-error" class="err-msg hidden"></div>
-    <div id="runs-wrap" class="hidden">
-      <div class="card" style="padding:0;overflow:hidden;">
-        <table>
-          <thead><tr>
-            <th>#</th><th>Дата запуска</th><th>Статус</th><th>Длительность</th><th>Лог</th>
-          </tr></thead>
-          <tbody id="runs-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+</div><!-- /page -->
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <span>&copy; 2025 Das Experten · Wildberries FBO</span>
+  <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub →</a>
+</footer>
 
 <script>
 const OWNER = 'dasexperten';
@@ -137,157 +409,147 @@ const REPO  = 'arams-db';
 const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/wb-fbo-status.json`;
 const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/wb-fbo-monthly.yml/runs?per_page=10`;
 
-// ── Load status JSON ──────────────────────────────────────────────────────────
+const CLUSTER_ORDER = ['Центральный', 'Южный', 'Волга', 'Восточный', 'Северо-западный'];
+const CLUSTER_HALOS = {
+  'Центральный':     'radial-gradient(ellipse at 50% 80%, #6D28D9 0%, #3D156E 30%, #0C0418 70%)',
+  'Южный':           'radial-gradient(ellipse at 50% 80%, #E8178A 0%, #9C0F5B 30%, #1F0110 70%)',
+  'Волга':           'radial-gradient(ellipse at 50% 80%, #F5A524 0%, #8C5B0A 30%, #1A1004 70%)',
+  'Восточный':       'radial-gradient(ellipse at 50% 80%, #00C2E8 0%, #0077A8 30%, #001520 70%)',
+  'Северо-западный': 'radial-gradient(ellipse at 50% 80%, #FB4C5C 0%, #8C1A24 30%, #1A0509 70%)',
+};
+
 async function loadStatus() {
-  const loading = document.getElementById('status-loading');
+  const loadEl  = document.getElementById('status-loading');
   const errEl   = document.getElementById('status-error');
-  const wrap    = document.getElementById('status-wrap');
+  const grid    = document.getElementById('metrics-grid');
 
   try {
     const r = await fetch(STATUS_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
 
-    loading.classList.add('hidden');
-    wrap.classList.remove('hidden');
+    loadEl.classList.add('hidden');
+    grid.classList.remove('hidden');
 
-    // OOS banner
+    if (d.run_date) {
+      document.getElementById('hero-sub').textContent =
+        `Расчёт от ${d.run_date} · ${fmt(d.stocks_rows)} позиций остатков · ${fmt(d.sales_rows)} продаж`;
+    }
+
     if (d.oos_count > 0) {
       const b = document.getElementById('oos-banner');
-      b.textContent = `🔴 ${d.oos_count} позиций в out-of-stock — требуют приоритетной отгрузки`;
+      b.textContent = `${d.oos_count} позиций в out-of-stock — требуют приоритетной отгрузки`;
       b.classList.remove('hidden');
     }
 
-    // Metrics
-    const grid = document.getElementById('metrics-grid');
-    const runDate = d.run_date || '—';
-    grid.innerHTML = metric(runDate, 'Дата расчёта', '')
-      + metric(d.total_skus, 'SKU × кластер', '')
-      + metric(d.to_ship_count, 'К поставке', d.to_ship_count > 0 ? 'warn' : 'ok')
-      + metric(fmt(d.to_ship_units), 'Итого штук', d.to_ship_units > 0 ? 'accent' : '')
-      + metric(d.oos_count, 'Out-of-stock', d.oos_count > 0 ? 'danger' : 'ok')
-      + metric(d.overstock_count, 'Overstock', '')
-      + metric(d.stocks_rows, 'Остатки WB', '')
-      + metric(d.sales_rows, 'Продаж 30д', '');
+    grid.innerHTML =
+      metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
+      metricCard(d.to_ship_count,      'SKU × кластеров', '') +
+      metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
+      metricCard(d.overstock_count,    'Overstock',       '');
 
-    // Clusters
     const clusters = d.clusters || {};
-    const keys = Object.keys(clusters).sort((a, b) =>
-      (clusters[b].to_ship || 0) - (clusters[a].to_ship || 0));
+    const keys = CLUSTER_ORDER.filter(k => clusters[k]);
+    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') keys.push(k); });
+
     if (keys.length) {
-      const sec  = document.getElementById('clusters-section');
-      const cgrid = document.getElementById('cluster-grid');
-      sec.classList.remove('hidden');
-      cgrid.innerHTML = keys.map(cl => {
+      document.getElementById('clusters-section').classList.remove('hidden');
+      document.getElementById('cluster-grid').innerHTML = keys.map(cl => {
         const c = clusters[cl];
-        return `<div class="cluster-card">
-          <div class="cluster-name">${escHtml(cl)}</div>
-          <div class="cluster-ship">${fmt(c.to_ship || 0)} шт.</div>
-          <div class="cluster-sub">к отгрузке</div>
-          <div class="cluster-detail">
-            ${c.sku_count || 0} SKU
-            ${c.oos > 0 ? ` · <span style="color:var(--danger)">🔴 ${c.oos} OOS</span>` : ''}
-            ${c.deficit > 0 ? ` · ⚠️ ${c.deficit} дефицит` : ''}
+        const halo = CLUSTER_HALOS[cl] || 'radial-gradient(ellipse at 50% 80%, #3A3A3A 0%, #141414 70%)';
+        return `<div class="cluster-tile">
+          <div class="cluster-halo" style="background:${halo}"></div>
+          <div class="cluster-body">
+            <div class="cluster-name">${esc(cl)}</div>
+            <div class="cluster-center">
+              <div class="cluster-ship-num">${fmt(c.to_ship || 0)}</div>
+              <div class="cluster-ship-unit">шт.</div>
+            </div>
+            <div class="cluster-meta">
+              ${c.sku_count || 0} SKU${c.oos > 0 ? `<span class="cluster-oos">· ${c.oos} OOS</span>` : ''}
+            </div>
           </div>
         </div>`;
       }).join('');
     }
 
-    // Generated-at note
-    if (d.generated_at) {
-      const note = document.createElement('p');
-      note.className = 'info-note';
-      note.textContent = `Данные от: ${new Date(d.generated_at).toLocaleString('ru-RU')} UTC`;
-      wrap.appendChild(note);
-    }
-
   } catch (e) {
-    loading.classList.add('hidden');
+    loadEl.classList.add('hidden');
     errEl.classList.remove('hidden');
-    if (e.message.includes('404') || e.message.includes('HTTP 404')) {
-      errEl.textContent = '⚠️ Расчёт ещё не выполнялся — запустите workflow в GitHub Actions.';
-    } else {
-      errEl.textContent = `Ошибка загрузки статуса: ${e.message}`;
-    }
+    errEl.textContent = e.message.includes('404')
+      ? '⚠ Расчёт ещё не выполнялся — запустите workflow в GitHub Actions.'
+      : `Ошибка: ${e.message}`;
   }
 }
 
-// ── Load run history ──────────────────────────────────────────────────────────
 async function loadRuns() {
-  const loading = document.getElementById('runs-loading');
-  const errEl   = document.getElementById('runs-error');
-  const wrap    = document.getElementById('runs-wrap');
-  const tbody   = document.getElementById('runs-tbody');
+  const loadEl = document.getElementById('runs-loading');
+  const errEl  = document.getElementById('runs-error');
+  const wrap   = document.getElementById('runs-wrap');
+  const tbody  = document.getElementById('runs-tbody');
 
   try {
-    const r = await fetch(RUNS_URL, {
-      headers: { 'Accept': 'application/vnd.github+json' }
-    });
+    const r = await fetch(RUNS_URL, { headers: { 'Accept': 'application/vnd.github+json' } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     const runs = data.workflow_runs || [];
 
-    loading.classList.add('hidden');
+    loadEl.classList.add('hidden');
     wrap.classList.remove('hidden');
 
     if (!runs.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--sub);padding:16px">Нет прогонов</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-300);padding:20px">Нет прогонов</td></tr>';
       return;
     }
 
     tbody.innerHTML = runs.map(run => {
       const created = run.created_at ? new Date(run.created_at) : null;
       const updated = run.updated_at ? new Date(run.updated_at) : null;
-      const dur = created && updated
+      const dur = (created && updated)
         ? Math.max(0, Math.round((updated - created) / 60000)) + ' мин'
         : '—';
       return `<tr>
-        <td style="color:var(--sub)">#${run.run_number}</td>
+        <td class="run-num">#${run.run_number}</td>
         <td>${created ? created.toLocaleString('ru-RU') : '—'}</td>
-        <td>${badge(run.conclusion, run.status)}</td>
-        <td>${dur}</td>
-        <td><a href="${escHtml(run.html_url)}" target="_blank" style="color:var(--accent)">→ Лог</a></td>
+        <td>${runBadge(run.conclusion, run.status)}</td>
+        <td style="color:var(--ink-300)">${dur}</td>
+        <td><a class="run-link" href="${esc(run.html_url)}" target="_blank">→ Лог</a></td>
       </tr>`;
     }).join('');
 
   } catch (e) {
-    loading.classList.add('hidden');
+    loadEl.classList.add('hidden');
     errEl.classList.remove('hidden');
     errEl.textContent = `Ошибка загрузки истории: ${e.message}`;
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function metric(value, label, cls) {
-  const valCls = cls ? ` ${cls}` : '';
-  return `<div class="metric">
-    <div class="metric-value${valCls}">${value ?? '—'}</div>
+function metricCard(value, label, cls) {
+  return `<div class="metric-card">
+    <div class="metric-value${cls ? ' ' + cls : ''}">${value ?? '—'}</div>
     <div class="metric-label">${label}</div>
   </div>`;
 }
 
-function badge(conclusion, status) {
+function runBadge(conclusion, status) {
   if (status === 'in_progress' || status === 'queued')
     return `<span class="badge badge-run"><span class="spinner"></span> В процессе</span>`;
-  if (conclusion === 'success')  return `<span class="badge badge-ok">✅ Успех</span>`;
-  if (conclusion === 'failure')  return `<span class="badge badge-fail">❌ Ошибка</span>`;
-  if (conclusion === 'skipped')  return `<span class="badge badge-skip">— Пропущен</span>`;
-  if (conclusion === 'cancelled') return `<span class="badge badge-skip">✕ Отменён</span>`;
+  if (conclusion === 'success')   return `<span class="badge badge-ok">Успех</span>`;
+  if (conclusion === 'failure')   return `<span class="badge badge-fail">Ошибка</span>`;
+  if (conclusion === 'cancelled') return `<span class="badge badge-skip">Отменён</span>`;
   return `<span class="badge badge-skip">${conclusion || status || '?'}</span>`;
 }
 
-function fmt(n) {
-  return (n || 0).toLocaleString('ru-RU');
-}
-
-function escHtml(s) {
+function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
+function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function loadAll() {
   document.getElementById('status-loading').classList.remove('hidden');
   document.getElementById('status-error').classList.add('hidden');
-  document.getElementById('status-wrap').classList.add('hidden');
+  document.getElementById('metrics-grid').classList.add('hidden');
+  document.getElementById('oos-banner').classList.add('hidden');
   document.getElementById('clusters-section').classList.add('hidden');
   document.getElementById('runs-loading').classList.remove('hidden');
   document.getElementById('runs-error').classList.add('hidden');
