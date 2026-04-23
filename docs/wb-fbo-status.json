@@ -1,27 +1,27 @@
 {
   "run_date": "2026-04-23",
-  "generated_at": "2026-04-23T15:47:17Z",
-  "stocks_rows": 730,
-  "sales_rows": 8150,
+  "generated_at": "2026-04-23T15:59:04Z",
+  "stocks_rows": 729,
+  "sales_rows": 8157,
   "total_skus": 229,
-  "to_ship_count": 58,
-  "to_ship_units": 10224,
+  "to_ship_count": 59,
+  "to_ship_units": 10584,
   "oos_count": 183,
   "overstock_count": 11,
   "unknown_pack": 151,
   "exit_code": 0,
   "clusters": {
     "Центральный": {
-      "to_ship": 1728,
+      "to_ship": 2016,
       "sku_count": 46,
-      "oos": 30,
-      "deficit": 31
+      "oos": 29,
+      "deficit": 30
     },
     "Восточный": {
       "to_ship": 2232,
       "sku_count": 42,
-      "oos": 39,
-      "deficit": 39
+      "oos": 38,
+      "deficit": 38
     },
     "Волга": {
       "to_ship": 2088,
@@ -36,14 +36,14 @@
       "deficit": 36
     },
     "Южный": {
-      "to_ship": 2088,
-      "sku_count": 39,
-      "oos": 36,
-      "deficit": 36
+      "to_ship": 2160,
+      "sku_count": 40,
+      "oos": 38,
+      "deficit": 38
     },
     "UNKNOWN": {
       "to_ship": 72,
-      "sku_count": 26,
+      "sku_count": 25,
       "oos": 3,
       "deficit": 3
     }
