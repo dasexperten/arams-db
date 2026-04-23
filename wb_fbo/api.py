@@ -42,11 +42,22 @@ class WBFBOAPI:
         """GET /ping on common-api. Returns {"Status": "OK"} if token is valid."""
         return self._common.get("/ping")
 
-    def stocks_report_page(self, offset: int = 0, limit: int = PAGE_LIMIT) -> list[dict]:
-        """POST stocks-report with offset pagination.
+    def stocks_list(self) -> list[dict]:
+        """GET /api/v1/supplier/stocks — current FBO stocks by warehouse.
 
-        IMPORTANT: old GET /api/v1/supplier/stocks is disabled since 2026-06-23.
-        Always use this endpoint.
+        Valid until 2026-06-23. dateFrom set far in the past to get all current stocks.
+        Returns list of {nmId, supplierArticle, warehouseName, quantity, ...}.
+        """
+        params = {"dateFrom": "2019-01-01T00:00:00"}
+        resp = self._statistics.get("/api/v1/supplier/stocks", params=params)
+        if isinstance(resp, list):
+            return resp
+        return resp.get("data") or resp.get("result") or []
+
+    def stocks_report_page(self, offset: int = 0, limit: int = PAGE_LIMIT) -> list[dict]:
+        """POST stocks-report with offset pagination (analytics API).
+
+        Use after 2026-06-23 when old GET /api/v1/supplier/stocks is disabled.
         """
         body = {
             "locale": "ru",
@@ -63,22 +74,17 @@ class WBFBOAPI:
         if not isinstance(resp, dict):
             from .client import WBFBOError
             raise WBFBOError(
-                f"stocks-report вернул неожиданный тип {type(resp).__name__!r}: {str(resp)[:300]}\n"
-                f"Проверь скоупы токена WB_FEEDBACKS_TOKEN — нужны: Вопросы и отзывы + Статистика + Аналитика"
+                f"stocks-report вернул {type(resp).__name__!r}: {str(resp)[:300]}"
             )
         if resp.get("error") or resp.get("errors"):
             from .client import WBFBOError
             raise WBFBOError(
-                f"stocks-report ошибка WB: {resp.get('errorText') or resp.get('errors') or resp}"
+                f"stocks-report WB error: {resp.get('errorText') or resp.get('errors') or resp}"
             )
         return resp.get("data") or resp.get("result") or []
 
     def stocks_report_iter(self) -> Iterator[tuple[list[dict], bool]]:
-        """Yield (page_rows, has_more) with throttle between pages.
-
-        Stops when a page returns fewer than PAGE_LIMIT rows.
-        Caller must sleep STOCKS_THROTTLE_SEC between calls if not using this iterator.
-        """
+        """Yield (page_rows, has_more) for analytics endpoint (post-2026-06-23)."""
         offset = 0
         first = True
         while True:

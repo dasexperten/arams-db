@@ -232,7 +232,7 @@ def _stock_row(s: dict, run_date: str) -> dict:
         "nm_id": s.get("nmId"),
         "warehouse_id": s.get("warehouseId") or 0,
         "run_date": run_date,
-        "vendor_code": s.get("vendorCode"),
+        "vendor_code": s.get("vendorCode") or s.get("supplierArticle"),
         "warehouse_name": s.get("warehouseName"),
         "region": s.get("region"),
         "quantity": int(s.get("quantity") or 0),

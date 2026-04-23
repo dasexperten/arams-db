@@ -5,19 +5,15 @@ from .api import WBFBOAPI
 
 
 def sync_stocks(api: WBFBOAPI, run_date: str) -> dict:
-    """Fetch all stocks pages into fbo_stocks. Throttle is inside stocks_report_iter."""
+    """Fetch stocks via GET /api/v1/supplier/stocks (valid until 2026-06-23)."""
     started = datetime.utcnow().isoformat()
-    all_stocks: list[dict] = []
-    pages = 0
 
     try:
-        for page, _has_more in api.stocks_report_iter():
-            all_stocks.extend(page)
-            pages += 1
+        all_stocks = api.stocks_list()
     except Exception as e:
         with db.connect() as conn:
-            db.log_run(conn, run_date=run_date, stocks_pages=pages,
-                       stocks_rows=len(all_stocks), sales_rows=0, plans_created=0,
+            db.log_run(conn, run_date=run_date, stocks_pages=0,
+                       stocks_rows=0, sales_rows=0, plans_created=0,
                        warnings=0, exit_code=2,
                        started_at=started, finished_at=datetime.utcnow().isoformat())
         raise
@@ -26,7 +22,7 @@ def sync_stocks(api: WBFBOAPI, run_date: str) -> dict:
     with db.connect() as conn:
         written = db.upsert_stocks(conn, all_stocks, run_date)
 
-    return {"pages": pages, "rows_fetched": len(all_stocks), "rows_written": written}
+    return {"pages": 1, "rows_fetched": len(all_stocks), "rows_written": written}
 
 
 def sync_sales(api: WBFBOAPI, days: int = 30) -> dict:
