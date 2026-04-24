@@ -110,6 +110,29 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
     ws.column_dimensions["G"].width = 12
     ws.column_dimensions["H"].width = 46
 
+    # Sheet 2: supply order — артикул | имя | количество
+    ship_totals: dict[str, dict] = {}
+    for p in plans:
+        qty = p.get("to_ship") or 0
+        if qty <= 0:
+            continue
+        sku = p.get("sku") or ""
+        if sku not in ship_totals:
+            ship_totals[sku] = {"item_name": p.get("item_name") or "", "qty": 0}
+        ship_totals[sku]["qty"] += qty
+
+    if ship_totals:
+        ws2 = wb.create_sheet("К отгрузке")
+        ws2.append(["Артикул", "Название", "Количество"])
+        hdr2 = ws2.max_row
+        for cell in ws2[hdr2]:
+            cell.font = bold
+        for sku in sorted(ship_totals):
+            ws2.append([sku, ship_totals[sku]["item_name"], ship_totals[sku]["qty"]])
+        ws2.column_dimensions["A"].width = 18
+        ws2.column_dimensions["B"].width = 40
+        ws2.column_dimensions["C"].width = 14
+
     wb.save(str(out_path))
     return out_path
 

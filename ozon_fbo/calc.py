@@ -87,8 +87,6 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
 
-        # Only apply minimum-sales filter when sales data is available (sales > 0).
-        # When sales = 0 (no data or genuine zero), include the item with appropriate flag.
         if sales > 0 and sales <= _min_sales_threshold(sku):
             continue
 
@@ -102,7 +100,7 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             pack_size = detect_pack_size(sku)
             if pack_size is None:
                 flags.append(f"⚠️ Unknown pack для SKU {sku}")
-            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags))
+            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags, item_name=row.get("item_name") or ""))
             continue
 
         if sales == 0:
@@ -132,12 +130,13 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             to_ship = roundup_to_multiple(raw, pack_size) if raw > 0 else 0
 
         global_oos = sku_total_stock.get(sku, 0) == 0
-        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos))
+        item_name = row.get("item_name") or ""
+        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name))
 
     return result
 
 
-def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False):
+def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False, item_name=""):
     return {
         "sku": sku,
         "cluster": cluster,
@@ -149,4 +148,5 @@ def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_
         "global_oos": global_oos,
         "to_ship": to_ship,
         "flag": "; ".join(flags),
+        "item_name": item_name,
     }
