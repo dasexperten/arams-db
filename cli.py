@@ -1273,9 +1273,8 @@ def cmd_init_ozon_fbo_db(_: argparse.Namespace) -> int:
 def cmd_ping_ozon_fbo(_: argparse.Namespace) -> int:
     with OzonFBOAPI() as api:
         resp = api.ping()
-    rows = (resp.get("result") or {}).get("rows") or []
-    total = (resp.get("result") or {}).get("total") or 0
-    print(f"ozon-fbo ping ok — fbo stock rows visible: {total} total, {len(rows)} in sample")
+    items = (resp.get("result") or {}).get("items") or []
+    print(f"ozon-fbo ping ok — products visible: {len(items)} (sample)")
     return 0
 
 
@@ -1285,23 +1284,6 @@ def cmd_sync_ozon_stocks(_: argparse.Namespace) -> int:
     with OzonFBOAPI() as api:
         result = ozon_fbo_etl.sync_stocks(api, run_date)
     print(f"ozon stocks: {result}")
-    return 0
-
-
-def cmd_debug_ozon_fbo(_: argparse.Namespace) -> int:
-    """Probe analytics/data endpoint with every known dimension combo."""
-    import json as _json
-    with OzonFBOAPI() as api:
-        stock_resp = api.stock_on_warehouses(offset=0, limit=1)
-        print("=== stock_on_warehouses sample (first row) ===")
-        rows = (stock_resp.get("result") or {}).get("rows") or []
-        if rows:
-            print(_json.dumps(rows[0], ensure_ascii=False, indent=2))
-        else:
-            print("(no rows)")
-
-        print("\n=== analytics/data dimension probe ===")
-        api.probe_analytics()
     return 0
 
 
@@ -1337,9 +1319,8 @@ def cmd_report_ozon_fbo(_: argparse.Namespace) -> int:
     if not plans:
         print(f"no plans for {run_date} — run calc-ozon-fbo first")
         return 1
-    out_paths = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
-    for p in out_paths:
-        print(f"excel written: {p}")
+    out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+    print(f"excel written: {out_path}")
     return 0
 
 
@@ -2173,7 +2154,6 @@ def build_parser() -> argparse.ArgumentParser:
     # ── Ozon FBO ──────────────────────────────────────────────────────────────
     sub.add_parser("init-ozon-fbo-db", help="Create ozon_fbo.db schema (idempotent)").set_defaults(func=cmd_init_ozon_fbo_db)
     sub.add_parser("ping-ozon-fbo", help="Test Ozon FBO credentials").set_defaults(func=cmd_ping_ozon_fbo)
-    sub.add_parser("debug-ozon-fbo", help="Print raw stock + analytics API response (field inspection)").set_defaults(func=cmd_debug_ozon_fbo)
     sub.add_parser("sync-ozon-stocks", help="Fetch Ozon FBO stocks into SQLite").set_defaults(func=cmd_sync_ozon_stocks)
 
     sos = sub.add_parser("sync-ozon-sales", help="Fetch Ozon ordered_units analytics (last N days)")
