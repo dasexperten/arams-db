@@ -4,9 +4,7 @@ import re
 # Hard-coded — do not change without explicit instruction from Aram.
 K_LOW = 0.8
 K_HIGH = 1.2
-K_TARGET = 1.5          # 45 days coverage (default)
-K_TARGET_REDUCED = 1.0  # 30 days coverage when globally overstocked
-K_GLOBAL_OVERSTOCK = 2.0  # if global_k > this, use K_TARGET_REDUCED
+K_TARGET = 1.0   # 30 days of REGIONAL sales coverage (per cluster)
 
 ZONE_DEFICIT = "DEFICIT"
 ZONE_NORMAL = "NORMAL"
@@ -74,6 +72,9 @@ def _min_sales_threshold(vendor_code: str) -> int:
 def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = None) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
+    Target per cluster = 30 days of that cluster's regional sales.
+    Ship enough (rounded up to pack_size) so that stock + to_ship ≥ sales_30d.
+
     Input:  [{sku, cluster, stock, sales_30d}, ...]
             storage_fees: optional {sku_str: monthly_fee_rub} from Ozon finance API
     Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag, global_oos,
@@ -130,12 +131,12 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
         if pack_size is None:
             flags.append(f"⚠️ Unknown pack для SKU {sku}")
 
-        if zone == ZONE_DEFICIT and pack_size is not None and sales > 0:
-            global_k = sku_total_stock.get(sku, 0) / sales
-            k_target = K_TARGET_REDUCED if global_k > K_GLOBAL_OVERSTOCK else K_TARGET
-            target = sales * k_target
-            raw = max(0.0, target - stock)
-            to_ship = roundup_to_multiple(raw, pack_size) if raw > 0 else 0
+        # Top up to 30 days of this region's sales.
+        # Ship whenever current stock is below that target, regardless of zone.
+        if pack_size is not None and sales > 0 and stock < sales * K_TARGET:
+            target = sales * K_TARGET
+            raw = target - stock
+            to_ship = roundup_to_multiple(raw, pack_size)
 
         global_oos = sku_total_stock.get(sku, 0) == 0
         item_name = row.get("item_name") or ""
