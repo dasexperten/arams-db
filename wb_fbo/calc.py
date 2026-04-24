@@ -39,8 +39,6 @@ def detect_pack_size(vendor_code: str) -> int | None:
     if series == 2:
         return 36 if _is_set(suffix) else 72
     else:
-        if full_code in _ACCESSORY_CODES:
-            return None
         return 288
 
 
