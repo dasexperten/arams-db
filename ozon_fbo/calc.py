@@ -87,7 +87,7 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
 
-        if sales <= _min_sales_threshold(sku):
+        if sales > 0 and sales <= _min_sales_threshold(sku):
             continue
 
         flags: list[str] = []
