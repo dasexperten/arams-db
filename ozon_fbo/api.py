@@ -216,27 +216,40 @@ class OzonFBOAPI:
         Fallback 1: dimension=["sku","warehouse"] in /v1/analytics/data.
         Fallback 2: dimension=["sku"] — global totals (warehouse=None).
 
-        'warehouse' field carries the region/warehouse name; warehouse_to_cluster()
-        maps both warehouse names and Russian region names to clusters.
+        Prints which source was used so it's visible in workflow logs whether we
+        actually got per-region data or silently fell through to warehouse/global.
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
 
-        # Primary: per-region from FBO postings
+        # Primary: per-region from FBO postings. Buffer fully so a mid-flight
+        # error doesn't yield partial data before the fallback kicks in.
         try:
-            yield from self._sales_from_postings(date_from, date_to, page_size)
+            results = list(self._sales_from_postings(date_from, date_to, page_size))
+            n = len(results)
+            n_unknown = sum(1 for r in results if not r.get("warehouse"))
+            print(f"[ozon-fbo] sales source: FBO postings → {n} (sku,region) rows, "
+                  f"{n_unknown} without region")
+            yield from results
             return
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[ozon-fbo] postings failed ({type(e).__name__}: {e}); "
+                  f"falling back to /v1/analytics/data dimension=sku,warehouse")
 
-        # Fallback 1: per-warehouse from analytics endpoint
+        # Fallback 1: per-warehouse from analytics endpoint (fulfillment warehouse,
+        # NOT buyer's region — results will be biased by stockout routing).
         try:
-            yield from self._analytics_sales_by_warehouse(date_from, date_to, page_size)
+            results = list(self._analytics_sales_by_warehouse(date_from, date_to, page_size))
+            print(f"[ozon-fbo] sales source: analytics/data sku,warehouse → "
+                  f"{len(results)} rows (fulfillment warehouse, not region)")
+            yield from results
             return
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[ozon-fbo] sku,warehouse failed ({type(e).__name__}: {e}); "
+                  f"falling back to GLOBAL totals")
 
         # Fallback 2: global totals — warehouse=None means "all clusters"
+        print("[ozon-fbo] sales source: GLOBAL totals (no regional breakdown)")
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -262,23 +275,28 @@ class OzonFBOAPI:
     def _sales_from_postings(self, date_from: str, date_to: str, page_size: int = 1000):
         """Aggregate FBO postings into {sku, warehouse(=region), orders_30d}.
 
-        Skips cancelled postings. Uses analytics_data.region as the regional key
-        so that demand reflects WHERE customers ordered from, not which warehouse
-        happened to fulfil the order (avoids stockout bias).
+        Groups strictly by analytics_data.region (buyer's delivery region).
+        Does NOT fall back to warehouse_name — if region is missing, posting is
+        counted under "" (UNKNOWN cluster) so we don't silently mix in
+        fulfillment-warehouse data.
         """
         sales: dict[tuple[str, str], int] = {}
         cancelled = {"cancelled", "cancelled_from_backend", "cancelled_from_admin"}
+        total = kept = 0
         for posting in self.fbo_postings_iter(date_from, date_to, page_size):
+            total += 1
             if posting.get("status") in cancelled:
                 continue
             ad = posting.get("analytics_data") or {}
-            region = str(ad.get("region") or ad.get("warehouse_name") or "")
+            region = str(ad.get("region") or "")
             for product in (posting.get("products") or []):
                 sku = str(product.get("sku") or "")
                 qty = int(product.get("quantity") or 0)
                 if sku and qty > 0:
                     key = (sku, region)
                     sales[key] = sales.get(key, 0) + qty
+                    kept += 1
+        print(f"[ozon-fbo] FBO postings: {total} total, {kept} non-cancelled items aggregated")
         for (sku, region), units in sales.items():
             yield {"sku": sku, "warehouse": region, "orders_30d": units}
 

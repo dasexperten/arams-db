@@ -79,6 +79,67 @@ jobs:
           PYEOF
           true
 
+      - name: Debug FBO postings (analytics_data.region)
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          from datetime import date, timedelta
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              c = OzonSellerClient()
+              date_to = date.today().isoformat()
+              date_from = (date.today() - timedelta(days=30)).isoformat()
+              body = {
+                  "dir": "ASC",
+                  "filter": {
+                      "since": f"{date_from}T00:00:00.000Z",
+                      "to":   f"{date_to}T23:59:59.999Z",
+                  },
+                  "limit": 5,
+                  "offset": 0,
+                  "with": {"analytics_data": True},
+              }
+              resp = c.post("/v2/posting/fbo/list", body)
+              result = resp.get("result") or []
+              if isinstance(result, dict):
+                  result = result.get("postings") or []
+              print(f"sample count={len(result)}  keys[0]={list(result[0].keys()) if result else 'empty'}")
+              for p in result[:3]:
+                  ad = p.get("analytics_data") or {}
+                  print(json.dumps({
+                      "posting_number": p.get("posting_number"),
+                      "status": p.get("status"),
+                      "analytics_data.region": ad.get("region"),
+                      "analytics_data.city": ad.get("city"),
+                      "analytics_data.warehouse_name": ad.get("warehouse_name"),
+                      "products": [{"sku": x.get("sku"), "qty": x.get("quantity")}
+                                   for x in (p.get("products") or [])[:3]],
+                  }, ensure_ascii=False, indent=2))
+              body_all = {**body, "limit": 1000}
+              resp_all = c.post("/v2/posting/fbo/list", body_all)
+              result_all = resp_all.get("result") or []
+              if isinstance(result_all, dict):
+                  result_all = result_all.get("postings") or []
+              regions = {}
+              missing = 0
+              for p in result_all:
+                  ad = p.get("analytics_data") or {}
+                  r = ad.get("region")
+                  if r:
+                      regions[r] = regions.get(r, 0) + 1
+                  else:
+                      missing += 1
+              print(f"\nFirst 1000 postings — region breakdown:")
+              for r, n in sorted(regions.items(), key=lambda x: -x[1])[:30]:
+                  print(f"  {n:>4}  {r}")
+              print(f"  (missing region: {missing})")
+          except Exception as e:
+              print(f"posting/fbo/list failed: {type(e).__name__}: {e}")
+          PYEOF
+          true
+
       - name: Debug finance/transaction/list (storage fees)
         if: always()
         run: |
