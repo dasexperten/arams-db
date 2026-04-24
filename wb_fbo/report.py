@@ -86,8 +86,9 @@ def write_excel(plans: list[dict], run_date: str, output_dir: Path) -> Path:
             flag = item.get("flag") or ""
 
             k_display = f"{k:.2f}" if k is not None else "—"
-            # Stock=0 → K unreliable (zero sales may be caused by stockout, not low demand)
-            to_ship_display = f"{to_ship} ⚠️" if stock == 0 and to_ship > 0 else to_ship
+            # ⚠️ only when total stock for this SKU is 0 across ALL clusters
+            global_oos = item.get("global_oos", False)
+            to_ship_display = f"{to_ship} ⚠️" if global_oos and to_ship > 0 else to_ship
             ws.append([cl, sku, stock, sales, k_display, zone, to_ship_display, flag])
             cur = ws.max_row
 

@@ -57,7 +57,8 @@
       "k": 1.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE112"
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
@@ -67,7 +68,8 @@
       "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
@@ -77,7 +79,8 @@
       "k": 0.39,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201",
@@ -87,7 +90,8 @@
       "k": 0.37,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201",
@@ -97,7 +101,8 @@
       "k": 7.18,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -107,7 +112,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -117,7 +123,8 @@
       "k": 1.85,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -127,7 +134,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -137,7 +145,8 @@
       "k": 0.67,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -147,7 +156,8 @@
       "k": 10.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202",
@@ -157,7 +167,8 @@
       "k": 0.17,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202",
@@ -167,7 +178,8 @@
       "k": 0.06,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
@@ -177,7 +189,8 @@
       "k": 0.03,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
@@ -187,7 +200,8 @@
       "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 540,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
@@ -197,7 +211,8 @@
       "k": 0.02,
       "zone": "DEFICIT",
       "to_ship": 180,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
@@ -207,7 +222,8 @@
       "k": 0.74,
       "zone": "DEFICIT",
       "to_ship": 432,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
@@ -217,7 +233,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 432,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE203",
@@ -227,7 +244,8 @@
       "k": 0.05,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE203",
@@ -237,7 +255,8 @@
       "k": 6.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE203",
@@ -247,7 +266,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -257,7 +277,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -267,7 +288,8 @@
       "k": 9.82,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -277,7 +299,8 @@
       "k": 5.12,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -287,7 +310,8 @@
       "k": 6.32,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
@@ -297,7 +321,8 @@
       "k": 2.84,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
@@ -307,7 +332,8 @@
       "k": 0.04,
       "zone": "DEFICIT",
       "to_ship": 180,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
@@ -317,7 +343,8 @@
       "k": 4.38,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
@@ -327,7 +354,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
@@ -337,7 +365,8 @@
       "k": 4.21,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
@@ -347,7 +376,8 @@
       "k": 0.02,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
@@ -357,7 +387,8 @@
       "k": 2.51,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
@@ -367,7 +398,8 @@
       "k": 5.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
@@ -377,7 +409,8 @@
       "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 216,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE210",
@@ -387,7 +420,8 @@
       "k": 0.9,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
@@ -397,7 +431,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false
     },
     {
       "sku": "DE210",
@@ -407,7 +442,8 @@
       "k": 1.54,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
@@ -417,7 +453,8 @@
       "k": 5.09,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE310",
@@ -427,7 +464,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310"
+      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
@@ -437,7 +475,8 @@
       "k": 15.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
@@ -447,7 +486,8 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310"
+      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
@@ -457,7 +497,8 @@
       "k": 16.57,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
@@ -467,7 +508,8 @@
       "k": 53.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     }
   ],
   "total": 42,

@@ -82,8 +82,15 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
     Input:  [{sku, cluster, stock, sales_30d}, ...]
-    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag}, ...]
+    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag, global_oos}, ...]
+    global_oos=True only when total stock across ALL clusters for this SKU is 0.
     """
+    # Pre-compute total stock per SKU across all clusters
+    sku_total_stock: dict[str, int] = {}
+    for row in rows:
+        s = str(row.get("sku") or "").strip()
+        sku_total_stock[s] = sku_total_stock.get(s, 0) + max(0, int(row.get("stock") or 0))
+
     result = []
     for row in rows:
         sku = str(row.get("sku") or "").strip()
@@ -136,12 +143,13 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             raw = max(0.0, target - stock)
             to_ship = roundup_to_multiple(raw, pack_size) if raw > 0 else 0
 
-        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags))
+        global_oos = sku_total_stock.get(sku, 0) == 0
+        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos))
 
     return result
 
 
-def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags):
+def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False):
     return {
         "sku": sku,
         "cluster": cluster,
@@ -150,6 +158,7 @@ def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags):
         "k": k,
         "zone": zone,
         "pack_size": pack_size,
+        "global_oos": global_oos,
         "to_ship": to_ship,
         "flag": "; ".join(flags),
     }
