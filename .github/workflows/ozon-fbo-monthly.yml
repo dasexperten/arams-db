@@ -54,6 +54,10 @@ jobs:
       - name: Run Ozon FBO daily
         run: python cli.py ozon-fbo-monthly
 
+      - name: Debug raw API response (field names)
+        if: always()
+        run: python cli.py debug-ozon-fbo || true
+
       - name: Show warehouse → cluster mapping (debug)
         if: always()
         run: python cli.py list-ozon-warehouses || true
