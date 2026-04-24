@@ -3,476 +3,590 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WB-FBO Пульт управления</title>
+<title>WB-FBO · Das Experten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --accent: #4a6cf7;
-    --accent-hover: #3558e8;
-    --danger: #e53935;
-    --warn: #f57c00;
-    --ok: #388e3c;
-    --bg: #f5f6fa;
-    --card: #fff;
-    --border: #e0e3ef;
-    --text: #1a1d2e;
-    --sub: #6b7280;
-    --deficit-bg: #fcebeb;
-    --normal-bg: #eaf3de;
-    --overstock-bg: #f1efe8;
+    --d-teal:       #48B097;
+    --d-teal-soft:  #9DD7C7;
+    --d-teal-bg:    #E7F4F0;
+    --d-slate:      #5B7A8C;
+    --d-slate-bg:   #E5ECEF;
+    --d-gold:       #F5C747;
+    --d-gold-bg:    #FDF3D4;
+    --d-rot:        #E26B5F;
+    --d-rot-bg:     #FCE5E2;
+    --d-blue:       #4A7FC1;
+    --d-blue-bg:    #E3ECF5;
+    --card-bg:      #FFFFFF;
+    --panel-bg:     #F6F7F8;
+    --ink:          #384553;
+    --ink-soft:     #7B8896;
+    --ink-muted:    #A9B2BB;
+    --hairline:     #E4E8EC;
+    --brand-schwarz: #282229;
+    --brand-rot:     #E5202C;
+    --brand-gold:    #FEF004;
+    --warn:          #E26B5F;
+    --err:           #E26B5F;
+    --font-display:  'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-body:     'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-narrow:   'Archivo Narrow', 'Archivo', Arial, sans-serif;
+    --font-accent:   'Fraunces', Georgia, serif;
+    --font-mono:     'JetBrains Mono', ui-monospace, monospace;
+    --shadow-card:   0 1px 2px rgba(26,21,25,.04), 0 0 0 1px var(--hairline);
+    --shadow-raised: 0 4px 16px -6px rgba(26,21,25,.10), 0 0 0 1px var(--hairline);
+    --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-pill: 999px;
+    --t-fast: 120ms; --t-base: 200ms;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-         background: var(--bg); color: var(--text); line-height: 1.5; }
-  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
-  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
-  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: var(--sub); text-transform: uppercase; letter-spacing: .04em; }
-  .section { margin-bottom: 32px; }
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .card.primary { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,108,247,.15); }
-  .card-title { font-weight: 600; margin-bottom: 12px; }
-  .secret-status { font-size: .82rem; margin-bottom: 10px; padding: 6px 10px; border-radius: 6px; }
-  .status-ok { background: #e8f5e9; color: var(--ok); }
-  .status-warn { background: #fff3e0; color: var(--warn); }
-  .status-danger { background: #ffebee; color: var(--danger); }
-  .status-unknown { background: #f3f4f6; color: var(--sub); }
-  label { display: block; font-size: .82rem; font-weight: 500; margin-bottom: 4px; color: var(--sub); }
-  input[type=text], input[type=password] {
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
-    border-radius: 7px; font-size: .9rem; background: var(--bg);
-    color: var(--text); outline: none; margin-bottom: 10px;
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--panel-bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
-  input:focus { border-color: var(--accent); }
-  button {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer;
-    font-size: .9rem; font-weight: 500; transition: opacity .15s;
+
+  /* ── Nav / top ribbon ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 32px; height: 56px;
+    box-shadow: 0 1px 4px rgba(26,21,25,.06);
   }
-  button:hover { opacity: .85; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-secondary { background: #e8eaf6; color: var(--accent); }
-  .btn-danger { background: #ffebee; color: var(--danger); }
-  .result-box { margin-top: 10px; padding: 10px 12px; border-radius: 7px;
-    font-size: .85rem; font-family: monospace; background: var(--bg);
-    border: 1px solid var(--border); white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
-  .result-box.ok { border-color: var(--ok); background: #e8f5e9; }
-  .result-box.err { border-color: var(--danger); background: #ffebee; }
-  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-  th { text-align: left; padding: 8px 12px; background: var(--bg); font-weight: 600;
-       border-bottom: 2px solid var(--border); }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-  tr:hover td { background: #f8f9ff; cursor: pointer; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; }
-  .badge-ok { background: #e8f5e9; color: var(--ok); }
-  .badge-fail { background: #ffebee; color: var(--danger); }
-  .badge-running { background: #fff3e0; color: var(--warn); }
-  .detail-panel { display: none; margin-top: 16px; }
-  .detail-panel.open { display: block; }
-  .metric-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-  .metric { flex: 1; min-width: 100px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px; text-align: center; }
-  .metric-value { font-size: 1.6rem; font-weight: 700; }
-  .metric-label { font-size: .78rem; color: var(--sub); margin-top: 2px; }
-  .zone-bar { display: flex; border-radius: 8px; overflow: hidden; height: 22px; margin-bottom: 4px; }
-  .zone-bar-seg { display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 600; }
-  .zone-deficit { background: var(--deficit-bg); color: #b71c1c; }
-  .zone-normal { background: var(--normal-bg); color: #1b5e20; }
-  .zone-overstock { background: var(--overstock-bg); color: #4e342e; }
-  .oos-banner { background: #ffebee; border: 1px solid #e57373; border-radius: 8px;
-    padding: 10px 14px; margin-bottom: 12px; color: var(--danger); font-weight: 600; }
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-  .cluster-accordion { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; }
-  .cluster-header { padding: 12px 16px; font-weight: 600; cursor: pointer;
-    display: flex; justify-content: space-between; border-radius: 10px; }
-  .cluster-header:hover { background: var(--bg); }
-  .cluster-body { display: none; padding: 0 0 8px; }
-  .cluster-body.open { display: block; }
-  .sku-row { display: flex; align-items: center; gap: 12px; padding: 7px 16px;
-    font-size: .85rem; border-top: 1px solid var(--border); }
-  .sku-code { font-family: monospace; font-weight: 600; min-width: 90px; }
-  .sku-wh { color: var(--sub); font-size: .78rem; flex: 1; }
-  .sku-k { min-width: 50px; text-align: right; }
-  .sku-ship { min-width: 60px; text-align: right; font-weight: 600; }
-  .normal-collapsed { padding: 8px 16px; color: var(--sub); font-size: .82rem; cursor: pointer; }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor;
-    border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  .nav-brand {
+    font-family: var(--font-display); font-size: 16px; font-weight: 800;
+    letter-spacing: -0.01em; color: var(--ink);
+  }
+  .nav-ribbon {
+    display: inline-grid; grid-template-columns: repeat(3,1fr);
+    gap: 2px; width: 30px; height: 6px; border-radius: 2px; overflow: hidden;
+  }
+  .nav-ribbon i { display: block; }
+  .nav-ribbon i:nth-child(1) { background: var(--brand-schwarz); }
+  .nav-ribbon i:nth-child(2) { background: var(--brand-rot); }
+  .nav-ribbon i:nth-child(3) { background: var(--brand-gold); }
+  .nav-sep { width: 1px; height: 18px; background: var(--hairline); }
+  .nav-tag {
+    font-family: var(--font-narrow); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  /* ── Page ── */
+  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px 96px; }
+
+  /* ── Hero ── */
+  .hero { padding: 48px 0 36px; border-bottom: 1px solid var(--hairline); margin-bottom: 32px; }
+  .eyebrow {
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--d-teal);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .hero-title {
+    font-family: var(--font-display); font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 800; line-height: 1.05; letter-spacing: -0.025em; color: var(--ink);
+  }
+  .hero-sub {
+    margin-top: 10px; font-size: 13px; color: var(--ink-soft);
+    font-family: var(--font-mono); letter-spacing: 0.02em;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    padding: 40px 0 6px; font-family: var(--font-display); font-size: 18px;
+    font-weight: 700; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .section-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.5; }
+
+  /* ── OOS Banner ── */
+  .oos-banner {
+    background: var(--d-rot-bg); border: 1px solid rgba(226,107,95,0.3);
+    border-radius: var(--r-lg); padding: 12px 18px; color: var(--d-rot);
+    font-weight: 600; font-size: 14px; margin-bottom: 20px;
+  }
+
+  /* ── Metric cards ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .metric-card {
+    background: var(--card-bg); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card); padding: 20px 20px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .metric-value {
+    font-family: var(--font-display); font-size: 36px; font-weight: 800;
+    line-height: 1; letter-spacing: -0.03em; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .metric-value.accent { color: var(--d-teal); }
+  .metric-value.danger { color: var(--d-rot); }
+  .metric-label {
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  /* ── Cluster tiles ── */
+  .cluster-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+  .cluster-tile {
+    background: var(--card-bg); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card); padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    transition: box-shadow var(--t-base), transform var(--t-base);
+  }
+  .cluster-tile:hover { box-shadow: var(--shadow-raised); transform: translateY(-2px); }
+  .cluster-halo { display: none; }
+  .cluster-body { display: flex; flex-direction: column; gap: 10px; }
+  .cluster-name {
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--d-teal);
+  }
+  .cluster-num {
+    font-family: var(--font-display); font-size: 38px; font-weight: 800;
+    line-height: 1; letter-spacing: -0.03em; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .cluster-unit {
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .cluster-meta { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+  .cluster-oos { color: var(--d-rot); margin-left: 4px; font-weight: 700; }
+
+  /* ── Ship cluster summary ── */
+  .ship-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .ship-pill {
+    background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+    padding: 16px 20px; min-width: 150px; flex: 1;
+    border-left: 3px solid var(--d-teal);
+  }
+  .ship-pill-num {
+    font-family: var(--font-display); font-size: 28px; font-weight: 800;
+    letter-spacing: -0.03em; color: var(--d-teal); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .ship-pill-unit {
+    font-family: var(--font-narrow); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); margin-top: 3px;
+  }
+  .ship-pill-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-top: 8px; }
+
+  /* ── Tables ── */
+  .table-wrap { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { background: var(--panel-bg); }
+  th {
+    text-align: left; padding: 12px 16px;
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+    border-bottom: 1px solid var(--hairline);
+  }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); color: var(--ink); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--panel-bg); }
+
+  /* ── SKU cluster header ── */
+  .sku-cluster-hdr td {
+    background: var(--d-teal-bg); font-family: var(--font-narrow); font-size: 11px;
+    font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--d-teal); padding: 8px 16px; border-bottom: 1px solid var(--hairline);
+  }
+
+  /* ── SKU row colors (K-based) ── */
+  tr.sku-global-def  { background: var(--d-teal-bg); }
+  tr.sku-global-def  .sku-name { color: var(--d-teal); }
+  tr.sku-global-def  .sku-k   { color: var(--d-teal); font-weight: 700; }
+  tr.sku-global-over { background: var(--d-rot-bg); }
+  tr.sku-global-over .sku-name { color: var(--d-rot); }
+  tr.sku-global-over .sku-k   { color: var(--d-rot); font-weight: 700; }
+  tr.sku-neutral { background: #fff; }
+  tr.sku-neutral .sku-name { color: var(--ink); }
+  tr.sku-good { background: var(--d-teal-bg); }
+  tr.sku-good .sku-name { color: var(--d-teal); }
+  tr.sku-bad  { background: var(--d-rot-bg); }
+  tr.sku-bad  .sku-name { color: var(--d-rot); }
+  .sku-name  { font-weight: 700; font-size: 14px; }
+  .sku-k     { font-weight: 600; color: var(--ink-soft); }
+  .sku-ship  { font-weight: 800; color: var(--ink); }
+  .sku-agg-k { font-size: 11px; opacity: 0.6; font-weight: 400; }
+
+  /* ── Run table ── */
+  .run-num  { color: var(--ink-muted); font-family: var(--font-mono); font-size: 13px; }
+  .run-link { color: var(--d-teal); text-decoration: none; font-weight: 600; font-size: 13px; }
+  .run-link:hover { text-decoration: underline; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: var(--r-pill);
+    font-family: var(--font-narrow); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .badge-ok   { background: #E6F4EC; color: #2E7D4F; }
+  .badge-fail { background: var(--d-rot-bg); color: var(--d-rot); }
+  .badge-run  { background: var(--d-gold-bg); color: #8A6000; }
+  .badge-skip { background: var(--panel-bg); color: var(--ink-muted); }
+
+  /* ── Action block ── */
+  .action-block {
+    background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 24px;
+  }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .action-note { margin-top: 12px; font-size: 13px; color: var(--ink-soft); }
+
+  /* ── Buttons ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: var(--r-md);
+    font-family: var(--font-body); font-weight: 700; font-size: 14px;
+    cursor: pointer; text-decoration: none; border: 0;
+    transition: opacity var(--t-fast); white-space: nowrap;
+  }
+  .pill-primary { background: var(--d-teal); color: #fff; }
+  .pill-primary:hover { opacity: 0.88; }
+  .pill-ghost { background: #fff; color: var(--ink-soft); box-shadow: 0 0 0 1px var(--hairline); }
+  .pill-ghost:hover { background: var(--panel-bg); }
+
+  /* ── Loading / error ── */
+  .loading { color: var(--ink-muted); font-size: 14px; padding: 32px 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); }
+  .err-msg  { color: var(--d-rot); font-size: 14px; padding: 12px 0; }
+  .hidden   { display: none !important; }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 1.5px solid currentColor; border-top-color: transparent;
+    border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .countdown { font-size: .78rem; margin-left: 6px; }
-  .hidden { display: none !important; }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--hairline); padding: 20px 32px;
+    max-width: 1200px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-narrow); font-size: 12px; letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+  .footer a { color: var(--ink-muted); text-decoration: none; }
+  .footer a:hover { color: var(--ink); }
+
+  @media (max-width: 900px) {
+    .metrics-grid { grid-template-columns: repeat(2,1fr); }
+    .cluster-grid { grid-template-columns: repeat(2,1fr); }
+    .page { padding: 0 16px 64px; }
+    .nav { padding: 0 16px; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>📦 WB-FBO Пульт управления</h1>
-  <p style="color:var(--sub);margin-bottom:24px;">Wildberries FBO · Das Experten</p>
 
-  <!-- ===================== БЛОК 1: СЕКРЕТЫ ===================== -->
-  <div class="section">
-    <h2>🔐 Секреты</h2>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-title">GitHub PAT (хранится только в этом браузере)</div>
-      <label for="pat-input">Personal Access Token (scope: secrets, actions)</label>
-      <input type="password" id="pat-input" placeholder="ghp_..." autocomplete="off">
-      <button class="btn-secondary" onclick="savePat()">💾 Сохранить локально</button>
-      <span id="pat-status" style="margin-left:8px;font-size:.82rem;color:var(--sub)"></span>
+<!-- ── Nav ── -->
+<nav class="nav">
+  <span class="nav-brand">DAS EXPERTEN</span>
+  <div class="nav-ribbon"><i></i><i></i><i></i></div>
+  <div class="nav-sep"></div>
+  <span class="nav-tag">WB · FBO · Supply Plan</span>
+</nav>
+
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="eyebrow">
+      <span class="nav-ribbon" style="width:36px;height:8px"><i></i><i></i><i></i></span>
+      Wildberries FBO · Supply Planning
     </div>
-
-    <div class="card-grid">
-      <div class="card" id="card-wb-token">
-        <div class="card-title">WB_FEEDBACKS_TOKEN</div>
-        <div id="wb-status" class="secret-status status-unknown">Статус неизвестен</div>
-        <label for="wb-input">Новый токен</label>
-        <input type="password" id="wb-input" placeholder="eyJ..." autocomplete="off">
-        <button class="btn-primary" onclick="writeSecret('WB_FEEDBACKS_TOKEN','wb-input','wb-status','wb-date')">📝 Записать</button>
-        <div id="wb-date" style="margin-top:8px;font-size:.78rem;color:var(--sub)"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">TELEGRAM_BOT_TOKEN</div>
-        <div id="tg-bot-status" class="secret-status status-unknown">Статус неизвестен</div>
-        <label for="tg-bot-input">Новый токен</label>
-        <input type="password" id="tg-bot-input" placeholder="12345:ABCdef..." autocomplete="off">
-        <button class="btn-primary" onclick="writeSecret('TELEGRAM_BOT_TOKEN','tg-bot-input','tg-bot-status','tg-bot-date')">📝 Записать</button>
-        <div id="tg-bot-date" style="font-size:.78rem;color:var(--sub);margin-top:8px;"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">TELEGRAM_CHAT_ID</div>
-        <div id="tg-chat-status" class="secret-status status-unknown">Статус неизвестен</div>
-        <label for="tg-chat-input">Chat ID</label>
-        <input type="text" id="tg-chat-input" placeholder="-100..." autocomplete="off">
-        <button class="btn-primary" onclick="writeSecret('TELEGRAM_CHAT_ID','tg-chat-input','tg-chat-status','tg-chat-date')">📝 Записать</button>
-        <div id="tg-chat-date" style="font-size:.78rem;color:var(--sub);margin-top:8px;"></div>
-      </div>
-    </div>
+    <h1 class="hero-title">Пульт управления<br>поставками</h1>
+    <p class="hero-sub" id="hero-sub"></p>
   </div>
 
-  <!-- ===================== БЛОК 2: ДЕЙСТВИЯ ===================== -->
-  <div class="section">
-    <h2>⚡ Действия</h2>
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-title">🏓 Ping WB API</div>
-        <p style="font-size:.85rem;color:var(--sub);margin-bottom:12px;">Проверяет токен через WB common-api /ping</p>
-        <button class="btn-secondary" onclick="pingWB()">Ping</button>
-        <div id="ping-result" class="result-box hidden"></div>
-      </div>
+  <!-- ── OOS banner ── -->
+  <div id="oos-banner" class="oos-banner hidden"></div>
 
-      <div class="card primary">
-        <div class="card-title">🚀 Запустить расчёт</div>
-        <p style="font-size:.85rem;color:var(--sub);margin-bottom:12px;">Триггерит workflow <code>wb-fbo-monthly</code> через GitHub Actions</p>
-        <button class="btn-primary" onclick="triggerWorkflow()">▶ Запустить</button>
-        <div id="trigger-result" class="result-box hidden"></div>
-      </div>
+  <!-- ── Metrics ── -->
+  <div id="status-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем данные...</div>
+  <div id="status-error" class="err-msg hidden"></div>
+  <div id="metrics-grid" class="metrics-grid hidden"></div>
 
-      <div class="card">
-        <div class="card-title">📥 Скачать Excel</div>
-        <p style="font-size:.85rem;color:var(--sub);margin-bottom:12px;">Последний artifact из GitHub Actions</p>
-        <button class="btn-secondary" onclick="downloadArtifact()">⬇ Скачать</button>
-        <div id="download-result" class="result-box hidden"></div>
-      </div>
-    </div>
+  <!-- ── Clusters ── -->
+  <div id="clusters-section" class="hidden">
+    <div class="section-title">По кластерам</div>
+    <div class="cluster-grid" id="cluster-grid" style="margin-top:16px;"></div>
   </div>
 
-  <!-- ===================== БЛОК 3: ИСТОРИЯ ===================== -->
-  <div class="section">
-    <h2>📋 История прогонов</h2>
-    <button class="btn-secondary" onclick="loadRuns()" style="margin-bottom:12px;">🔄 Обновить</button>
-    <div id="runs-table-wrap">
-      <table id="runs-table">
+  <!-- ── Supply plan ── -->
+  <div id="skus-section" class="hidden">
+    <div class="section-title">План поставки по SKU</div>
+    <p class="section-sub">
+      Только позиции с рекомендуемой поставкой. 🔴 Товар вышел при продажах=0 —
+      спрос неизвестен из-за дефицита, K не рассчитывается.
+    </p>
+    <div class="ship-pills" id="ship-cluster-summary"></div>
+    <div class="table-wrap">
+      <table>
         <thead><tr>
-          <th>Дата</th><th>Статус</th><th>Запущен</th><th>Завершён</th><th>Артефакт</th>
+          <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
         </tr></thead>
-        <tbody id="runs-tbody"><tr><td colspan="5" style="color:var(--sub);padding:16px;">Нажмите «Обновить»</td></tr></tbody>
+        <tbody id="skus-tbody"></tbody>
       </table>
     </div>
-    <!-- Detail panel -->
-    <div id="detail-panel" class="detail-panel">
-      <div id="detail-content"></div>
+  </div>
+
+  <!-- ── Actions ── -->
+  <div class="section-title">Действия</div>
+  <div class="action-block">
+    <div class="action-row">
+      <a class="pill pill-primary"
+         href="https://github.com/dasexperten/arams-db/actions/workflows/wb-fbo-monthly.yml"
+         target="_blank">Запустить расчёт в GitHub Actions →</a>
+      <button class="pill pill-ghost" onclick="loadAll()">Обновить данные</button>
+    </div>
+    <p class="action-note">
+      Нажми «Run workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
+    </p>
+  </div>
+
+  <!-- ── Run history ── -->
+  <div class="section-title">История прогонов</div>
+  <div id="runs-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем историю...</div>
+  <div id="runs-error" class="err-msg hidden"></div>
+  <div id="runs-wrap" class="hidden">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Дата запуска</th><th>Статус</th><th>Длительность</th><th>Лог</th>
+        </tr></thead>
+        <tbody id="runs-tbody"></tbody>
+      </table>
     </div>
   </div>
+
 </div>
 
+<footer class="footer">
+  <span>© 2025 DAS EXPERTEN · WB-FBO</span>
+  <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub ↗</a>
+</footer>
+
 <script>
-// ── Config ──────────────────────────────────────────────────────────────────
 const OWNER = 'dasexperten';
 const REPO  = 'arams-db';
-const WORKFLOW_FILE = 'wb-fbo-monthly.yml';
-const WB_TOKEN_LIFETIME_DAYS = 180;
+const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/wb-fbo-status.json`;
+const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/wb-fbo-monthly.yml/runs?per_page=10`;
 
-// ── PAT ─────────────────────────────────────────────────────────────────────
-function getPat() { return localStorage.getItem('gh_pat') || ''; }
-function savePat() {
-  const v = document.getElementById('pat-input').value.trim();
-  if (!v) { alert('Введи PAT'); return; }
-  localStorage.setItem('gh_pat', v);
-  document.getElementById('pat-status').textContent = '✓ сохранён';
-  loadSecretStatuses();
-}
+const CLUSTER_ORDER = ['Центральный','Южный','Волга','Восточный','Северо-западный'];
+const CLUSTER_HALOS = {
+  'Центральный':     'radial-gradient(ellipse at 50% 85%, #8B5CF6 0%, #3D1578 35%, #0C0418 70%)',
+  'Южный':           'radial-gradient(ellipse at 50% 85%, #E91FB2 0%, #7A0F5A 35%, #1A0110 70%)',
+  'Волга':           'radial-gradient(ellipse at 50% 85%, #3A7BFF 0%, #142E8A 35%, #050A1A 70%)',
+  'Восточный':       'radial-gradient(ellipse at 50% 85%, #3DC5F5 0%, #0F6A8A 35%, #020F14 70%)',
+  'Северо-западный': 'radial-gradient(ellipse at 50% 85%, #9333EA 0%, #3D1478 35%, #08041A 70%)',
+};
 
-function ghHeaders(extra={}) {
-  return { 'Authorization': `Bearer ${getPat()}`, 'Accept': 'application/vnd.github+json',
-           'X-GitHub-Api-Version': '2022-11-28', ...extra };
-}
-
-// ── Secret statuses ──────────────────────────────────────────────────────────
-async function loadSecretStatuses() {
-  if (!getPat()) return;
+async function loadStatus() {
+  const loadEl = document.getElementById('status-loading');
+  const errEl  = document.getElementById('status-error');
+  const grid   = document.getElementById('metrics-grid');
   try {
-    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/secrets`, { headers: ghHeaders() });
-    if (!r.ok) return;
-    const data = await r.json();
-    const secrets = {};
-    (data.secrets || []).forEach(s => { secrets[s.name] = s.updated_at; });
-    renderSecretStatus('WB_FEEDBACKS_TOKEN', secrets['WB_FEEDBACKS_TOKEN'],
-      'wb-status', 'wb-date', WB_TOKEN_LIFETIME_DAYS);
-    renderSecretStatus('TELEGRAM_BOT_TOKEN', secrets['TELEGRAM_BOT_TOKEN'],
-      'tg-bot-status', 'tg-bot-date', null);
-    renderSecretStatus('TELEGRAM_CHAT_ID', secrets['TELEGRAM_CHAT_ID'],
-      'tg-chat-status', 'tg-chat-date', null);
-  } catch(e) {}
-}
+    const r = await fetch(STATUS_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
 
-function renderSecretStatus(name, updatedAt, statusId, dateId, lifetimeDays) {
-  const el = document.getElementById(statusId);
-  const dateEl = document.getElementById(dateId);
-  if (!updatedAt) {
-    el.className = 'secret-status status-danger';
-    el.textContent = `❌ ${name} не установлен`;
-    return;
-  }
-  const updated = new Date(updatedAt);
-  dateEl.textContent = `Обновлён: ${updated.toLocaleDateString('ru-RU')}`;
-  if (!lifetimeDays) {
-    el.className = 'secret-status status-ok';
-    el.textContent = '✅ Установлен';
-    return;
-  }
-  const daysLeft = Math.floor((updated.getTime() + lifetimeDays * 86400000 - Date.now()) / 86400000);
-  if (daysLeft < 0) {
-    el.className = 'secret-status status-danger';
-    el.textContent = `❌ Истёк ${Math.abs(daysLeft)} дн. назад`;
-  } else if (daysLeft <= 7) {
-    el.className = 'secret-status status-danger';
-    el.textContent = `🔴 Истекает через ${daysLeft} дн.`;
-  } else if (daysLeft <= 30) {
-    el.className = 'secret-status status-warn';
-    el.textContent = `⚠️ Истекает через ${daysLeft} дн.`;
-  } else {
-    el.className = 'secret-status status-ok';
-    el.textContent = `✅ Актуален, ещё ${daysLeft} дн.`;
-  }
-}
+    loadEl.classList.add('hidden');
+    grid.classList.remove('hidden');
 
-async function writeSecret(secretName, inputId, statusId, dateId) {
-  const val = document.getElementById(inputId).value.trim();
-  const pat = getPat();
-  if (!pat) { alert('Сначала сохрани GitHub PAT'); return; }
-  if (!val) { alert('Введи значение секрета'); return; }
-
-  // Get repo public key for secret encryption
-  try {
-    const pkRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/secrets/public-key`,
-      { headers: ghHeaders() });
-    if (!pkRes.ok) throw new Error(`Ошибка получения public key: ${pkRes.status}`);
-    const { key, key_id } = await pkRes.json();
-
-    // Encrypt with libsodium (loaded below)
-    const encrypted = await encryptSecret(key, val);
-
-    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/secrets/${secretName}`, {
-      method: 'PUT',
-      headers: ghHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ encrypted_value: encrypted, key_id })
-    });
-    if (r.status === 204 || r.status === 201) {
-      document.getElementById(statusId).className = 'secret-status status-ok';
-      document.getElementById(statusId).textContent = '✅ Записан успешно';
-      document.getElementById(dateId).textContent = `Обновлён: ${new Date().toLocaleDateString('ru-RU')}`;
-      document.getElementById(inputId).value = '';
-    } else {
-      throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if (d.run_date) {
+      document.getElementById('hero-sub').textContent =
+        `run_date=${d.run_date}  ·  stocks=${fmt(d.stocks_rows)}  ·  sales=${fmt(d.sales_rows)}`;
     }
-  } catch(e) {
-    alert('Ошибка: ' + e.message);
-  }
-}
 
-// libsodium-wrappers for secret encryption
-async function encryptSecret(base64Key, secretValue) {
-  // Load libsodium dynamically
-  if (!window._sodium) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/libsodium-wrappers@0.7.11/dist/modules/libsodium-wrappers.js';
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-    await window.sodium.ready;
-    window._sodium = window.sodium;
-  }
-  const sodium = window._sodium;
-  const keyBytes = sodium.from_base64(base64Key, sodium.base64_variants.ORIGINAL);
-  const msgBytes = sodium.from_string(secretValue);
-  const encrypted = sodium.crypto_box_seal(msgBytes, keyBytes);
-  return sodium.to_base64(encrypted, sodium.base64_variants.ORIGINAL);
-}
-
-// ── Ping WB ──────────────────────────────────────────────────────────────────
-async function pingWB() {
-  const box = document.getElementById('ping-result');
-  box.className = 'result-box'; box.classList.remove('hidden');
-  box.textContent = 'Пингуем...';
-  // Proxy through GitHub Actions trigger (direct browser→WB API call is blocked by CORS)
-  box.textContent = 'Ping WB API из браузера невозможен из-за CORS.\nДля проверки: python cli.py ping-wb-fbo\nили запустите workflow и проверьте логи.';
-}
-
-// ── Trigger workflow ──────────────────────────────────────────────────────────
-async function triggerWorkflow() {
-  const pat = getPat();
-  if (!pat) { alert('Сначала сохрани GitHub PAT'); return; }
-  const box = document.getElementById('trigger-result');
-  box.className = 'result-box'; box.classList.remove('hidden');
-  box.textContent = 'Запускаем...';
-  try {
-    const r = await fetch(
-      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
-      { method: 'POST', headers: ghHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ ref: 'main' }) }
-    );
-    if (r.status === 204) {
-      box.className = 'result-box ok';
-      box.textContent = '✅ Запущен! Смотри историю через ~30 секунд.';
-    } else {
-      const text = await r.text();
-      throw new Error(`HTTP ${r.status}: ${text}`);
+    if (d.oos_count > 0) {
+      const b = document.getElementById('oos-banner');
+      b.textContent = `⚠ ${d.oos_count} позиций out-of-stock — приоритетная отгрузка`;
+      b.classList.remove('hidden');
     }
-  } catch(e) {
-    box.className = 'result-box err';
-    box.textContent = '❌ ' + e.message;
+
+    grid.innerHTML =
+      metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
+      metricCard(d.to_ship_count,      'SKU × кластеров', '') +
+      metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
+      metricCard(d.overstock_count,    'Overstock',       '');
+
+    // Cluster tiles
+    const clusters = d.clusters || {};
+    const clKeys = CLUSTER_ORDER.filter(k => clusters[k]);
+    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') clKeys.push(k); });
+    if (clKeys.length) {
+      document.getElementById('clusters-section').classList.remove('hidden');
+      document.getElementById('cluster-grid').innerHTML = clKeys.map(cl => {
+        const c = clusters[cl];
+        const halo = CLUSTER_HALOS[cl] || 'radial-gradient(ellipse at 50% 85%, #3A3A5A 0%, #0A0D14 70%)';
+        return `<div class="cluster-tile">
+          <div class="cluster-halo" style="background:${halo}"></div>
+          <div class="cluster-body">
+            <div class="cluster-name">${esc(cl)}</div>
+            <div style="text-align:center">
+              <div class="cluster-num">${fmt(c.to_ship || 0)}</div>
+              <div class="cluster-unit">шт.</div>
+            </div>
+            <div class="cluster-meta">
+              ${c.sku_count || 0} SKU${c.oos > 0 ? `<span class="cluster-oos"> · ${c.oos} OOS</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Aggregate K per SKU across all clusters (using full skus list, not filtered)
+    const skuAgg = {};
+    (d.skus || []).forEach(s => {
+      const key = s.sku || '';
+      if (!skuAgg[key]) skuAgg[key] = { stock: 0, sales: 0 };
+      skuAgg[key].stock += (s.stock || 0);
+      skuAgg[key].sales += (s.sales_30d || 0);
+    });
+    // Aggregate K: 0–0.7 → green, 0.7–2.0 → neutral (white), 2.0+ → red
+    const skuColorMap = {};
+    Object.entries(skuAgg).forEach(([sku, v]) => {
+      if (v.sales === 0) return;
+      const k = v.stock / v.sales;
+      if (k >= 2.0)     skuColorMap[sku] = 'red';
+      else if (k < 0.7) skuColorMap[sku] = 'green';
+      else              skuColorMap[sku] = 'neutral';
+    });
+
+    // Supply plan table — only to_ship > 0
+    const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
+    if (skus.length) {
+      document.getElementById('skus-section').classList.remove('hidden');
+
+      const clTotals = {};
+      skus.forEach(s => { clTotals[s.cluster] = (clTotals[s.cluster] || 0) + (s.to_ship || 0); });
+      const clByTotal = Object.entries(clTotals).sort((a, b) => b[1] - a[1]);
+
+      document.getElementById('ship-cluster-summary').innerHTML = clByTotal.map(([cl, total]) =>
+        `<div class="ship-pill">
+          <div class="ship-pill-num">${fmt(total)}</div>
+          <div class="ship-pill-unit">шт. к поставке</div>
+          <div class="ship-pill-name">${esc(cl)}</div>
+        </div>`
+      ).join('');
+
+      const rows = [];
+      clByTotal.forEach(([cl]) => {
+        rows.push(`<tr class="sku-cluster-hdr"><td colspan="5">${esc(cl)}</td></tr>`);
+        skus
+          .filter(s => s.cluster === cl)
+          .sort((a, b) => {
+            const d = (b.to_ship || 0) - (a.to_ship || 0);
+            return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
+          })
+          .forEach(s => {
+            const skuColor = skuColorMap[s.sku || ''];
+            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : skuColor === 'neutral' ? 'sku-neutral' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+            const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
+            const aggK   = skuAgg[s.sku || ''];
+            const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
+            const skuLabel = aggKDisp && skuColor
+              ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
+              : esc(s.sku || '');
+            rows.push(`<tr class="${rowCls}">
+              <td class="sku-name">${skuLabel}</td>
+              <td style="color:var(--ink-60)">${fmt(s.stock)}</td>
+              <td style="color:var(--ink-60)">${fmt(s.sales_30d)}</td>
+              <td class="sku-k">${kDisp}</td>
+              <td class="sku-ship">${fmt(s.to_ship)}${(skuAgg[s.sku||'']?.stock === 0) ? ' <span title="Нет остатков ни в одном кластере — спрос может быть занижен" style="color:var(--warn)">⚠</span>' : ''}</td>
+            </tr>`);
+          });
+      });
+      document.getElementById('skus-tbody').innerHTML = rows.join('');
+    }
+
+  } catch (e) {
+    loadEl.classList.add('hidden');
+    errEl.classList.remove('hidden');
+    errEl.textContent = e.message.includes('404')
+      ? '⚠ Расчёт ещё не выполнялся — запустите workflow в GitHub Actions.'
+      : `Ошибка: ${e.message}`;
   }
 }
 
-// ── Download artifact ─────────────────────────────────────────────────────────
-async function downloadArtifact() {
-  const pat = getPat();
-  if (!pat) { alert('Сначала сохрани GitHub PAT'); return; }
-  const box = document.getElementById('download-result');
-  box.className = 'result-box'; box.classList.remove('hidden');
-  box.textContent = 'Ищем артефакт...';
-  try {
-    const r = await fetch(
-      `https://api.github.com/repos/${OWNER}/${REPO}/actions/artifacts?per_page=10`,
-      { headers: ghHeaders() }
-    );
-    const data = await r.json();
-    const arts = (data.artifacts || []).filter(a => a.name && a.name.startsWith('wb-fbo-') && !a.expired);
-    if (!arts.length) { box.textContent = 'Нет доступных артефактов'; return; }
-    const latest = arts[0];
-    box.textContent = `Артефакт: ${latest.name} (${(latest.size_in_bytes/1024).toFixed(0)} KB)\nСоздан: ${new Date(latest.created_at).toLocaleString('ru-RU')}\nСкачиваем...`;
-    // GitHub API requires redirect — open in new tab with auth doesn't work directly from browser
-    // Show instructions
-    box.className = 'result-box ok';
-    box.textContent = `✅ Найден: ${latest.name}\nСоздан: ${new Date(latest.created_at).toLocaleString('ru-RU')}\n\nДля скачивания используй:\ncurl -L -H "Authorization: Bearer <PAT>" \\\n  ${latest.archive_download_url} -o wb_fbo.zip`;
-  } catch(e) {
-    box.className = 'result-box err';
-    box.textContent = '❌ ' + e.message;
-  }
-}
-
-// ── Run history ───────────────────────────────────────────────────────────────
-let _runs = [];
 async function loadRuns() {
-  const pat = getPat();
-  if (!pat) { alert('Сначала сохрани GitHub PAT'); return; }
-  const tbody = document.getElementById('runs-tbody');
-  tbody.innerHTML = '<tr><td colspan="5"><span class="spinner"></span> Загрузка...</td></tr>';
+  const loadEl = document.getElementById('runs-loading');
+  const errEl  = document.getElementById('runs-error');
+  const wrap   = document.getElementById('runs-wrap');
+  const tbody  = document.getElementById('runs-tbody');
   try {
-    const r = await fetch(
-      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=12`,
-      { headers: ghHeaders() }
-    );
+    const r = await fetch(RUNS_URL, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
-    _runs = data.workflow_runs || [];
-    if (!_runs.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--sub)">Нет прогонов</td></tr>';
+    const runs = data.workflow_runs || [];
+    loadEl.classList.add('hidden');
+    wrap.classList.remove('hidden');
+    if (!runs.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-60);padding:20px">Нет прогонов</td></tr>';
       return;
     }
-    tbody.innerHTML = _runs.map((run, i) => `
-      <tr onclick="showDetail(${i})">
-        <td>${run.created_at ? new Date(run.created_at).toLocaleDateString('ru-RU') : '—'}</td>
-        <td>${statusBadge(run.conclusion, run.status)}</td>
-        <td>${run.created_at ? new Date(run.created_at).toLocaleTimeString('ru-RU') : '—'}</td>
-        <td>${run.updated_at ? new Date(run.updated_at).toLocaleTimeString('ru-RU') : '—'}</td>
-        <td><a href="${run.html_url}" target="_blank" style="color:var(--accent);">→ Лог</a></td>
-      </tr>`).join('');
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger)">Ошибка: ${e.message}</td></tr>`;
+    tbody.innerHTML = runs.map(run => {
+      const cr = run.created_at ? new Date(run.created_at) : null;
+      const up = run.updated_at ? new Date(run.updated_at) : null;
+      const dur = cr && up ? Math.max(0, Math.round((up - cr) / 60000)) + ' мин' : '—';
+      return `<tr>
+        <td class="run-num">#${run.run_number}</td>
+        <td style="color:var(--ink-80)">${cr ? cr.toLocaleString('ru-RU') : '—'}</td>
+        <td>${runBadge(run.conclusion, run.status)}</td>
+        <td style="color:var(--ink-60)">${dur}</td>
+        <td><a class="run-link" href="${esc(run.html_url)}" target="_blank">↗ лог</a></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    loadEl.classList.add('hidden');
+    errEl.classList.remove('hidden');
+    errEl.textContent = `Ошибка загрузки истории: ${e.message}`;
   }
 }
 
-function statusBadge(conclusion, status) {
+function metricCard(value, label, cls) {
+  return `<div class="metric-card">
+    <div class="metric-value${cls ? ' ' + cls : ''}">${value ?? '—'}</div>
+    <div class="metric-label">${label}</div>
+  </div>`;
+}
+
+function runBadge(conclusion, status) {
   if (status === 'in_progress' || status === 'queued')
-    return `<span class="badge badge-running"><span class="spinner"></span> В процессе</span>`;
-  if (conclusion === 'success') return `<span class="badge badge-ok">✅ Успех</span>`;
-  if (conclusion === 'failure') return `<span class="badge badge-fail">❌ Ошибка</span>`;
-  return `<span class="badge" style="background:#f3f4f6">${conclusion || status || '?'}</span>`;
+    return `<span class="badge badge-run"><span class="spinner"></span> В процессе</span>`;
+  if (conclusion === 'success')   return `<span class="badge badge-ok">success</span>`;
+  if (conclusion === 'failure')   return `<span class="badge badge-fail">failure</span>`;
+  if (conclusion === 'cancelled') return `<span class="badge badge-skip">cancelled</span>`;
+  return `<span class="badge badge-skip">${conclusion || status || '?'}</span>`;
 }
 
-async function showDetail(idx) {
-  const run = _runs[idx];
-  const panel = document.getElementById('detail-panel');
-  const content = document.getElementById('detail-content');
-
-  // Fetch artifacts for this run
-  let artifactHtml = '';
-  try {
-    const ar = await fetch(
-      `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run.id}/artifacts`,
-      { headers: ghHeaders() }
-    );
-    const ad = await ar.json();
-    const arts = (ad.artifacts || []);
-    if (arts.length) {
-      artifactHtml = `<div style="margin-top:12px"><b>Артефакты:</b> ${arts.map(a =>
-        `<a href="${a.archive_download_url}" style="color:var(--accent)">${a.name}</a> (${(a.size_in_bytes/1024).toFixed(0)} KB)`
-      ).join(', ')}</div>`;
-    }
-  } catch(e) {}
-
-  const created = run.created_at ? new Date(run.created_at) : null;
-  const updated = run.updated_at ? new Date(run.updated_at) : null;
-  const durationMs = created && updated ? updated - created : null;
-  const duration = durationMs ? `${Math.round(durationMs/60000)} мин` : '—';
-
-  content.innerHTML = `
-    <div class="card" style="margin-top:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <span style="font-weight:600;font-size:1.05rem">Прогон #${run.run_number}</span>
-        <span>${statusBadge(run.conclusion, run.status)}</span>
-      </div>
-      <div style="font-size:.85rem;color:var(--sub);margin-bottom:12px">
-        Запущен: ${created ? created.toLocaleString('ru-RU') : '—'} ·
-        Длительность: ${duration} ·
-        <a href="${run.html_url}" target="_blank" style="color:var(--accent)">Открыть лог →</a>
-      </div>
-      ${artifactHtml}
-      <p style="font-size:.82rem;color:var(--sub);margin-top:12px">
-        Детали расчёта (SKU, зоны, кластеры) — в Excel файле артефакта.
-        Данные передаются в Telegram после каждого успешного прогона.
-      </p>
-    </div>`;
-  panel.classList.add('open');
+function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  if (getPat()) {
-    document.getElementById('pat-status').textContent = '✓ сохранён';
-    loadSecretStatuses();
-  }
-});
+function loadAll() {
+  ['status-loading','runs-loading'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  ['status-error','metrics-grid','oos-banner','clusters-section',
+   'skus-section','runs-error','runs-wrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  loadStatus();
+  loadRuns();
+}
+
+document.addEventListener('DOMContentLoaded', loadAll);
 </script>
 </body>
 </html>
