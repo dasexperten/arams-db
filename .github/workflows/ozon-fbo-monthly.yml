@@ -1,4 +1,4 @@
-name: Ozon FBO Monthly Supply Plan
+name: Ozon FBO Daily Supply Plan
 
 on:
   workflow_dispatch:
@@ -8,8 +8,8 @@ on:
         required: false
         default: "30"
   schedule:
-    # 1st of every month at 08:00 MSK = 05:00 UTC
-    - cron: "0 5 1 * *"
+    # every day at 08:00 MSK = 05:00 UTC
+    - cron: "0 5 * * *"
 
 jobs:
   ozon-fbo-monthly:
@@ -51,7 +51,7 @@ jobs:
       - name: Init DB
         run: python cli.py init-ozon-fbo-db
 
-      - name: Run Ozon FBO monthly
+      - name: Run Ozon FBO daily
         run: python cli.py ozon-fbo-monthly
 
       - name: Show warehouse → cluster mapping (debug)
