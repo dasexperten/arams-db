@@ -1,14 +1,14 @@
 {
   "run_date": "2026-04-24",
-  "generated_at": "2026-04-24T09:33:41Z",
-  "stocks_rows": 706,
-  "sales_rows": 8007,
+  "generated_at": "2026-04-24T09:48:49Z",
+  "stocks_rows": 708,
+  "sales_rows": 8009,
   "total_skus": 40,
   "to_ship_count": 19,
   "to_ship_units": 3888,
   "oos_count": 6,
   "overstock_count": 18,
-  "unknown_pack": 6,
+  "unknown_pack": 5,
   "exit_code": 0,
   "clusters": {
     "Центральный": {
@@ -51,7 +51,7 @@
       "k": 1.69,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE112"
+      "flag": ""
     },
     {
       "sku": "DE120AAAA",
@@ -186,7 +186,7 @@
     {
       "sku": "DE202AA",
       "cluster": "Центральный",
-      "stock": 388,
+      "stock": 389,
       "sales_30d": 517,
       "k": 0.75,
       "zone": "DEFICIT",
@@ -216,9 +216,9 @@
     {
       "sku": "DE203",
       "cluster": "Центральный",
-      "stock": 527,
+      "stock": 528,
       "sales_30d": 82,
-      "k": 6.43,
+      "k": 6.44,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "flag": ""
