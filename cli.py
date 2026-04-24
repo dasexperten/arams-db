@@ -1289,19 +1289,19 @@ def cmd_sync_ozon_stocks(_: argparse.Namespace) -> int:
 
 
 def cmd_debug_ozon_fbo(_: argparse.Namespace) -> int:
-    """Print first row of stock and first row of sales analytics for field inspection."""
+    """Probe analytics/data endpoint with every known dimension combo."""
     import json as _json
     with OzonFBOAPI() as api:
         stock_resp = api.stock_on_warehouses(offset=0, limit=1)
-        print("=== stock_on_warehouses (limit=1) ===")
-        print(_json.dumps(stock_resp, ensure_ascii=False, indent=2))
+        print("=== stock_on_warehouses sample (first row) ===")
+        rows = (stock_resp.get("result") or {}).get("rows") or []
+        if rows:
+            print(_json.dumps(rows[0], ensure_ascii=False, indent=2))
+        else:
+            print("(no rows)")
 
-        from datetime import date as _date, timedelta as _td
-        d_to = _date.today().isoformat()
-        d_from = (_date.today() - _td(days=7)).isoformat()
-        sales_resp = api.analytics_data(date_from=d_from, date_to=d_to, limit=1)
-        print("=== analytics/data (limit=1, last 7 days) ===")
-        print(_json.dumps(sales_resp, ensure_ascii=False, indent=2))
+        print("\n=== analytics/data dimension probe ===")
+        api.probe_analytics()
     return 0
 
 

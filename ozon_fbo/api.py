@@ -77,7 +77,35 @@ class OzonFBOAPI:
             },
         )
 
-    def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
+    def probe_analytics(self) -> None:
+        """Try every known dimension field/value combo; print which ones succeed."""
+        import json as _json
+        d_to = date.today().isoformat()
+        d_from = (date.today() - timedelta(days=7)).isoformat()
+        combos = [
+            {"dimension":  ["sku"]},
+            {"dimension":  ["day"]},
+            {"dimension":  ["spu"]},
+            {"dimensions": ["sku"]},
+            {"dimensions": ["day"]},
+            {"dimension":  ["sku", "day"]},
+            {"dimensions": ["sku", "day"]},
+        ]
+        base = {"date_from": d_from, "date_to": d_to,
+                "metrics": ["ordered_units"], "filters": [], "limit": 1, "offset": 0}
+        for combo in combos:
+            body = {**base, **combo}
+            key = list(combo.keys())[0]
+            val = list(combo.values())[0]
+            label = f"{key}={val}"
+            try:
+                resp = self.c.post("/v1/analytics/data", body)
+                rows = (resp.get("result") or {}).get("data") or []
+                print(f"  OK  {label}  rows={len(rows)}")
+            except Exception as e:
+                print(f"  ERR {label}  → {e}")
+
+
         """Yield {offer_id, orders_30d} dicts for all SKUs in the last N days."""
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
