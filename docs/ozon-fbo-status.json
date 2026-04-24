@@ -1,0 +1,15 @@
+{
+  "run_date": "2026-04-24",
+  "generated_at": "2026-04-24T16:09:22Z",
+  "stocks_rows": 375,
+  "sales_rows": 0,
+  "total_skus": 0,
+  "to_ship_count": 0,
+  "to_ship_units": 0,
+  "oos_count": 0,
+  "overstock_count": 0,
+  "unknown_pack": 0,
+  "exit_code": 1,
+  "clusters": {},
+  "skus": []
+}
