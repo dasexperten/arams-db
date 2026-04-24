@@ -31,7 +31,7 @@ class OzonFBOAPI:
         """POST /v2/analytics/stock_on_warehouses — FBO stock per warehouse.
 
         Response: {"result": {"rows": [{sku, item_code, item_name,
-                    fbo_present_stock, warehouse_name, ...}], "total": N}}
+                    free_to_sell_amount, warehouse_name, ...}], "total": N}}
         """
         return self.c.post(
             "/v2/analytics/stock_on_warehouses",
@@ -79,6 +79,7 @@ class OzonFBOAPI:
 
     def probe_analytics(self) -> None:
         """Try every known dimension field/value combo; print which ones succeed."""
+        import json as _json
         d_to = date.today().isoformat()
         d_from = (date.today() - timedelta(days=7)).isoformat()
         combos = [
@@ -103,6 +104,7 @@ class OzonFBOAPI:
                 print(f"  OK  {label}  rows={len(rows)}")
             except Exception as e:
                 print(f"  ERR {label}  → {e}")
+
 
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
         """Yield {sku, orders_30d} dicts for all SKUs in the last N days."""
