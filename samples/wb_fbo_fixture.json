@@ -1,0 +1,26 @@
+{
+  "stocks_page1": [
+    {"nmId": 101, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE201", "region": "Центр", "quantity": 50, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 102, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE201 AA", "region": "Центр", "quantity": 10, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 103, "warehouseId": 1, "warehouseName": "Коледино", "vendorCode": "DE119", "region": "Центр", "quantity": 288, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 104, "warehouseId": 2, "warehouseName": "Санкт-Петербург", "vendorCode": "DE201", "region": "Северо-Запад", "quantity": 3, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 105, "warehouseId": 2, "warehouseName": "Санкт-Петербург", "vendorCode": "DE119", "region": "Северо-Запад", "quantity": 0, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 106, "warehouseId": 3, "warehouseName": "Казань", "vendorCode": "DE206", "region": "Поволжье", "quantity": 200, "inWayToClient": 0, "inWayFromClient": 0},
+    {"nmId": 107, "warehouseId": 3, "warehouseName": "Казань", "vendorCode": "UNKNOWN-SKU", "region": "Поволжье", "quantity": 50, "inWayToClient": 0, "inWayFromClient": 0}
+  ],
+  "stocks_page2": [
+    {"nmId": 108, "warehouseId": 4, "warehouseName": "Краснодар", "vendorCode": "DE119 AAAA", "region": "Юг", "quantity": 144, "inWayToClient": 0, "inWayFromClient": 0}
+  ],
+  "sales": [
+    {"saleID": "S123001", "supplierArticle": "DE201", "nmId": 101, "warehouseName": "Коледино", "date": "2026-04-01T10:00:00", "lastChangeDate": "2026-04-01T10:00:00", "forPay": 350.0},
+    {"saleID": "S123002", "supplierArticle": "DE201", "nmId": 101, "warehouseName": "Коледино", "date": "2026-04-05T10:00:00", "lastChangeDate": "2026-04-05T10:00:00", "forPay": 350.0},
+    {"saleID": "R123003", "supplierArticle": "DE201", "nmId": 101, "warehouseName": "Коледино", "date": "2026-04-06T10:00:00", "lastChangeDate": "2026-04-06T10:00:00", "forPay": -350.0},
+    {"saleID": "S123004", "supplierArticle": "DE201", "nmId": 101, "warehouseName": "Коледино", "date": "2026-04-10T10:00:00", "lastChangeDate": "2026-04-10T10:00:00", "forPay": 350.0},
+    {"saleID": "S123005", "supplierArticle": "DE119", "nmId": 103, "warehouseName": "Коледино", "date": "2026-04-02T10:00:00", "lastChangeDate": "2026-04-02T10:00:00", "forPay": 500.0},
+    {"saleID": "S123006", "supplierArticle": "DE119", "nmId": 105, "warehouseName": "Санкт-Петербург", "date": "2026-04-03T10:00:00", "lastChangeDate": "2026-04-03T10:00:00", "forPay": 500.0},
+    {"saleID": "S123007", "supplierArticle": "DE119", "nmId": 105, "warehouseName": "Санкт-Петербург", "date": "2026-04-08T10:00:00", "lastChangeDate": "2026-04-08T10:00:00", "forPay": 500.0},
+    {"saleID": "S123008", "supplierArticle": "DE201", "nmId": 104, "warehouseName": "Санкт-Петербург", "date": "2026-04-15T10:00:00", "lastChangeDate": "2026-04-15T10:00:00", "forPay": 350.0},
+    {"saleID": "S123009", "supplierArticle": "DE201", "nmId": 104, "warehouseName": "Санкт-Петербург", "date": "2026-04-18T10:00:00", "lastChangeDate": "2026-04-18T10:00:00", "forPay": 350.0},
+    {"saleID": "S123010", "supplierArticle": "DE206", "nmId": 106, "warehouseName": "Казань", "date": "2026-04-10T10:00:00", "lastChangeDate": "2026-04-10T10:00:00", "forPay": 320.0}
+  ]
+}

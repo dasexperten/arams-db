@@ -132,30 +132,44 @@
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
   }
 
-  /* ── Cluster tiles ── */
-  .cluster-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
-  .cluster-tile {
-    background: var(--card-bg); border-radius: var(--r-lg);
-    box-shadow: var(--shadow-card); padding: 20px 16px;
-    display: flex; flex-direction: column; gap: 10px;
-    transition: box-shadow var(--t-base), transform var(--t-base);
+  /* ── Accordion ── */
+  .accordion { display: flex; flex-direction: column; gap: 8px; }
+  .ac-item { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .ac-header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 20px 24px; cursor: pointer;
+    transition: background var(--t-fast); user-select: none;
   }
-  .cluster-tile:hover { box-shadow: var(--shadow-raised); transform: translateY(-2px); }
-  .cluster-halo { display: none; }
-  .cluster-body { display: flex; flex-direction: column; gap: 10px; }
+  .ac-header:hover { background: var(--panel-bg); }
+  .ac-header.open { border-bottom: 1px solid var(--hairline); }
+  .ac-chevron { font-size: 18px; color: var(--ink-muted); transition: transform var(--t-base); margin-left: auto; }
+  .ac-header.open .ac-chevron { transform: rotate(180deg); }
+  .ac-body { display: none; }
+  .ac-body.open { display: block; }
+  .ac-footer {
+    padding: 16px 24px; display: flex; justify-content: flex-end;
+    border-top: 1px solid var(--hairline); background: var(--panel-bg);
+  }
+  .btn-ship {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px; border-radius: var(--r-md);
+    background: var(--d-teal); color: #fff;
+    font-family: var(--font-body); font-weight: 700; font-size: 14px;
+    cursor: pointer; border: 0; transition: opacity var(--t-fast);
+  }
+  .btn-ship:hover { opacity: 0.88; }
   .cluster-name {
-    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
-    letter-spacing: 0.18em; text-transform: uppercase; color: var(--d-teal);
+    font-family: var(--font-narrow); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--d-teal); flex: 1;
   }
   .cluster-num {
-    font-family: var(--font-display); font-size: 38px; font-weight: 800;
+    font-family: var(--font-display); font-size: 32px; font-weight: 800;
     line-height: 1; letter-spacing: -0.03em; color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
   .cluster-unit {
-    font-family: var(--font-narrow); font-size: 12px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft);
-    margin-top: 2px;
+    font-family: var(--font-narrow); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px;
   }
   .cluster-meta { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
   .cluster-oos { color: var(--d-rot); margin-left: 4px; font-weight: 700; }
@@ -316,20 +330,14 @@
   <div id="status-error" class="err-msg hidden"></div>
   <div id="metrics-grid" class="metrics-grid hidden"></div>
 
-  <!-- ── Clusters ── -->
+  <!-- ── Clusters accordion ── -->
   <div id="clusters-section" class="hidden">
     <div class="section-title">По кластерам</div>
-    <div class="cluster-grid" id="cluster-grid" style="margin-top:16px;"></div>
+    <div class="accordion" id="cluster-accordion" style="margin-top:16px;"></div>
   </div>
 
-  <!-- ── Supply plan ── -->
+  <!-- ── Supply plan (hidden, data used by JS) ── -->
   <div id="skus-section" class="hidden">
-    <div class="section-title">План поставки по SKU</div>
-    <p class="section-sub">
-      Только позиции с рекомендуемой поставкой. 🔴 Товар вышел при продажах=0 —
-      спрос неизвестен из-за дефицита, K не рассчитывается.
-    </p>
-    <div class="ship-pills" id="ship-cluster-summary"></div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -420,32 +428,7 @@ async function loadStatus() {
       metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
       metricCard(d.overstock_count,    'Overstock',       '');
 
-    // Cluster tiles
-    const clusters = d.clusters || {};
-    const clKeys = CLUSTER_ORDER.filter(k => clusters[k]);
-    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') clKeys.push(k); });
-    if (clKeys.length) {
-      document.getElementById('clusters-section').classList.remove('hidden');
-      document.getElementById('cluster-grid').innerHTML = clKeys.map(cl => {
-        const c = clusters[cl];
-        const halo = CLUSTER_HALOS[cl] || 'radial-gradient(ellipse at 50% 85%, #3A3A5A 0%, #0A0D14 70%)';
-        return `<div class="cluster-tile">
-          <div class="cluster-halo" style="background:${halo}"></div>
-          <div class="cluster-body">
-            <div class="cluster-name">${esc(cl)}</div>
-            <div style="text-align:center">
-              <div class="cluster-num">${fmt(c.to_ship || 0)}</div>
-              <div class="cluster-unit">шт.</div>
-            </div>
-            <div class="cluster-meta">
-              ${c.sku_count || 0} SKU${c.oos > 0 ? `<span class="cluster-oos"> · ${c.oos} OOS</span>` : ''}
-            </div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // Aggregate K per SKU across all clusters (using full skus list, not filtered)
+    // Aggregate K per SKU (for color coding)
     const skuAgg = {};
     (d.skus || []).forEach(s => {
       const key = s.sku || '';
@@ -453,61 +436,73 @@ async function loadStatus() {
       skuAgg[key].stock += (s.stock || 0);
       skuAgg[key].sales += (s.sales_30d || 0);
     });
-    // Aggregate K: 0–0.7 → green, 0.7–2.0 → neutral (white), 2.0+ → red
     const skuColorMap = {};
     Object.entries(skuAgg).forEach(([sku, v]) => {
       if (v.sales === 0) return;
       const k = v.stock / v.sales;
-      if (k >= 2.0)     skuColorMap[sku] = 'red';
-      else if (k < 0.7) skuColorMap[sku] = 'green';
-      else              skuColorMap[sku] = 'neutral';
+      skuColorMap[sku] = k >= 2.0 ? 'red' : k < 0.7 ? 'green' : 'neutral';
     });
 
-    // Supply plan table — only to_ship > 0
-    const skus = (d.skus || []).filter(s => (s.to_ship || 0) > 0);
-    if (skus.length) {
-      document.getElementById('skus-section').classList.remove('hidden');
+    // Group SKUs by cluster
+    const skusByCluster = {};
+    (d.skus || []).forEach(s => {
+      const cl = s.cluster || '';
+      if (!skusByCluster[cl]) skusByCluster[cl] = [];
+      skusByCluster[cl].push(s);
+    });
 
-      const clTotals = {};
-      skus.forEach(s => { clTotals[s.cluster] = (clTotals[s.cluster] || 0) + (s.to_ship || 0); });
-      const clByTotal = Object.entries(clTotals).sort((a, b) => b[1] - a[1]);
-
-      document.getElementById('ship-cluster-summary').innerHTML = clByTotal.map(([cl, total]) =>
-        `<div class="ship-pill">
-          <div class="ship-pill-num">${fmt(total)}</div>
-          <div class="ship-pill-unit">шт. к поставке</div>
-          <div class="ship-pill-name">${esc(cl)}</div>
-        </div>`
-      ).join('');
-
-      const rows = [];
-      clByTotal.forEach(([cl]) => {
-        rows.push(`<tr class="sku-cluster-hdr"><td colspan="5">${esc(cl)}</td></tr>`);
-        skus
-          .filter(s => s.cluster === cl)
-          .sort((a, b) => {
-            const d = (b.to_ship || 0) - (a.to_ship || 0);
-            return d !== 0 ? d : (b.sales_30d || 0) - (a.sales_30d || 0);
-          })
-          .forEach(s => {
-            const skuColor = skuColorMap[s.sku || ''];
-            const rowCls = skuColor === 'red' ? 'sku-global-over' : skuColor === 'green' ? 'sku-global-def' : skuColor === 'neutral' ? 'sku-neutral' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
-            const kDisp  = s.k != null ? s.k.toFixed(2) : '—';
-            const aggK   = skuAgg[s.sku || ''];
-            const aggKDisp = (aggK && aggK.sales > 0) ? (aggK.stock / aggK.sales).toFixed(2) : null;
-            const skuLabel = aggKDisp && skuColor
-              ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
-              : esc(s.sku || '');
-            rows.push(`<tr class="${rowCls}">
-              <td class="sku-name">${skuLabel}</td>
-              <td style="color:var(--ink-60)">${fmt(s.stock)}</td>
-              <td style="color:var(--ink-60)">${fmt(s.sales_30d)}</td>
+    // Build accordion
+    const clusters = d.clusters || {};
+    const clKeys = CLUSTER_ORDER.filter(k => clusters[k]);
+    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') clKeys.push(k); });
+    if (clKeys.length) {
+      document.getElementById('clusters-section').classList.remove('hidden');
+      document.getElementById('cluster-accordion').innerHTML = clKeys.map(cl => {
+        const c = clusters[cl] || {};
+        const oosHtml = (c.oos > 0) ? `<span class="cluster-oos"> · ${c.oos} OOS</span>` : '';
+        const clSkus = (skusByCluster[cl] || []).sort((a, b) =>
+          ((b.to_ship || 0) - (a.to_ship || 0)) || ((b.sales_30d || 0) - (a.sales_30d || 0))
+        );
+        const skuRows = clSkus.map(s => {
+          const col = skuColorMap[s.sku || ''];
+          const rowCls = col === 'red' ? 'sku-global-over' : col === 'green' ? 'sku-global-def' : col === 'neutral' ? 'sku-neutral' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+          const kDisp = s.k != null ? Number(s.k).toFixed(2) : '—';
+          const agg = skuAgg[s.sku || ''];
+          const aggKDisp = (agg && agg.sales > 0) ? (agg.stock / agg.sales).toFixed(2) : null;
+          const label = aggKDisp && col
+            ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
+            : esc(s.sku || '');
+          const oos = (skuAgg[s.sku || '']?.stock === 0);
+          const shipCell = (s.to_ship || 0) > 0
+            ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)" title="Нет остатков ни в одном кластере">⚠</span>' : ''}`
+            : `<span style="color:var(--ink-muted)">—</span>`;
+          return `<tr class="${rowCls}">
+              <td class="sku-name">${label}</td>
+              <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
-              <td class="sku-ship">${fmt(s.to_ship)}${(skuAgg[s.sku||'']?.stock === 0) ? ' <span title="Нет остатков ни в одном кластере — спрос может быть занижен" style="color:var(--warn)">⚠</span>' : ''}</td>
-            </tr>`);
-          });
-      });
-      document.getElementById('skus-tbody').innerHTML = rows.join('');
+              <td class="sku-ship">${shipCell}</td>
+            </tr>`;
+        }).join('');
+        return `<div class="ac-item">
+          <div class="ac-header" onclick="toggleAc(this)">
+            <div class="cluster-name">${esc(cl)}</div>
+            <div style="margin-right:24px">
+              <div class="cluster-num">${fmt(c.to_ship || 0)}</div>
+              <div class="cluster-unit">шт. к поставке</div>
+            </div>
+            <div class="cluster-meta">${c.sku_count || 0} SKU${oosHtml}</div>
+            <div class="ac-chevron">▾</div>
+          </div>
+          <div class="ac-body">
+            <table><thead><tr>
+              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
+            </tr></thead><tbody>${skuRows}</tbody></table>
+            <div class="ac-footer">
+              <button class="btn-ship">📦 Создать поставку</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
     }
 
   } catch (e) {
@@ -573,6 +568,16 @@ function runBadge(conclusion, status) {
 function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleAc(hdr) {
+  const body = hdr.nextElementSibling;
+  const isOpen = hdr.classList.contains('open');
+  document.querySelectorAll('.ac-header.open').forEach(h => {
+    h.classList.remove('open');
+    h.nextElementSibling.classList.remove('open');
+  });
+  if (!isOpen) { hdr.classList.add('open'); body.classList.add('open'); }
 }
 
 function loadAll() {
