@@ -64,6 +64,18 @@ CLUSTER_ORDER = [
     "Хабаровск",
 ]
 
+# 3-letter city code used in Excel filenames: ozon_{CODE}_{ddmmyy}.xlsx
+CLUSTER_CODES: dict[str, str] = {
+    "Москва":        "MSC",
+    "Санкт-Петербург": "SPB",
+    "Екатеринбург":  "EKB",
+    "Казань":        "KZN",
+    "Краснодар":     "KRD",
+    "Ростов-на-Дону": "RND",
+    "Новосибирск":   "NSK",
+    "Хабаровск":     "KHV",
+}
+
 
 def warehouse_to_cluster(warehouse_name: str) -> str:
     """Map Ozon warehouse name to FBO cluster. Returns 'UNKNOWN' if no match."""
