@@ -330,20 +330,14 @@
   <div id="status-error" class="err-msg hidden"></div>
   <div id="metrics-grid" class="metrics-grid hidden"></div>
 
-  <!-- ── Clusters ── -->
+  <!-- ── Clusters accordion ── -->
   <div id="clusters-section" class="hidden">
     <div class="section-title">По кластерам</div>
-    <div class="cluster-grid" id="cluster-grid" style="margin-top:16px;"></div>
+    <div class="accordion" id="cluster-accordion" style="margin-top:16px;"></div>
   </div>
 
-  <!-- ── Supply plan ── -->
+  <!-- ── Supply plan (hidden, data used by JS) ── -->
   <div id="skus-section" class="hidden">
-    <div class="section-title">План поставки по SKU</div>
-    <p class="section-sub">
-      Только позиции с рекомендуемой поставкой. 🔴 Товар вышел при продажах=0 —
-      спрос неизвестен из-за дефицита, K не рассчитывается.
-    </p>
-    <div class="ship-pills" id="ship-cluster-summary"></div>
     <div class="table-wrap">
       <table>
         <thead><tr>
