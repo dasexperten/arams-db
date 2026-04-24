@@ -31,7 +31,7 @@ class OzonFBOAPI:
         """POST /v2/analytics/stock_on_warehouses — FBO stock per warehouse.
 
         Response: {"result": {"rows": [{sku, item_code, item_name,
-                    fbo_present_stock, warehouse_name, ...}], "total": N}}
+                    free_to_sell_amount, warehouse_name, ...}], "total": N}}
         """
         return self.c.post(
             "/v2/analytics/stock_on_warehouses",

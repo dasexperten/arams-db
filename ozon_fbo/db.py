@@ -200,6 +200,6 @@ def _stock_row(s: dict, run_date: str) -> dict:
         "run_date": run_date,
         "offer_id": s.get("item_code") or s.get("offer_id") or "",
         "item_name": s.get("item_name") or "",
-        "present_stock": int(s.get("fbo_present_stock") or s.get("present_stock") or 0),
+        "present_stock": int(s.get("free_to_sell_amount") or s.get("fbo_present_stock") or s.get("present_stock") or 0),
         "raw_payload": json.dumps(s, ensure_ascii=False),
     }
