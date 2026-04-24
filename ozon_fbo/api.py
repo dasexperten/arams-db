@@ -21,8 +21,11 @@ class OzonFBOAPI:
         self.close()
 
     def ping(self) -> dict:
-        """Verify credentials by fetching product list (limit=1)."""
-        return self.c.post("/v2/product/list", {"filter": {}, "limit": 1, "last_id": ""})
+        """Verify credentials by fetching FBO stock (limit=1)."""
+        return self.c.post(
+            "/v2/analytics/stock_on_warehouses",
+            {"limit": 1, "offset": 0, "warehouse_type": "fbo"},
+        )
 
     def stock_on_warehouses(self, offset: int = 0, limit: int = 1000) -> dict:
         """POST /v2/analytics/stock_on_warehouses — FBO stock per warehouse.
