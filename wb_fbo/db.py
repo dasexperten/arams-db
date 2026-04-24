@@ -240,23 +240,41 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
 
 
 def load_barcodes_by_sku(conn: sqlite3.Connection, run_date: str) -> dict[str, list[str]]:
-    """Return {vendor_code: [barcode, ...]} extracted from raw_payload for run_date."""
+    """Return {sku: [barcode, ...]} extracted from raw_payload for run_date.
+
+    Uses the same nm_id → canonical SKU mapping as load_plan_inputs so that
+    barcodes are keyed by supplier_article (from sales) rather than vendor_code
+    (from stocks), which can differ for some products.
+    """
+    nm_to_sku: dict[int, str] = {}
+    for row in conn.execute(
+        "SELECT DISTINCT nm_id, supplier_article FROM fbo_sales "
+        "WHERE nm_id IS NOT NULL AND supplier_article IS NOT NULL"
+    ):
+        nm_id = int(row[0])
+        if nm_id not in nm_to_sku:
+            nm_to_sku[nm_id] = row[1]
+
     result: dict[str, list[str]] = {}
     for row in conn.execute(
-        """SELECT vendor_code,
+        """SELECT nm_id, vendor_code,
                   json_extract(raw_payload, '$.barcode') AS barcode
            FROM fbo_stocks
            WHERE run_date = ?
              AND json_extract(raw_payload, '$.barcode') IS NOT NULL
-           GROUP BY vendor_code, barcode""",
+           GROUP BY nm_id, barcode""",
         (run_date,),
     ):
-        vc, bc = row[0], row[1]
-        if vc and bc:
-            if vc not in result:
-                result[vc] = []
-            if bc not in result[vc]:
-                result[vc].append(str(bc))
+        nm_id = int(row[0] or 0)
+        vc, bc = row[1], row[2]
+        sku = nm_to_sku.get(nm_id) or vc
+        if not sku or not bc:
+            continue
+        bc = str(bc)
+        if sku not in result:
+            result[sku] = []
+        if bc not in result[sku]:
+            result[sku].append(bc)
     return result
 
 

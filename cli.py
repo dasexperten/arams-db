@@ -21,6 +21,7 @@ from wb_fbo import db as fbo_db
 from wb_fbo import etl as fbo_etl
 from wb_fbo import calc as fbo_calc
 from wb_fbo import report as fbo_report
+from wb_fbo import sku_export as fbo_sku_export
 
 
 _REPLIED_PATH = Path(__file__).parent / "data" / "replied_reviews.json"
@@ -1245,6 +1246,17 @@ def cmd_list_wb_warehouses(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_wb_sku_db(args: argparse.Namespace) -> int:
+    """Export SKU database (SKU | nm_id | Barcode) to Excel."""
+    out_dir = Path(getattr(args, "output_dir", None) or "docs")
+    run_date = getattr(args, "run_date", None)
+    out_path = out_dir / "WB-SKU.xlsx"
+    with fbo_db.connect() as conn:
+        result = fbo_sku_export.write_sku_db(conn, run_date, out_path)
+    print(f"SKU database written: {result}")
+    return 0
+
+
 def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with fbo_db.connect() as conn:
@@ -1396,6 +1408,15 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
         print("[wb-fbo-monthly] status JSON written to docs/wb-fbo-status.json", flush=True)
     except Exception as e:
         print(f"[wb-fbo-monthly] status JSON FAILED: {e}", flush=True)
+
+    # 7b. Write SKU database Excel (SKU | nm_id | Barcode) to docs/
+    try:
+        sku_db_path = Path("docs") / "WB-SKU.xlsx"
+        with fbo_db.connect() as conn:
+            fbo_sku_export.write_sku_db(conn, run_date, sku_db_path)
+        print(f"[wb-fbo-monthly] SKU database written to {sku_db_path}", flush=True)
+    except Exception as e:
+        print(f"[wb-fbo-monthly] SKU database FAILED: {e}", flush=True)
 
     # 8. Telegram sendDocument
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -1860,6 +1881,14 @@ def build_parser() -> argparse.ArgumentParser:
         "list-wb-warehouses",
         help="Show all WB warehouse names from DB with their cluster mapping (debug)",
     ).set_defaults(func=cmd_list_wb_warehouses)
+
+    sku_db_p = sub.add_parser(
+        "wb-sku-db",
+        help="Export WB-SKU.xlsx: SKU | nm_id | Barcode master reference",
+    )
+    sku_db_p.add_argument("--output-dir", default="docs", help="Output directory (default: docs/)")
+    sku_db_p.add_argument("--run-date", default=None, help="Specific run_date (default: latest)")
+    sku_db_p.set_defaults(func=cmd_wb_sku_db)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
