@@ -1337,8 +1337,9 @@ def cmd_report_ozon_fbo(_: argparse.Namespace) -> int:
     if not plans:
         print(f"no plans for {run_date} — run calc-ozon-fbo first")
         return 1
-    out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
-    print(f"excel written: {out_path}")
+    out_paths = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+    for p in out_paths:
+        print(f"excel written: {p}")
     return 0
 
 
@@ -1419,9 +1420,11 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
     print(f"[ozon-fbo-monthly] plans: {len(plans)} rows", flush=True)
 
     # 5. Excel
+    out_paths: list = []
     try:
-        out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
-        print(f"[ozon-fbo-monthly] excel: {out_path}", flush=True)
+        out_paths = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+        for p in out_paths:
+            print(f"[ozon-fbo-monthly] excel: {p}", flush=True)
     except Exception as e:
         print(f"[ozon-fbo-monthly] excel FAILED: {e}", flush=True)
         return 2
@@ -1436,7 +1439,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
             sales_rows=sales_result.get("rows_fetched", 0),
             plans_created=len(plans),
             warnings=sum(1 for p in plans if p.get("flag")),
-            excel_path=str(out_path),
+            excel_path="; ".join(str(p) for p in out_paths),
             exit_code=exit_code,
             started_at=started_at,
             finished_at=datetime.utcnow().isoformat(),

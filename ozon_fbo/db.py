@@ -161,7 +161,7 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
 
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
-        """SELECT sku, offer_id, warehouse, SUM(present_stock) as qty
+        """SELECT sku, offer_id, warehouse, SUM(present_stock) as qty, MAX(item_name) as item_name
            FROM ozon_fbo_stocks WHERE run_date = ?
            GROUP BY sku, offer_id, warehouse""",
         (run_date,),
@@ -178,6 +178,7 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
                 "cluster": cluster,
                 "stock": 0,
                 "sales_30d": sales_map.get(numeric_sku, 0),
+                "item_name": row[4] or "",
             }
         cluster_data[key]["stock"] += int(row[3] or 0)
 
