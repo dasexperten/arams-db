@@ -68,6 +68,16 @@ def classify_zone(k: float) -> str:
     return ZONE_OVERSTOCK
 
 
+def _min_sales_threshold(vendor_code: str) -> int:
+    """Minimum monthly sales per cluster to include a SKU in the plan.
+    DE1XX: 144 (one set pack), DE2XX: 36 (one set pack). Below or equal → excluded.
+    """
+    m = _SKU_RE.match((vendor_code or "").strip())
+    if not m:
+        return 0
+    return 144 if int(m.group(1)) == 1 else 36
+
+
 def calculate_plan(rows: list[dict]) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
@@ -80,6 +90,10 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         cluster = str(row.get("cluster") or "").strip()
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
+
+        # Skip rows below minimum viable sales threshold for this SKU series
+        if sales <= _min_sales_threshold(sku):
+            continue
 
         flags: list[str] = []
         k: float | None = None
