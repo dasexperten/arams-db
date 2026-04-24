@@ -106,7 +106,8 @@ class OzonFBOAPI:
                 print(f"  ERR {label}  → {e}")
 
 
-        """Yield {offer_id, orders_30d} dicts for all SKUs in the last N days."""
+    def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
+        """Yield {sku, orders_30d} dicts for all SKUs in the last N days."""
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
         offset = 0
