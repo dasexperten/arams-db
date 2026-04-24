@@ -1,68 +1,68 @@
 {
   "run_date": "2026-04-24",
-  "generated_at": "2026-04-24T19:40:13Z",
-  "stocks_rows": 376,
+  "generated_at": "2026-04-24T19:54:31Z",
+  "stocks_rows": 377,
   "sales_rows": 49,
-  "total_skus": 101,
-  "to_ship_count": 76,
-  "to_ship_units": 90396,
-  "oos_count": 101,
-  "overstock_count": 0,
-  "unknown_pack": 13,
+  "total_skus": 102,
+  "to_ship_count": 51,
+  "to_ship_units": 62964,
+  "oos_count": 0,
+  "overstock_count": 21,
+  "unknown_pack": 14,
   "exit_code": 0,
   "clusters": {
     "UNKNOWN": {
-      "to_ship": 17244,
+      "to_ship": 936,
       "sku_count": 22,
-      "oos": 22,
-      "deficit": 22
+      "oos": 0,
+      "deficit": 3
     },
     "Екатеринбург": {
-      "to_ship": 17244,
+      "to_ship": 12924,
       "sku_count": 17,
-      "oos": 17,
-      "deficit": 17
-    },
-    "Казань": {
-      "to_ship": 2448,
-      "sku_count": 5,
-      "oos": 5,
-      "deficit": 5
-    },
-    "Ростов-на-Дону": {
-      "to_ship": 15588,
-      "sku_count": 13,
-      "oos": 13,
-      "deficit": 13
-    },
-    "Хабаровск": {
-      "to_ship": 9000,
-      "sku_count": 10,
-      "oos": 10,
+      "oos": 0,
       "deficit": 10
     },
+    "Казань": {
+      "to_ship": 2016,
+      "sku_count": 6,
+      "oos": 0,
+      "deficit": 3
+    },
+    "Ростов-на-Дону": {
+      "to_ship": 14184,
+      "sku_count": 13,
+      "oos": 0,
+      "deficit": 12
+    },
+    "Хабаровск": {
+      "to_ship": 8496,
+      "sku_count": 10,
+      "oos": 0,
+      "deficit": 8
+    },
     "Москва": {
-      "to_ship": 11628,
+      "to_ship": 10332,
       "sku_count": 18,
-      "oos": 18,
-      "deficit": 18
+      "oos": 0,
+      "deficit": 10
     },
     "Санкт-Петербург": {
-      "to_ship": 14148,
+      "to_ship": 11160,
       "sku_count": 11,
-      "oos": 11,
-      "deficit": 11
+      "oos": 0,
+      "deficit": 10
     },
     "Краснодар": {
-      "to_ship": 2412,
+      "to_ship": 2268,
       "sku_count": 3,
-      "oos": 3,
+      "oos": 0,
       "deficit": 3
     },
     "Новосибирск": {
-      "to_ship": 684,
+      "to_ship": 648,
       "sku_count": 2,
-      "oos": 2,
+      "oos": 0,
       "deficit": 2
     }
   },
@@ -70,233 +70,233 @@
     {
       "sku": "DE105AAAA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1798,
       "sales_30d": 542,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 864,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 3.32,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE105AAAA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 551,
       "sales_30d": 542,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 864,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.02,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE105AAAA",
       "cluster": "Казань",
-      "stock": 0,
+      "stock": 3,
       "sales_30d": 542,
-      "k": 0.0,
+      "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 864,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE105AAAA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 27,
       "sales_30d": 542,
-      "k": 0.0,
+      "k": 0.05,
       "zone": "DEFICIT",
       "to_ship": 864,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE105AAAA",
       "cluster": "Хабаровск",
-      "stock": 0,
+      "stock": 160,
       "sales_30d": 542,
-      "k": 0.0,
+      "k": 0.3,
       "zone": "DEFICIT",
-      "to_ship": 864,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 720,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE108",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE108",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE109",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE110",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 12,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "UNKNOWN",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
-      "zone": "DEFICIT",
+      "stock": 1627,
+      "sales_30d": 430,
+      "k": 3.78,
+      "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Екатеринбург",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
+      "stock": 169,
+      "sales_30d": 430,
+      "k": 0.39,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Москва",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
+      "stock": 128,
+      "sales_30d": 430,
+      "k": 0.3,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
+      "stock": 128,
+      "sales_30d": 430,
+      "k": 0.3,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
+      "stock": 144,
+      "sales_30d": 430,
+      "k": 0.33,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Хабаровск",
-      "stock": 0,
-      "sales_30d": 429,
-      "k": 0.0,
+      "stock": 42,
+      "sales_30d": 430,
+      "k": 0.1,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE112",
+      "global_oos": false
     },
     {
       "sku": "DE115",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 120,
       "sales_30d": 151,
-      "k": 0.0,
+      "k": 0.79,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE115",
+      "global_oos": false
     },
     {
       "sku": "DE115",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 41,
       "sales_30d": 151,
-      "k": 0.0,
+      "k": 0.27,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE115",
+      "global_oos": false
     },
     {
       "sku": "DE116",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 12,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE116AAAA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1616,
       "sales_30d": 359,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 4.5,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE116AAAA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 22,
       "sales_30d": 359,
-      "k": 0.0,
+      "k": 0.06,
       "zone": "DEFICIT",
       "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE116AAAA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 154,
       "sales_30d": 359,
-      "k": 0.0,
+      "k": 0.43,
       "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 432,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE116AAAA",
@@ -307,7 +307,7 @@
       "zone": "DEFICIT",
       "to_ship": 576,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE116AAAA",
@@ -318,139 +318,139 @@
       "zone": "DEFICIT",
       "to_ship": 576,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE118",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 12,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE118",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
-      "sales_30d": 902,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "stock": 1262,
+      "sales_30d": 903,
+      "k": 1.4,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
-      "sales_30d": 902,
-      "k": 0.0,
+      "stock": 152,
+      "sales_30d": 903,
+      "k": 0.17,
       "zone": "DEFICIT",
-      "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1296,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Хабаровск",
-      "stock": 0,
-      "sales_30d": 902,
-      "k": 0.0,
+      "stock": 120,
+      "sales_30d": 903,
+      "k": 0.13,
       "zone": "DEFICIT",
-      "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1296,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1954,
       "sales_30d": 714,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 2.74,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 602,
       "sales_30d": 714,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 0.84,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Казань",
-      "stock": 0,
+      "stock": 16,
       "sales_30d": 714,
-      "k": 0.0,
+      "k": 0.02,
       "zone": "DEFICIT",
       "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Краснодар",
-      "stock": 0,
+      "stock": 68,
       "sales_30d": 714,
-      "k": 0.0,
+      "k": 0.1,
       "zone": "DEFICIT",
-      "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1008,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 114,
       "sales_30d": 714,
-      "k": 0.0,
+      "k": 0.16,
       "zone": "DEFICIT",
-      "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1008,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 177,
       "sales_30d": 714,
-      "k": 0.0,
+      "k": 0.25,
       "zone": "DEFICIT",
-      "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1008,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 33,
       "sales_30d": 714,
-      "k": 0.0,
+      "k": 0.05,
       "zone": "DEFICIT",
       "to_ship": 1152,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE120AAAA",
@@ -461,40 +461,51 @@
       "zone": "DEFICIT",
       "to_ship": 1152,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE124",
       "cluster": "Казань",
-      "stock": 0,
+      "stock": 1,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE125",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 185,
+      "sales_30d": 1084,
+      "k": 0.17,
+      "zone": "DEFICIT",
+      "to_ship": 0,
+      "flag": "⚠️ Unknown pack для SKU DE125",
+      "global_oos": false
+    },
+    {
+      "sku": "DE125",
+      "cluster": "Казань",
+      "stock": 1,
       "sales_30d": 1084,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
-      "global_oos": true
+      "flag": "⚠️ Возможен дефицит — проверь вручную; ⚠️ Unknown pack для SKU DE125",
+      "global_oos": false
     },
     {
       "sku": "DE130",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1459,
       "sales_30d": 858,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.7,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE130",
@@ -505,40 +516,40 @@
       "zone": "DEFICIT",
       "to_ship": 1440,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE130",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 123,
       "sales_30d": 858,
-      "k": 0.0,
+      "k": 0.14,
       "zone": "DEFICIT",
       "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE130",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 127,
       "sales_30d": 858,
-      "k": 0.0,
+      "k": 0.15,
       "zone": "DEFICIT",
       "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE130",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 37,
       "sales_30d": 858,
-      "k": 0.0,
+      "k": 0.04,
       "zone": "DEFICIT",
       "to_ship": 1440,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE130",
@@ -549,29 +560,29 @@
       "zone": "DEFICIT",
       "to_ship": 1440,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 2278,
       "sales_30d": 450,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 5.06,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 427,
       "sales_30d": 450,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 0.95,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
@@ -582,117 +593,117 @@
       "zone": "DEFICIT",
       "to_ship": 684,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 8,
       "sales_30d": 450,
-      "k": 0.0,
+      "k": 0.02,
       "zone": "DEFICIT",
       "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Новосибирск",
-      "stock": 0,
+      "stock": 52,
       "sales_30d": 450,
-      "k": 0.0,
+      "k": 0.12,
       "zone": "DEFICIT",
-      "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 648,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 511,
       "sales_30d": 450,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.14,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 185,
       "sales_30d": 450,
-      "k": 0.0,
+      "k": 0.41,
       "zone": "DEFICIT",
-      "to_ship": 684,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 504,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 5453,
       "sales_30d": 2062,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 3096,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 2.64,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 7,
       "sales_30d": 2062,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 3096,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 36,
       "sales_30d": 2062,
-      "k": 0.0,
+      "k": 0.02,
       "zone": "DEFICIT",
-      "to_ship": 3096,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 3060,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 1159,
       "sales_30d": 2062,
-      "k": 0.0,
+      "k": 0.56,
       "zone": "DEFICIT",
-      "to_ship": 3096,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1944,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE202AA",
       "cluster": "Хабаровск",
-      "stock": 0,
+      "stock": 1,
       "sales_30d": 2062,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 3096,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 730,
       "sales_30d": 1100,
-      "k": 0.0,
+      "k": 0.66,
       "zone": "DEFICIT",
-      "to_ship": 1656,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 936,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -703,18 +714,18 @@
       "zone": "DEFICIT",
       "to_ship": 1656,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 71,
       "sales_30d": 1100,
-      "k": 0.0,
+      "k": 0.06,
       "zone": "DEFICIT",
-      "to_ship": 1656,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1584,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
@@ -725,337 +736,337 @@
       "zone": "DEFICIT",
       "to_ship": 1656,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE203AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 93,
       "sales_30d": 1100,
-      "k": 0.0,
+      "k": 0.08,
       "zone": "DEFICIT",
-      "to_ship": 1656,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1584,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1490,
       "sales_30d": 598,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 900,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 2.49,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 39,
       "sales_30d": 598,
-      "k": 0.0,
+      "k": 0.07,
       "zone": "DEFICIT",
-      "to_ship": 900,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 864,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 98,
       "sales_30d": 598,
-      "k": 0.0,
+      "k": 0.16,
       "zone": "DEFICIT",
-      "to_ship": 900,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 828,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 176,
       "sales_30d": 598,
-      "k": 0.0,
+      "k": 0.29,
       "zone": "DEFICIT",
-      "to_ship": 900,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 756,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 166,
       "sales_30d": 598,
-      "k": 0.0,
+      "k": 0.28,
       "zone": "DEFICIT",
-      "to_ship": 900,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 756,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
-      "sales_30d": 1170,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 1764,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "stock": 2752,
+      "sales_30d": 1171,
+      "k": 2.35,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
-      "sales_30d": 1170,
-      "k": 0.0,
+      "stock": 70,
+      "sales_30d": 1171,
+      "k": 0.06,
       "zone": "DEFICIT",
-      "to_ship": 1764,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1692,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Москва",
-      "stock": 0,
-      "sales_30d": 1170,
-      "k": 0.0,
+      "stock": 64,
+      "sales_30d": 1171,
+      "k": 0.05,
       "zone": "DEFICIT",
-      "to_ship": 1764,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1728,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
-      "sales_30d": 1170,
-      "k": 0.0,
+      "stock": 207,
+      "sales_30d": 1171,
+      "k": 0.18,
       "zone": "DEFICIT",
-      "to_ship": 1764,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1584,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
-      "sales_30d": 1170,
-      "k": 0.0,
+      "stock": 703,
+      "sales_30d": 1171,
+      "k": 0.6,
       "zone": "DEFICIT",
-      "to_ship": 1764,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 1080,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE207",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 1434,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 11.66,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 162,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.32,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "Казань",
-      "stock": 0,
+      "stock": 225,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.83,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 30,
       "sales_30d": 123,
-      "k": 0.0,
+      "k": 0.24,
       "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 180,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 20,
       "sales_30d": 123,
-      "k": 0.0,
+      "k": 0.16,
       "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 180,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE207AA",
       "cluster": "Хабаровск",
-      "stock": 0,
+      "stock": 160,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.3,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE208",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE208",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 24,
       "sales_30d": 0,
       "k": null,
-      "zone": "DEFICIT",
+      "zone": "NORMAL",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Продажи=0 из-за дефицита — нужна ручная проверка",
-      "global_oos": true
+      "flag": "Нет продаж за 30 дней",
+      "global_oos": false
     },
     {
       "sku": "DE208AA",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 2175,
       "sales_30d": 130,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 16.73,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE208AA",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 568,
       "sales_30d": 130,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 4.37,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE208AA",
       "cluster": "Казань",
-      "stock": 0,
+      "stock": 108,
       "sales_30d": 130,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 0.83,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE208AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
+      "stock": 83,
       "sales_30d": 130,
-      "k": 0.0,
+      "k": 0.64,
       "zone": "DEFICIT",
-      "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 144,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE208AA",
       "cluster": "Хабаровск",
-      "stock": 0,
+      "stock": 13,
       "sales_30d": 130,
-      "k": 0.0,
+      "k": 0.1,
       "zone": "DEFICIT",
       "to_ship": 216,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE209",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 3994,
       "sales_30d": 342,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 11.68,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE209",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 315,
       "sales_30d": 342,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 0.92,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE209",
       "cluster": "Краснодар",
-      "stock": 0,
+      "stock": 1,
       "sales_30d": 342,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false
     },
     {
       "sku": "DE209",
       "cluster": "Москва",
-      "stock": 0,
+      "stock": 378,
       "sales_30d": 342,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 1.11,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE209",
@@ -1066,117 +1077,117 @@
       "zone": "DEFICIT",
       "to_ship": 576,
       "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "global_oos": false
     },
     {
       "sku": "DE209",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
+      "stock": 1100,
       "sales_30d": 342,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 576,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "k": 3.22,
+      "zone": "OVERSTOCK",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "UNKNOWN",
-      "stock": 0,
-      "sales_30d": 1742,
-      "k": 0.0,
-      "zone": "DEFICIT",
-      "to_ship": 2664,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "stock": 1511,
+      "sales_30d": 1743,
+      "k": 0.87,
+      "zone": "NORMAL",
+      "to_ship": 0,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Екатеринбург",
-      "stock": 0,
-      "sales_30d": 1742,
-      "k": 0.0,
+      "stock": 314,
+      "sales_30d": 1743,
+      "k": 0.18,
       "zone": "DEFICIT",
-      "to_ship": 2664,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 2304,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Москва",
-      "stock": 0,
-      "sales_30d": 1742,
-      "k": 0.0,
+      "stock": 199,
+      "sales_30d": 1743,
+      "k": 0.11,
       "zone": "DEFICIT",
-      "to_ship": 2664,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 2448,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Ростов-на-Дону",
-      "stock": 0,
-      "sales_30d": 1742,
-      "k": 0.0,
+      "stock": 106,
+      "sales_30d": 1743,
+      "k": 0.06,
       "zone": "DEFICIT",
-      "to_ship": 2664,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 2520,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Санкт-Петербург",
-      "stock": 0,
-      "sales_30d": 1742,
-      "k": 0.0,
+      "stock": 143,
+      "sales_30d": 1743,
+      "k": 0.08,
       "zone": "DEFICIT",
-      "to_ship": 2664,
-      "flag": "🔴 Товар вышел",
-      "global_oos": true
+      "to_ship": 2520,
+      "flag": "",
+      "global_oos": false
     },
     {
       "sku": "DE310",
       "cluster": "UNKNOWN",
-      "stock": 0,
+      "stock": 969,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
+      "k": 7.88,
+      "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
       "cluster": "Екатеринбург",
-      "stock": 0,
+      "stock": 183,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
+      "k": 1.49,
+      "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
       "cluster": "Новосибирск",
-      "stock": 0,
+      "stock": 19,
       "sales_30d": 123,
-      "k": 0.0,
+      "k": 0.15,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     },
     {
       "sku": "DE310",
       "cluster": "Хабаровск",
-      "stock": 0,
+      "stock": 220,
       "sales_30d": 123,
-      "k": 0.0,
-      "zone": "DEFICIT",
+      "k": 1.79,
+      "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
-      "global_oos": true
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false
     }
   ]
 }
