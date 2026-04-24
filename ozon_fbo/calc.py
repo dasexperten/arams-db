@@ -4,7 +4,9 @@ import re
 # Hard-coded — do not change without explicit instruction from Aram.
 K_LOW = 0.8
 K_HIGH = 1.2
-K_TARGET = 1.5  # 45 days coverage
+K_TARGET = 1.5          # 45 days coverage (default)
+K_TARGET_REDUCED = 1.0  # 30 days coverage when globally overstocked
+K_GLOBAL_OVERSTOCK = 2.0  # if global_k > this, use K_TARGET_REDUCED
 
 ZONE_DEFICIT = "DEFICIT"
 ZONE_NORMAL = "NORMAL"
@@ -69,12 +71,15 @@ def _min_sales_threshold(vendor_code: str) -> int:
     return 144 if int(m.group(1)) == 1 else 36
 
 
-def calculate_plan(rows: list[dict]) -> list[dict]:
+def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = None) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
     Input:  [{sku, cluster, stock, sales_30d}, ...]
-    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag, global_oos}, ...]
+            storage_fees: optional {sku_str: monthly_fee_rub} from Ozon finance API
+    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag, global_oos,
+              storage_fee_month}, ...]
     """
+    fees = storage_fees or {}
     sku_total_stock: dict[str, int] = {}
     for row in rows:
         s = str(row.get("sku") or "").strip()
@@ -86,6 +91,7 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         cluster = str(row.get("cluster") or "").strip()
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
+        storage_fee = fees.get(sku)
 
         if sales > 0 and sales <= _min_sales_threshold(sku):
             continue
@@ -100,7 +106,7 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             pack_size = detect_pack_size(sku)
             if pack_size is None:
                 flags.append(f"⚠️ Unknown pack для SKU {sku}")
-            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags, item_name=row.get("item_name") or ""))
+            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags, item_name=row.get("item_name") or "", storage_fee=storage_fee))
             continue
 
         if sales == 0:
@@ -125,18 +131,20 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
             flags.append(f"⚠️ Unknown pack для SKU {sku}")
 
         if zone == ZONE_DEFICIT and pack_size is not None and sales > 0:
-            target = sales * K_TARGET
+            global_k = sku_total_stock.get(sku, 0) / sales
+            k_target = K_TARGET_REDUCED if global_k > K_GLOBAL_OVERSTOCK else K_TARGET
+            target = sales * k_target
             raw = max(0.0, target - stock)
             to_ship = roundup_to_multiple(raw, pack_size) if raw > 0 else 0
 
         global_oos = sku_total_stock.get(sku, 0) == 0
         item_name = row.get("item_name") or ""
-        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name))
+        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name, storage_fee))
 
     return result
 
 
-def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False, item_name=""):
+def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False, item_name="", storage_fee=None):
     return {
         "sku": sku,
         "cluster": cluster,
@@ -149,4 +157,5 @@ def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_
         "to_ship": to_ship,
         "flag": "; ".join(flags),
         "item_name": item_name,
+        "storage_fee_month": storage_fee,
     }

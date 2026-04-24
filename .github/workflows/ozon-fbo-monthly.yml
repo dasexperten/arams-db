@@ -79,6 +79,52 @@ jobs:
           PYEOF
           true
 
+      - name: Debug finance/transaction/list (storage fees)
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          from datetime import date, timedelta
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              c = OzonSellerClient()
+              date_to = date.today().isoformat()
+              date_from = (date.today() - timedelta(days=30)).isoformat()
+              body = {
+                  "filter": {
+                      "date": {
+                          "from": f"{date_from}T00:00:00.000Z",
+                          "to":   f"{date_to}T23:59:59.999Z",
+                      },
+                      "transaction_type": "all",
+                  },
+                  "page": 1,
+                  "page_size": 5,
+              }
+              resp = c.post("/v3/finance/transaction/list", body)
+              result = resp.get("result") or resp
+              ops = (result.get("operations") or [])[:3]
+              print(f"page_count={result.get('page_count')}  sample ops:")
+              for op in ops:
+                  print(json.dumps({
+                      "operation_type": op.get("operation_type"),
+                      "operation_type_name": op.get("operation_type_name"),
+                      "amount": op.get("amount"),
+                      "items": op.get("items", [])[:2],
+                  }, ensure_ascii=False, indent=2))
+              body2 = {**body, "page_size": 1000}
+              resp2 = c.post("/v3/finance/transaction/list", body2)
+              ops2 = (resp2.get("result") or {}).get("operations") or []
+              types = sorted({o.get("operation_type","") for o in ops2})
+              print(f"\nAll operation_type values ({len(ops2)} ops):")
+              for t in types:
+                  print(f"  {t}")
+          except Exception as e:
+              print(f"finance/transaction/list failed: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |

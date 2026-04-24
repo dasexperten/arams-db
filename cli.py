@@ -1388,6 +1388,15 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
         print("[ozon-fbo-monthly] both stocks and sales failed — aborting", flush=True)
         return 2
 
+    # 3b. Fetch storage fees (best-effort — won't abort on failure)
+    storage_fees: dict = {}
+    try:
+        with OzonFBOAPI() as api:
+            storage_fees = api.storage_fees_by_sku(days=30)
+        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} SKUs", flush=True)
+    except Exception as e:
+        print(f"[ozon-fbo-monthly] storage fees FAILED (non-fatal): {e}", flush=True)
+
     # 4. Calc
     with ozon_fbo_db.connect() as conn:
         rows = ozon_fbo_db.load_plan_inputs(conn)
@@ -1395,15 +1404,17 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
         print("[ozon-fbo-monthly] no data to calculate — aborting", flush=True)
         return 2
 
-    plans = ozon_fbo_calc.calculate_plan(rows)
+    plans = ozon_fbo_calc.calculate_plan(rows, storage_fees=storage_fees)
     with ozon_fbo_db.connect() as conn:
         ozon_fbo_db.upsert_plans(conn, plans, run_date)
     print(f"[ozon-fbo-monthly] plans: {len(plans)} rows", flush=True)
 
     # 5. Excel
+    out_paths: list = []
     try:
-        out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
-        print(f"[ozon-fbo-monthly] excel: {out_path}", flush=True)
+        out_paths = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+        for p in out_paths:
+            print(f"[ozon-fbo-monthly] excel: {p}", flush=True)
     except Exception as e:
         print(f"[ozon-fbo-monthly] excel FAILED: {e}", flush=True)
         return 2
@@ -1418,7 +1429,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
             sales_rows=sales_result.get("rows_fetched", 0),
             plans_created=len(plans),
             warnings=sum(1 for p in plans if p.get("flag")),
-            excel_path=str(out_path),
+            excel_path="; ".join(str(p) for p in out_paths),
             exit_code=exit_code,
             started_at=started_at,
             finished_at=datetime.utcnow().isoformat(),
