@@ -87,7 +87,9 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
 
-        if sales <= _min_sales_threshold(sku):
+        # Only apply minimum-sales filter when sales data is available (sales > 0).
+        # When sales = 0 (no data or genuine zero), include the item with appropriate flag.
+        if sales > 0 and sales <= _min_sales_threshold(sku):
             continue
 
         flags: list[str] = []
