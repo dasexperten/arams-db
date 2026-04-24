@@ -121,6 +121,9 @@
     box-shadow: var(--shadow-card); padding: 20px 20px;
     display: flex; flex-direction: column; gap: 6px;
   }
+  .metric-card.clickable { cursor: pointer; transition: box-shadow var(--t-base), transform var(--t-base); }
+  .metric-card.clickable:hover { box-shadow: var(--shadow-raised); transform: translateY(-2px); }
+  .metric-card.filter-active { outline: 2px solid var(--d-teal); outline-offset: 2px; }
   .metric-value {
     font-family: var(--font-display); font-size: 36px; font-weight: 800;
     line-height: 1; letter-spacing: -0.03em; color: var(--ink);
@@ -439,10 +442,10 @@ async function loadStatus() {
     }
 
     grid.innerHTML =
-      metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
-      metricCard(d.to_ship_count,      'SKU × кластеров', '') +
-      metricCard(d.oos_count,          'Stock-Out',        d.oos_count > 0 ? 'danger' : '') +
-      metricCard(d.overstock_count,    'Overstock',       '');
+      metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent',   null) +
+      metricCard(d.to_ship_count,      'SKU × кластеров', '',          null) +
+      metricCard(d.oos_count,          'Stock-Out',        d.oos_count > 0 ? 'danger' : '', 'stockout') +
+      metricCard(d.overstock_count,    'Overstock',        '',          'overstock');
 
     // Aggregate K per SKU (for color coding)
     const skuAgg = {};
@@ -495,7 +498,7 @@ async function loadStatus() {
             : `<span style="color:var(--ink-muted)">—</span>`;
           const bcs = s.barcodes || [];
           const bcCell = bcs.length ? `<div class="sku-barcodes">${bcs.map(b => esc(b)).join('<br>')}</div>` : `<span style="color:var(--ink-muted)">—</span>`;
-          return `<tr class="${rowCls}">
+          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}">
               <td class="sku-name">${label}</td>
               <td>${bcCell}</td>
               <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
@@ -569,11 +572,49 @@ async function loadRuns() {
   }
 }
 
-function metricCard(value, label, cls) {
-  return `<div class="metric-card">
+function metricCard(value, label, cls, filterType) {
+  const extra = filterType
+    ? ` clickable" data-filter="${filterType}" onclick="filterAccordion('${filterType}')`
+    : '';
+  return `<div class="metric-card${extra}">
     <div class="metric-value${cls ? ' ' + cls : ''}">${value ?? '—'}</div>
     <div class="metric-label">${label}</div>
   </div>`;
+}
+
+let _activeFilter = null;
+function filterAccordion(type) {
+  const same = _activeFilter === type;
+  _activeFilter = same ? null : type;
+
+  // Reset all cards
+  document.querySelectorAll('.metric-card').forEach(c => c.classList.remove('filter-active'));
+  if (_activeFilter) {
+    const card = document.querySelector(`.metric-card[data-filter="${_activeFilter}"]`);
+    if (card) card.classList.add('filter-active');
+  }
+
+  // Open all accordion items
+  document.querySelectorAll('.ac-header').forEach(h => {
+    h.classList.add('open');
+    h.nextElementSibling.classList.add('open');
+  });
+  document.getElementById('clusters-section').classList.remove('hidden');
+
+  // Show/hide rows
+  document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
+    if (!_activeFilter) {
+      row.style.display = '';
+    } else if (_activeFilter === 'stockout') {
+      row.style.display = row.dataset.oos === 'true' ? '' : 'none';
+    } else if (_activeFilter === 'overstock') {
+      row.style.display = row.dataset.zone === 'OVERSTOCK' ? '' : 'none';
+    }
+  });
+
+  if (_activeFilter) {
+    document.getElementById('clusters-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function runBadge(conclusion, status) {
