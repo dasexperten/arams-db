@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --d-teal:       #48B097;
@@ -391,13 +392,20 @@ const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs
 const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/wb-fbo-monthly.yml/runs?per_page=10`;
 
 const CLUSTER_ORDER = ['Центральный','Южный','Волга','Восточный','Северо-западный'];
-const CLUSTER_HALOS = {
-  'Центральный':     'radial-gradient(ellipse at 50% 85%, #8B5CF6 0%, #3D1578 35%, #0C0418 70%)',
-  'Южный':           'radial-gradient(ellipse at 50% 85%, #E91FB2 0%, #7A0F5A 35%, #1A0110 70%)',
-  'Волга':           'radial-gradient(ellipse at 50% 85%, #3A7BFF 0%, #142E8A 35%, #050A1A 70%)',
-  'Восточный':       'radial-gradient(ellipse at 50% 85%, #3DC5F5 0%, #0F6A8A 35%, #020F14 70%)',
-  'Северо-западный': 'radial-gradient(ellipse at 50% 85%, #9333EA 0%, #3D1478 35%, #08041A 70%)',
-};
+let _skusByCluster = {};
+
+function createShipExcel(cl) {
+  const skus = (_skusByCluster[cl] || []).filter(s => (s.to_ship || 0) > 0);
+  if (!skus.length) { alert('Нет позиций к поставке для ' + cl); return; }
+  const rows = [['Баркод', 'Количество']];
+  skus.forEach(s => rows.push(['', s.to_ship]));
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 20 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Поставка');
+  const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `wb_fbo_${cl}_${date}.xlsx`);
+}
 
 async function loadStatus() {
   const loadEl = document.getElementById('status-loading');
@@ -443,8 +451,9 @@ async function loadStatus() {
       skuColorMap[sku] = k >= 2.0 ? 'red' : k < 0.7 ? 'green' : 'neutral';
     });
 
-    // Group SKUs by cluster
+    // Group SKUs by cluster (also stored globally for Excel export)
     const skusByCluster = {};
+    _skusByCluster = skusByCluster;
     (d.skus || []).forEach(s => {
       const cl = s.cluster || '';
       if (!skusByCluster[cl]) skusByCluster[cl] = [];
@@ -498,7 +507,7 @@ async function loadStatus() {
               <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
             </tr></thead><tbody>${skuRows}</tbody></table>
             <div class="ac-footer">
-              <button class="btn-ship">📦 Создать поставку</button>
+              <button class="btn-ship" onclick="createShipExcel('${cl}')">📦 Создать поставку</button>
             </div>
           </div>
         </div>`;
