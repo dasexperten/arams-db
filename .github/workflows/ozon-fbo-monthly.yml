@@ -62,6 +62,23 @@ jobs:
         if: always()
         run: python cli.py list-ozon-warehouses || true
 
+      - name: Fetch official Ozon cluster list (/v1/cluster/list)
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              c = OzonSellerClient()
+              resp = c.post("/v1/cluster/list", {})
+              clusters = resp.get("clusters") or resp.get("result") or resp
+              print(json.dumps(clusters, ensure_ascii=False, indent=2))
+          except Exception as e:
+              print(f"cluster/list failed: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |
