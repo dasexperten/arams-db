@@ -1,18 +1,18 @@
 {
   "run_date": "2026-04-24",
-  "generated_at": "2026-04-24T09:48:49Z",
-  "stocks_rows": 708,
-  "sales_rows": 8009,
+  "generated_at": "2026-04-24T13:55:47Z",
+  "stocks_rows": 718,
+  "sales_rows": 8098,
   "total_skus": 40,
   "to_ship_count": 19,
-  "to_ship_units": 3888,
-  "oos_count": 6,
+  "to_ship_units": 3924,
+  "oos_count": 0,
   "overstock_count": 18,
   "unknown_pack": 5,
   "exit_code": 0,
   "clusters": {
     "Центральный": {
-      "to_ship": 1152,
+      "to_ship": 1188,
       "sku_count": 12,
       "oos": 0,
       "deficit": 5
@@ -26,19 +26,19 @@
     "Волга": {
       "to_ship": 756,
       "sku_count": 6,
-      "oos": 4,
+      "oos": 0,
       "deficit": 6
     },
     "Южный": {
       "to_ship": 432,
       "sku_count": 7,
-      "oos": 1,
+      "oos": 0,
       "deficit": 1
     },
     "Северо-западный": {
       "to_ship": 432,
       "sku_count": 4,
-      "oos": 1,
+      "oos": 0,
       "deficit": 4
     }
   },
@@ -46,22 +46,30 @@
     {
       "sku": "DE112",
       "cluster": "Центральный",
-      "stock": 276,
-      "sales_30d": 163,
-      "k": 1.69,
+      "stock": 266,
+      "sales_30d": 165,
+      "k": 1.61,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "6913362823450"
+      ]
     },
     {
       "sku": "DE120AAAA",
       "cluster": "Восточный",
-      "stock": 2,
-      "sales_30d": 151,
-      "k": 0.01,
+      "stock": 0,
+      "sales_30d": 153,
+      "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "6913362825942"
+      ]
     },
     {
       "sku": "DE120AAAA",
@@ -71,27 +79,39 @@
       "k": 0.4,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "6913362825942"
+      ]
     },
     {
       "sku": "DE201",
       "cluster": "Восточный",
-      "stock": 17,
-      "sales_30d": 46,
-      "k": 0.37,
+      "stock": 16,
+      "sales_30d": 48,
+      "k": 0.33,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210609"
+      ]
     },
     {
       "sku": "DE201",
       "cluster": "Центральный",
-      "stock": 677,
+      "stock": 676,
       "sales_30d": 87,
-      "k": 7.78,
+      "k": 7.77,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210609"
+      ]
     },
     {
       "sku": "DE201AA",
@@ -101,7 +121,11 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1381946886"
+      ]
     },
     {
       "sku": "DE201AA",
@@ -111,27 +135,39 @@
       "k": 1.94,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1381946886"
+      ]
     },
     {
       "sku": "DE201AA",
       "cluster": "Центральный",
-      "stock": 101,
-      "sales_30d": 143,
-      "k": 0.71,
+      "stock": 99,
+      "sales_30d": 145,
+      "k": 0.68,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1381946886"
+      ]
     },
     {
       "sku": "DE201AA",
       "cluster": "Южный",
-      "stock": 742,
+      "stock": 739,
       "sales_30d": 69,
-      "k": 10.75,
+      "k": 10.71,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1381946886"
+      ]
     },
     {
       "sku": "DE202",
@@ -141,7 +177,11 @@
       "k": 0.19,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210623"
+      ]
     },
     {
       "sku": "DE202",
@@ -151,77 +191,109 @@
       "k": 0.06,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210623"
+      ]
     },
     {
       "sku": "DE202AA",
       "cluster": "Волга",
       "stock": 4,
-      "sales_30d": 173,
+      "sales_30d": 175,
       "k": 0.02,
       "zone": "DEFICIT",
       "to_ship": 288,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359408834"
+      ]
     },
     {
       "sku": "DE202AA",
       "cluster": "Восточный",
-      "stock": 5,
-      "sales_30d": 340,
+      "stock": 3,
+      "sales_30d": 342,
       "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 540,
-      "flag": ""
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359408834"
+      ]
     },
     {
       "sku": "DE202AA",
       "cluster": "Северо-западный",
-      "stock": 1,
+      "stock": 0,
       "sales_30d": 99,
-      "k": 0.01,
+      "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 180,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359408834"
+      ]
     },
     {
       "sku": "DE202AA",
       "cluster": "Центральный",
-      "stock": 389,
-      "sales_30d": 517,
-      "k": 0.75,
+      "stock": 388,
+      "sales_30d": 528,
+      "k": 0.73,
       "zone": "DEFICIT",
-      "to_ship": 396,
-      "flag": ""
+      "to_ship": 432,
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359408834"
+      ]
     },
     {
       "sku": "DE202AA",
       "cluster": "Южный",
       "stock": 0,
-      "sales_30d": 268,
+      "sales_30d": 269,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 432,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359408834"
+      ]
     },
     {
       "sku": "DE203",
       "cluster": "Восточный",
-      "stock": 7,
-      "sales_30d": 58,
-      "k": 0.12,
+      "stock": 8,
+      "sales_30d": 59,
+      "k": 0.14,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210630"
+      ]
     },
     {
       "sku": "DE203",
       "cluster": "Центральный",
       "stock": 528,
-      "sales_30d": 82,
-      "k": 6.44,
+      "sales_30d": 90,
+      "k": 5.87,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "4270001210630"
+      ]
     },
     {
       "sku": "DE203AA",
@@ -231,37 +303,53 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359365941"
+      ]
     },
     {
       "sku": "DE203AA",
       "cluster": "Восточный",
-      "stock": 762,
+      "stock": 761,
       "sales_30d": 75,
-      "k": 10.16,
+      "k": 10.15,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359365941"
+      ]
     },
     {
       "sku": "DE203AA",
       "cluster": "Центральный",
-      "stock": 831,
-      "sales_30d": 157,
-      "k": 5.29,
+      "stock": 829,
+      "sales_30d": 158,
+      "k": 5.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359365941"
+      ]
     },
     {
       "sku": "DE203AA",
       "cluster": "Южный",
-      "stock": 449,
+      "stock": 451,
       "sales_30d": 70,
-      "k": 6.41,
+      "k": 6.44,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359365941"
+      ]
     },
     {
       "sku": "DE205AA",
@@ -271,67 +359,95 @@
       "k": 2.95,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359459315"
+      ]
     },
     {
       "sku": "DE205AA",
       "cluster": "Центральный",
-      "stock": 5,
-      "sales_30d": 105,
-      "k": 0.05,
+      "stock": 3,
+      "sales_30d": 108,
+      "k": 0.03,
       "zone": "DEFICIT",
       "to_ship": 180,
-      "flag": ""
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359459315"
+      ]
     },
     {
       "sku": "DE205AA",
       "cluster": "Южный",
-      "stock": 276,
-      "sales_30d": 63,
-      "k": 4.38,
+      "stock": 275,
+      "sales_30d": 64,
+      "k": 4.3,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "OZN1359459315"
+      ]
     },
     {
       "sku": "DE206AA",
       "cluster": "Волга",
       "stock": 0,
-      "sales_30d": 53,
+      "sales_30d": 55,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "flag": "🔴 Товар вышел"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "2041001965767"
+      ]
     },
     {
       "sku": "DE206AA",
       "cluster": "Восточный",
-      "stock": 649,
-      "sales_30d": 152,
-      "k": 4.27,
+      "stock": 648,
+      "sales_30d": 154,
+      "k": 4.21,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "2041001965767"
+      ]
     },
     {
       "sku": "DE206AA",
       "cluster": "Северо-западный",
-      "stock": 1,
+      "stock": 0,
       "sales_30d": 58,
-      "k": 0.02,
+      "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "2041001965767"
+      ]
     },
     {
       "sku": "DE206AA",
       "cluster": "Центральный",
-      "stock": 525,
-      "sales_30d": 203,
-      "k": 2.59,
+      "stock": 524,
+      "sales_30d": 204,
+      "k": 2.57,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "2041001965767"
+      ]
     },
     {
       "sku": "DE206AA",
@@ -341,57 +457,81 @@
       "k": 5.35,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "2041001965767"
+      ]
     },
     {
       "sku": "DE210",
       "cluster": "Волга",
-      "stock": 2,
+      "stock": 1,
       "sales_30d": 103,
-      "k": 0.02,
+      "k": 0.01,
       "zone": "DEFICIT",
       "to_ship": 216,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
+      "global_oos": false,
+      "barcodes": [
+        "6971663562997"
+      ]
     },
     {
       "sku": "DE210",
       "cluster": "Восточный",
-      "stock": 148,
+      "stock": 146,
       "sales_30d": 168,
-      "k": 0.88,
+      "k": 0.87,
       "zone": "NORMAL",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "6971663562997"
+      ]
     },
     {
       "sku": "DE210",
       "cluster": "Северо-западный",
-      "stock": 1,
+      "stock": 0,
       "sales_30d": 86,
-      "k": 0.01,
+      "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "flag": "⚠️ Возможен дефицит — проверь вручную"
+      "flag": "🔴 Товар вышел",
+      "global_oos": false,
+      "barcodes": [
+        "6971663562997"
+      ]
     },
     {
       "sku": "DE210",
       "cluster": "Центральный",
-      "stock": 548,
-      "sales_30d": 348,
+      "stock": 549,
+      "sales_30d": 350,
       "k": 1.57,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "6971663562997"
+      ]
     },
     {
       "sku": "DE210",
       "cluster": "Южный",
-      "stock": 596,
-      "sales_30d": 117,
-      "k": 5.09,
+      "stock": 594,
+      "sales_30d": 118,
+      "k": 5.03,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": ""
+      "flag": "",
+      "global_oos": false,
+      "barcodes": [
+        "6971663562997"
+      ]
     },
     {
       "sku": "DE310",
@@ -401,7 +541,11 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310"
+      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
+      "global_oos": false,
+      "barcodes": [
+        "6971663563000"
+      ]
     },
     {
       "sku": "DE310",
@@ -411,7 +555,11 @@
       "k": 15.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false,
+      "barcodes": [
+        "6971663563000"
+      ]
     },
     {
       "sku": "DE310",
@@ -421,17 +569,25 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 0,
-      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310"
+      "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
+      "global_oos": false,
+      "barcodes": [
+        "6971663563000"
+      ]
     },
     {
       "sku": "DE310",
       "cluster": "Центральный",
       "stock": 116,
-      "sales_30d": 7,
-      "k": 16.57,
+      "sales_30d": 8,
+      "k": 14.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false,
+      "barcodes": [
+        "6971663563000"
+      ]
     },
     {
       "sku": "DE310",
@@ -441,7 +597,11 @@
       "k": 53.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "flag": "⚠️ Unknown pack для SKU DE310"
+      "flag": "⚠️ Unknown pack для SKU DE310",
+      "global_oos": false,
+      "barcodes": [
+        "6971663563000"
+      ]
     }
   ]
 }
