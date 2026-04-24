@@ -570,6 +570,16 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function toggleAc(hdr) {
+  const body = hdr.nextElementSibling;
+  const isOpen = hdr.classList.contains('open');
+  document.querySelectorAll('.ac-header.open').forEach(h => {
+    h.classList.remove('open');
+    h.nextElementSibling.classList.remove('open');
+  });
+  if (!isOpen) { hdr.classList.add('open'); body.classList.add('open'); }
+}
+
 function loadAll() {
   ['status-loading','runs-loading'].forEach(id => document.getElementById(id).classList.remove('hidden'));
   ['status-error','metrics-grid','oos-banner','clusters-section',
