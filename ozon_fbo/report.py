@@ -69,8 +69,8 @@ def _write_cluster_file(plans: list[dict], cluster: str, run_date: str, out_path
     bold = Font(bold=True)
 
     if oos_count:
-        ws.append([f"⚠️ {oos_count} позиций в out-of-stock — приоритет отгрузки"] + [""] * 6)
-        ws.merge_cells("A1:G1")
+        ws.append([f"⚠️ {oos_count} позиций в out-of-stock — приоритет отгрузки"] + [""] * 7)
+        ws.merge_cells("A1:H1")
         ws["A1"].font = bold
         ws["A1"].alignment = Alignment(horizontal="center")
         ws.freeze_panes = "A2"
