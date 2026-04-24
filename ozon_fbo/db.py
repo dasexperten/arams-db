@@ -25,11 +25,11 @@ CREATE INDEX IF NOT EXISTS idx_ozon_fbo_stocks_date ON ozon_fbo_stocks(run_date)
 CREATE INDEX IF NOT EXISTS idx_ozon_fbo_stocks_offer ON ozon_fbo_stocks(offer_id, run_date);
 
 CREATE TABLE IF NOT EXISTS ozon_fbo_sales (
-    offer_id    TEXT NOT NULL,
+    sku         TEXT NOT NULL,
     run_date    TEXT NOT NULL,
     orders_30d  INTEGER DEFAULT 0,
     synced_at   TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (offer_id, run_date)
+    PRIMARY KEY (sku, run_date)
 );
 
 CREATE TABLE IF NOT EXISTS ozon_fbo_plans (
@@ -110,13 +110,13 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
 
 def upsert_sales(conn: sqlite3.Connection, sales: list[dict], run_date: str) -> int:
     sql = """
-    INSERT INTO ozon_fbo_sales (offer_id, run_date, orders_30d, synced_at)
-    VALUES (:offer_id, :run_date, :orders_30d, datetime('now'))
-    ON CONFLICT(offer_id, run_date) DO UPDATE SET
+    INSERT INTO ozon_fbo_sales (sku, run_date, orders_30d, synced_at)
+    VALUES (:sku, :run_date, :orders_30d, datetime('now'))
+    ON CONFLICT(sku, run_date) DO UPDATE SET
         orders_30d=excluded.orders_30d, synced_at=datetime('now')
     """
-    rows = [{"offer_id": s["offer_id"], "run_date": run_date, "orders_30d": s.get("orders_30d", 0)}
-            for s in sales if s.get("offer_id")]
+    rows = [{"sku": str(s["sku"]), "run_date": run_date, "orders_30d": s.get("orders_30d", 0)}
+            for s in sales if s.get("sku")]
     if rows:
         conn.executemany(sql, rows)
     return len(rows)
@@ -143,7 +143,8 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     """Aggregate stocks + sales into plan input rows grouped by (offer_id, cluster).
 
     Stocks are per warehouse → mapped to cluster and summed.
-    Sales are total per offer_id (all channels) → applied to each cluster where stock > 0.
+    Analytics returns by numeric Ozon SKU → joined with stocks by numeric SKU.
+    Plan uses text offer_id as the SKU key (needed for pack-size detection).
     """
     if run_date is None:
         row = conn.execute("SELECT MAX(run_date) FROM ozon_fbo_stocks").fetchone()
@@ -151,33 +152,34 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
-    # Sales map: offer_id → orders_30d
+    # Sales map: numeric_sku (str) → orders_30d
     sales_map: dict[str, int] = {}
     for row in conn.execute(
-        "SELECT offer_id, orders_30d FROM ozon_fbo_sales WHERE run_date = ?", (run_date,)
+        "SELECT sku, orders_30d FROM ozon_fbo_sales WHERE run_date = ?", (run_date,)
     ):
-        sales_map[row[0]] = int(row[1] or 0)
+        sales_map[str(row[0])] = int(row[1] or 0)
 
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
-        """SELECT offer_id, warehouse, SUM(present_stock) as qty
+        """SELECT sku, offer_id, warehouse, SUM(present_stock) as qty
            FROM ozon_fbo_stocks WHERE run_date = ?
-           GROUP BY offer_id, warehouse""",
+           GROUP BY sku, offer_id, warehouse""",
         (run_date,),
     ):
-        offer_id = row[0] or ""
+        numeric_sku = str(row[0] or "")
+        offer_id = row[1] or ""
         if not offer_id:
             continue
-        cluster = warehouse_to_cluster(row[1] or "")
+        cluster = warehouse_to_cluster(row[2] or "")
         key = (offer_id, cluster)
         if key not in cluster_data:
             cluster_data[key] = {
-                "sku": offer_id,
+                "sku": offer_id,       # text offer code for pack-size detection
                 "cluster": cluster,
                 "stock": 0,
-                "sales_30d": sales_map.get(offer_id, 0),
+                "sales_30d": sales_map.get(numeric_sku, 0),
             }
-        cluster_data[key]["stock"] += int(row[2] or 0)
+        cluster_data[key]["stock"] += int(row[3] or 0)
 
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
