@@ -54,64 +54,36 @@ jobs:
       - name: Run Ozon FBO daily
         run: python cli.py ozon-fbo-monthly
 
-      - name: Debug - probe analytics/data dimensions
+      - name: Debug raw API response (field names)
         if: always()
-        run: |
-          python - <<'PYEOF'
-          import sys, json
-          sys.path.insert(0, '.')
-          from datetime import date, timedelta
-          from ozon_seller.client import OzonSellerClient
-
-          d_to = date.today().isoformat()
-          d_from = (date.today() - timedelta(days=7)).isoformat()
-          combos = [
-              {"dimension":  ["sku"]},
-              {"dimension":  ["day"]},
-              {"dimension":  ["spu"]},
-              {"dimensions": ["sku"]},
-              {"dimensions": ["day"]},
-              {"dimension":  ["sku", "day"]},
-          ]
-          base = {
-              "date_from": d_from, "date_to": d_to,
-              "metrics": ["ordered_units"], "filters": [], "limit": 1, "offset": 0,
-          }
-          with OzonSellerClient() as c:
-              print("=== stock_on_warehouses sample ===")
-              try:
-                  r = c.post("/v2/analytics/stock_on_warehouses",
-                             {"limit": 1, "offset": 0, "warehouse_type": "fbo"})
-                  rows = (r.get("result") or {}).get("rows") or []
-                  print(json.dumps(rows[0] if rows else {}, ensure_ascii=False, indent=2))
-              except Exception as e:
-                  print(f"stock ERR: {e}")
-
-              print("\n=== analytics/data dimension probe ===")
-              for combo in combos:
-                  body = {**base, **combo}
-                  label = json.dumps(combo)
-                  try:
-                      resp = c.post("/v1/analytics/data", body)
-                      rows = (resp.get("result") or {}).get("data") or []
-                      print(f"  OK  {label}  rows={len(rows)}")
-                      if rows:
-                          print(f"      first row: {json.dumps(rows[0], ensure_ascii=False)}")
-                  except Exception as e:
-                      print(f"  ERR {label}")
-                      print(f"      {e}")
-          PYEOF
-          true
+        run: python cli.py debug-ozon-fbo || true
 
       - name: Show warehouse → cluster mapping (debug)
         if: always()
         run: python cli.py list-ozon-warehouses || true
 
+      - name: Fetch official Ozon cluster list (/v1/cluster/list)
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              c = OzonSellerClient()
+              resp = c.post("/v1/cluster/list", {})
+              clusters = resp.get("clusters") or resp.get("result") or resp
+              print(json.dumps(clusters, ensure_ascii=False, indent=2))
+          except Exception as e:
+              print(f"cluster/list failed: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |
           if [ ! -f docs/ozon-fbo-status.json ]; then
-            echo "No artifacts generated — skipping commit"
+            echo "No artifacts generated -- skipping commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
