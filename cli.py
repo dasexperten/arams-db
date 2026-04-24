@@ -1369,7 +1369,8 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             if p.get("zone") == "DEFICIT":
                 cluster_stats[cl]["deficit"] += 1
 
-        barcodes_map = fbo_db.load_barcodes_by_sku(conn, run_date)
+        with fbo_db.connect() as conn:
+            barcodes_map = fbo_db.load_barcodes_by_sku(conn, run_date)
         sku_list = [
             {
                 "sku": p.get("sku"),
