@@ -70,7 +70,7 @@ class OzonFBOAPI:
                 "date_from": date_from,
                 "date_to": date_to,
                 "metrics": metrics or ["ordered_units"],
-                "dimensions": dimension or ["item_code"],
+                "dimension": dimension or ["sku"],
                 "filters": [],
                 "limit": limit,
                 "offset": offset,
@@ -87,7 +87,7 @@ class OzonFBOAPI:
                 date_from=date_from,
                 date_to=date_to,
                 metrics=["ordered_units"],
-                dimension=["item_code"],
+                dimension=["sku"],
                 offset=offset,
                 limit=page_size,
             )
@@ -95,10 +95,10 @@ class OzonFBOAPI:
             for row in rows:
                 dims = row.get("dimensions") or []
                 mets = row.get("metrics") or []
-                offer_id = dims[0].get("id", "") if dims else ""
-                units = int(mets[0]) if mets else 0
-                if offer_id:
-                    yield {"offer_id": offer_id, "orders_30d": units}
+                sku_id = dims[0].get("id", "") if dims else ""
+                units = int(float(mets[0])) if mets else 0
+                if sku_id:
+                    yield {"sku": sku_id, "orders_30d": units}
             if len(rows) < page_size:
                 break
             offset += len(rows)
