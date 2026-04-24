@@ -23,7 +23,7 @@ def detect_pack_size(vendor_code: str) -> int | None:
     Packaging matrix:
       DE2## single        → 72
       DE2## AA/AAAA/набор → 36
-      DE1## brush (any)   → 72
+      DE1## brush/floss   → 288
       DE1## accessories   → None (flag)
       unknown format      → None (flag)
     """
@@ -41,7 +41,7 @@ def detect_pack_size(vendor_code: str) -> int | None:
     else:
         if full_code in _ACCESSORY_CODES:
             return None
-        return 72
+        return 288
 
 
 def _is_set(suffix: str | None) -> bool:
