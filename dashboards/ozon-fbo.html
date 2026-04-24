@@ -342,11 +342,15 @@ async function loadStatus() {
           const shipCell = (s.to_ship || 0) > 0
             ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)">⚠</span>' : ''}`
             : `<span style="color:var(--ink-muted)">—</span>`;
+          const feeCell = s.storage_fee_month != null
+            ? `<span style="color:var(--ink-soft)">${Number(s.storage_fee_month).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:0})} ₽</span>`
+            : `<span style="color:var(--ink-muted)">—</span>`;
           return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}">
               <td class="sku-name">${label}</td>
               <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
               <td class="sku-ship">${shipCell}</td>
+              <td>${feeCell}</td>
             </tr>`;
         }).join('');
         return `<div class="ac-item">
@@ -361,7 +365,7 @@ async function loadStatus() {
           </div>
           <div class="ac-body">
             <table><thead><tr>
-              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
+              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th><th>Хранение ₽/мес</th>
             </tr></thead><tbody>${skuRows}</tbody></table>
             <div class="ac-footer">
               <button class="btn-ship" onclick="createShipExcel('${cl}')">📦 Создать поставку</button>
