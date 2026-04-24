@@ -174,23 +174,69 @@ class OzonFBOAPI:
             pass
         return fees
 
+    def fbo_postings_iter(
+        self,
+        date_from: str,
+        date_to: str,
+        page_size: int = 1000,
+    ) -> Iterator[dict]:
+        """Iterate /v2/posting/fbo/list, yielding individual FBO postings.
+
+        Requests analytics_data so each posting includes:
+          analytics_data.region      — buyer's delivery region (oblast / krai)
+          analytics_data.warehouse_name — fulfillment FBO warehouse
+        Products are in posting["products"] as [{sku, quantity, ...}].
+        """
+        offset = 0
+        while True:
+            body = {
+                "dir": "ASC",
+                "filter": {
+                    "since": f"{date_from}T00:00:00.000Z",
+                    "to": f"{date_to}T23:59:59.999Z",
+                },
+                "limit": page_size,
+                "offset": offset,
+                "with": {"analytics_data": True},
+            }
+            resp = self.c.post("/v2/posting/fbo/list", body)
+            result = resp.get("result") or []
+            if isinstance(result, dict):
+                result = result.get("postings") or []
+            for posting in result:
+                yield posting
+            if len(result) < page_size:
+                break
+            offset += len(result)
+
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
         """Yield {sku, warehouse, orders_30d} dicts for all SKUs in the last N days.
 
-        Tries dimension=["sku","warehouse"] first for per-warehouse sales.
-        Falls back to dimension=["sku"] (global totals) if the API rejects it.
+        Primary: aggregate FBO postings by buyer's region (analytics_data.region).
+        Fallback 1: dimension=["sku","warehouse"] in /v1/analytics/data.
+        Fallback 2: dimension=["sku"] — global totals (warehouse=None).
+
+        'warehouse' field carries the region/warehouse name; warehouse_to_cluster()
+        maps both warehouse names and Russian region names to clusters.
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
 
-        # Try per-warehouse first
+        # Primary: per-region from FBO postings
+        try:
+            yield from self._sales_from_postings(date_from, date_to, page_size)
+            return
+        except Exception:
+            pass
+
+        # Fallback 1: per-warehouse from analytics endpoint
         try:
             yield from self._analytics_sales_by_warehouse(date_from, date_to, page_size)
             return
         except Exception:
             pass
 
-        # Fallback: global totals — warehouse=None means "all clusters"
+        # Fallback 2: global totals — warehouse=None means "all clusters"
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -212,6 +258,29 @@ class OzonFBOAPI:
             if len(rows) < page_size:
                 break
             offset += len(rows)
+
+    def _sales_from_postings(self, date_from: str, date_to: str, page_size: int = 1000):
+        """Aggregate FBO postings into {sku, warehouse(=region), orders_30d}.
+
+        Skips cancelled postings. Uses analytics_data.region as the regional key
+        so that demand reflects WHERE customers ordered from, not which warehouse
+        happened to fulfil the order (avoids stockout bias).
+        """
+        sales: dict[tuple[str, str], int] = {}
+        cancelled = {"cancelled", "cancelled_from_backend", "cancelled_from_admin"}
+        for posting in self.fbo_postings_iter(date_from, date_to, page_size):
+            if posting.get("status") in cancelled:
+                continue
+            ad = posting.get("analytics_data") or {}
+            region = str(ad.get("region") or ad.get("warehouse_name") or "")
+            for product in (posting.get("products") or []):
+                sku = str(product.get("sku") or "")
+                qty = int(product.get("quantity") or 0)
+                if sku and qty > 0:
+                    key = (sku, region)
+                    sales[key] = sales.get(key, 0) + qty
+        for (sku, region), units in sales.items():
+            yield {"sku": sku, "warehouse": region, "orders_30d": units}
 
     def _analytics_sales_by_warehouse(self, date_from: str, date_to: str, page_size: int = 1000):
         """Yield {sku, warehouse, orders_30d} with per-warehouse breakdown."""

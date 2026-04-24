@@ -163,8 +163,9 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     """Aggregate stocks + sales into plan input rows grouped by (offer_id, cluster).
 
     Stocks are per warehouse → mapped to cluster and summed.
-    Analytics returns by numeric Ozon SKU → joined with stocks by numeric SKU.
-    Plan uses text offer_id as the SKU key (needed for pack-size detection).
+    Sales are per region/warehouse → also mapped to cluster and summed.
+    Join happens at cluster level so region names from FBO postings and warehouse
+    names from stock data both resolve to the same cluster key.
     """
     if run_date is None:
         row = conn.execute("SELECT MAX(run_date) FROM ozon_fbo_stocks").fetchone()
@@ -172,27 +173,29 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
-    # Detect whether we have per-warehouse sales or only global (warehouse='')
-    has_warehouse_sales = conn.execute(
+    # Build sales map at cluster level: (numeric_sku, cluster) → total orders_30d.
+    # warehouse field may be a warehouse name, a buyer's region name, or '' (global).
+    sales_map: dict[tuple, int] = {}
+    for row in conn.execute(
+        "SELECT sku, warehouse, orders_30d FROM ozon_fbo_sales WHERE run_date = ?",
+        (run_date,),
+    ):
+        cluster = warehouse_to_cluster(str(row[1] or ""))
+        key = (str(row[0]), cluster)
+        sales_map[key] = sales_map.get(key, 0) + int(row[2] or 0)
+
+    # Detect global-only sales (all warehouse values are empty string)
+    has_regional_sales = conn.execute(
         "SELECT 1 FROM ozon_fbo_sales WHERE run_date = ? AND warehouse != '' LIMIT 1",
         (run_date,),
     ).fetchone() is not None
-
-    if has_warehouse_sales:
-        # Per-warehouse sales: (numeric_sku, warehouse_name) → orders_30d
-        sales_map: dict[tuple, int] = {}
-        for row in conn.execute(
-            "SELECT sku, warehouse, orders_30d FROM ozon_fbo_sales WHERE run_date = ?",
-            (run_date,),
-        ):
-            sales_map[(str(row[0]), str(row[1]))] = int(row[2] or 0)
-    else:
-        # Global sales fallback: numeric_sku → orders_30d
-        sales_map_global: dict[str, int] = {}
+    # Global fallback: (numeric_sku, '') → orders_30d (used when warehouse='')
+    sales_global: dict[str, int] = {}
+    if not has_regional_sales:
         for row in conn.execute(
             "SELECT sku, orders_30d FROM ozon_fbo_sales WHERE run_date = ?", (run_date,)
         ):
-            sales_map_global[str(row[0])] = int(row[1] or 0)
+            sales_global[str(row[0])] = int(row[1] or 0)
 
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
@@ -209,12 +212,11 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         cluster = warehouse_to_cluster(warehouse_name)
         key = (offer_id, cluster)
 
-        if has_warehouse_sales:
-            sales_30d = sales_map.get((numeric_sku, warehouse_name), 0)
-        else:
-            sales_30d = sales_map_global.get(numeric_sku, 0)  # type: ignore[possibly-undefined]
-
         if key not in cluster_data:
+            if has_regional_sales:
+                sales_30d = sales_map.get((numeric_sku, cluster), 0)
+            else:
+                sales_30d = sales_global.get(numeric_sku, 0)
             cluster_data[key] = {
                 "sku": offer_id,
                 "cluster": cluster,
@@ -222,9 +224,6 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
                 "sales_30d": sales_30d,
                 "item_name": row[4] or "",
             }
-        else:
-            # Same cluster, multiple warehouses: sum stock, sum sales
-            cluster_data[key]["sales_30d"] += sales_30d
         cluster_data[key]["stock"] += int(row[3] or 0)
 
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
