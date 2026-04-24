@@ -1,0 +1,74 @@
+name: Ozon FBO Monthly Supply Plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Sales look-back window in days (default 30)"
+        required: false
+        default: "30"
+  schedule:
+    # 1st of every month at 08:00 MSK = 05:00 UTC
+    - cron: "0 5 1 * *"
+
+jobs:
+  ozon-fbo-monthly:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ozon-fbo-monthly
+      cancel-in-progress: true
+    permissions:
+      contents: write
+    env:
+      OZON_SELLER_CLIENT_ID: ${{ secrets.OZON_SELLER_CLIENT_ID }}
+      OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Verify secrets present
+        run: |
+          missing=""
+          [ -z "$OZON_SELLER_CLIENT_ID" ] && missing="$missing OZON_SELLER_CLIENT_ID"
+          [ -z "$OZON_SELLER_API_KEY"   ] && missing="$missing OZON_SELLER_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Init DB
+        run: python cli.py init-ozon-fbo-db
+
+      - name: Run Ozon FBO monthly
+        run: python cli.py ozon-fbo-monthly
+
+      - name: Show warehouse → cluster mapping (debug)
+        if: always()
+        run: python cli.py list-ozon-warehouses || true
+
+      - name: Publish artifacts to repo
+        if: always()
+        run: |
+          if [ ! -f docs/ozon-fbo-status.json ]; then
+            echo "No artifacts generated — skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/ozon-fbo-status.json
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "chore: update ozon-fbo artifacts [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
