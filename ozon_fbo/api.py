@@ -175,9 +175,22 @@ class OzonFBOAPI:
         return fees
 
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
-        """Yield {sku, orders_30d} dicts for all SKUs in the last N days."""
+        """Yield {sku, warehouse, orders_30d} dicts for all SKUs in the last N days.
+
+        Tries dimension=["sku","warehouse"] first for per-warehouse sales.
+        Falls back to dimension=["sku"] (global totals) if the API rejects it.
+        """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
+
+        # Try per-warehouse first
+        try:
+            yield from self._analytics_sales_by_warehouse(date_from, date_to, page_size)
+            return
+        except Exception:
+            pass
+
+        # Fallback: global totals — warehouse=None means "all clusters"
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -195,7 +208,32 @@ class OzonFBOAPI:
                 sku_id = dims[0].get("id", "") if dims else ""
                 units = int(float(mets[0])) if mets else 0
                 if sku_id:
-                    yield {"sku": sku_id, "orders_30d": units}
+                    yield {"sku": sku_id, "warehouse": None, "orders_30d": units}
+            if len(rows) < page_size:
+                break
+            offset += len(rows)
+
+    def _analytics_sales_by_warehouse(self, date_from: str, date_to: str, page_size: int = 1000):
+        """Yield {sku, warehouse, orders_30d} with per-warehouse breakdown."""
+        offset = 0
+        while True:
+            resp = self.analytics_data(
+                date_from=date_from,
+                date_to=date_to,
+                metrics=["ordered_units"],
+                dimension=["sku", "warehouse"],
+                offset=offset,
+                limit=page_size,
+            )
+            rows = (resp.get("result") or {}).get("data") or []
+            for row in rows:
+                dims = row.get("dimensions") or []
+                mets = row.get("metrics") or []
+                sku_id = dims[0].get("id", "") if dims else ""
+                warehouse = dims[1].get("id", "") if len(dims) > 1 else ""
+                units = int(float(mets[0])) if mets else 0
+                if sku_id:
+                    yield {"sku": sku_id, "warehouse": warehouse, "orders_30d": units}
             if len(rows) < page_size:
                 break
             offset += len(rows)

@@ -26,11 +26,15 @@ CREATE INDEX IF NOT EXISTS idx_ozon_fbo_stocks_offer ON ozon_fbo_stocks(offer_id
 
 CREATE TABLE IF NOT EXISTS ozon_fbo_sales (
     sku         TEXT NOT NULL,
+    warehouse   TEXT NOT NULL DEFAULT '',
     run_date    TEXT NOT NULL,
     orders_30d  INTEGER DEFAULT 0,
     synced_at   TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (sku, run_date)
+    PRIMARY KEY (sku, warehouse, run_date)
 );
+
+-- migrate: add warehouse column if upgrading from old schema
+CREATE INDEX IF NOT EXISTS idx_ozon_fbo_sales_date ON ozon_fbo_sales(run_date);
 
 CREATE TABLE IF NOT EXISTS ozon_fbo_plans (
     sku         TEXT NOT NULL,
@@ -87,6 +91,15 @@ def connect(path: str | None = None) -> Iterator[sqlite3.Connection]:
 def init_schema(path: str | None = None) -> None:
     with connect(path) as conn:
         conn.executescript(SCHEMA)
+        # migrate: add warehouse column to ozon_fbo_sales if absent
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(ozon_fbo_sales)")}
+        if "warehouse" not in cols:
+            conn.execute("ALTER TABLE ozon_fbo_sales ADD COLUMN warehouse TEXT NOT NULL DEFAULT ''")
+            conn.execute("DROP INDEX IF EXISTS sqlite_autoindex_ozon_fbo_sales_1")
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_ozon_fbo_sales_pk "
+                "ON ozon_fbo_sales(sku, warehouse, run_date)"
+            )
 
 
 def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -> int:
@@ -110,13 +123,20 @@ def upsert_stocks(conn: sqlite3.Connection, stocks: list[dict], run_date: str) -
 
 def upsert_sales(conn: sqlite3.Connection, sales: list[dict], run_date: str) -> int:
     sql = """
-    INSERT INTO ozon_fbo_sales (sku, run_date, orders_30d, synced_at)
-    VALUES (:sku, :run_date, :orders_30d, datetime('now'))
-    ON CONFLICT(sku, run_date) DO UPDATE SET
+    INSERT INTO ozon_fbo_sales (sku, warehouse, run_date, orders_30d, synced_at)
+    VALUES (:sku, :warehouse, :run_date, :orders_30d, datetime('now'))
+    ON CONFLICT(sku, warehouse, run_date) DO UPDATE SET
         orders_30d=excluded.orders_30d, synced_at=datetime('now')
     """
-    rows = [{"sku": str(s["sku"]), "run_date": run_date, "orders_30d": s.get("orders_30d", 0)}
-            for s in sales if s.get("sku")]
+    rows = [
+        {
+            "sku": str(s["sku"]),
+            "warehouse": str(s.get("warehouse") or ""),
+            "run_date": run_date,
+            "orders_30d": s.get("orders_30d", 0),
+        }
+        for s in sales if s.get("sku")
+    ]
     if rows:
         conn.executemany(sql, rows)
     return len(rows)
@@ -152,12 +172,27 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     if not run_date:
         return []
 
-    # Sales map: numeric_sku (str) → orders_30d
-    sales_map: dict[str, int] = {}
-    for row in conn.execute(
-        "SELECT sku, orders_30d FROM ozon_fbo_sales WHERE run_date = ?", (run_date,)
-    ):
-        sales_map[str(row[0])] = int(row[1] or 0)
+    # Detect whether we have per-warehouse sales or only global (warehouse='')
+    has_warehouse_sales = conn.execute(
+        "SELECT 1 FROM ozon_fbo_sales WHERE run_date = ? AND warehouse != '' LIMIT 1",
+        (run_date,),
+    ).fetchone() is not None
+
+    if has_warehouse_sales:
+        # Per-warehouse sales: (numeric_sku, warehouse_name) → orders_30d
+        sales_map: dict[tuple, int] = {}
+        for row in conn.execute(
+            "SELECT sku, warehouse, orders_30d FROM ozon_fbo_sales WHERE run_date = ?",
+            (run_date,),
+        ):
+            sales_map[(str(row[0]), str(row[1]))] = int(row[2] or 0)
+    else:
+        # Global sales fallback: numeric_sku → orders_30d
+        sales_map_global: dict[str, int] = {}
+        for row in conn.execute(
+            "SELECT sku, orders_30d FROM ozon_fbo_sales WHERE run_date = ?", (run_date,)
+        ):
+            sales_map_global[str(row[0])] = int(row[1] or 0)
 
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
@@ -168,18 +203,28 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     ):
         numeric_sku = str(row[0] or "")
         offer_id = row[1] or ""
+        warehouse_name = row[2] or ""
         if not offer_id:
             continue
-        cluster = warehouse_to_cluster(row[2] or "")
+        cluster = warehouse_to_cluster(warehouse_name)
         key = (offer_id, cluster)
+
+        if has_warehouse_sales:
+            sales_30d = sales_map.get((numeric_sku, warehouse_name), 0)
+        else:
+            sales_30d = sales_map_global.get(numeric_sku, 0)  # type: ignore[possibly-undefined]
+
         if key not in cluster_data:
             cluster_data[key] = {
-                "sku": offer_id,       # text offer code for pack-size detection
+                "sku": offer_id,
                 "cluster": cluster,
                 "stock": 0,
-                "sales_30d": sales_map.get(numeric_sku, 0),
+                "sales_30d": sales_30d,
                 "item_name": row[4] or "",
             }
+        else:
+            # Same cluster, multiple warehouses: sum stock, sum sales
+            cluster_data[key]["sales_30d"] += sales_30d
         cluster_data[key]["stock"] += int(row[3] or 0)
 
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))

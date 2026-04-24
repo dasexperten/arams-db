@@ -1458,6 +1458,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
                 "k": round(p["k"], 2) if p.get("k") is not None else None,
                 "zone": p.get("zone"),
                 "to_ship": p.get("to_ship") or 0,
+                "storage_fee_month": p.get("storage_fee_month"),
                 "flag": p.get("flag") or "",
                 "global_oos": bool(p.get("global_oos")),
             }
