@@ -20,11 +20,10 @@ _SKU_RE = re.compile(r"^DE([12])(\d{2})(?:\s*(.+))?$", re.IGNORECASE)
 def detect_pack_size(vendor_code: str) -> int | None:
     """Return pack_size for ROUNDUP, or None if unknown/accessory.
 
-    Packaging matrix (verbatim from ozon-fbo-calculator SKILL.md):
+    Packaging matrix:
       DE2## single        → 72
       DE2## AA/AAAA/набор → 36
-      DE1## brush single  → 288
-      DE1## brush set     → 144
+      DE1## brush (any)   → 72
       DE1## accessories   → None (flag)
       unknown format      → None (flag)
     """
@@ -36,14 +35,13 @@ def detect_pack_size(vendor_code: str) -> int | None:
     two_digits = m.group(2)
     suffix = m.group(3)
     full_code = int(f"{series}{two_digits}")
-    has_set_suffix = _is_set(suffix)
 
     if series == 2:
-        return 36 if has_set_suffix else 72
+        return 36 if _is_set(suffix) else 72
     else:
         if full_code in _ACCESSORY_CODES:
             return None
-        return 144 if has_set_suffix else 288
+        return 72
 
 
 def _is_set(suffix: str | None) -> bool:
