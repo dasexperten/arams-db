@@ -1357,6 +1357,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
             if p.get("zone") == "DEFICIT":
                 cluster_stats[cl]["deficit"] += 1
 
+        barcodes_map = fbo_db.load_barcodes_by_sku(conn, run_date)
         sku_list = [
             {
                 "sku": p.get("sku"),
@@ -1367,6 +1368,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
                 "zone": p.get("zone"),
                 "to_ship": p.get("to_ship") or 0,
                 "flag": p.get("flag") or "",
+                "barcodes": barcodes_map.get(p.get("sku") or "", []),
             }
             for p in plans
         ]

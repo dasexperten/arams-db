@@ -239,6 +239,27 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
 
+def load_barcodes_by_sku(conn: sqlite3.Connection, run_date: str) -> dict[str, list[str]]:
+    """Return {vendor_code: [barcode, ...]} extracted from raw_payload for run_date."""
+    result: dict[str, list[str]] = {}
+    for row in conn.execute(
+        """SELECT vendor_code,
+                  json_extract(raw_payload, '$.barcode') AS barcode
+           FROM fbo_stocks
+           WHERE run_date = ?
+             AND json_extract(raw_payload, '$.barcode') IS NOT NULL
+           GROUP BY vendor_code, barcode""",
+        (run_date,),
+    ):
+        vc, bc = row[0], row[1]
+        if vc and bc:
+            if vc not in result:
+                result[vc] = []
+            if bc not in result[vc]:
+                result[vc].append(str(bc))
+    return result
+
+
 def log_run(conn: sqlite3.Connection, **kwargs) -> int:
     cols = ", ".join(kwargs.keys())
     placeholders = ", ".join(f":{k}" for k in kwargs.keys())

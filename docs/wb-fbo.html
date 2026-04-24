@@ -233,6 +233,7 @@
   .sku-agg-k { font-size: 11px; opacity: 0.6; font-weight: 400; }
 
   /* ── Run table ── */
+  .sku-barcodes { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.4; }
   .run-num  { color: var(--ink-muted); font-family: var(--font-mono); font-size: 13px; }
   .run-link { color: var(--d-teal); text-decoration: none; font-weight: 600; font-size: 13px; }
   .run-link:hover { text-decoration: underline; }
@@ -398,9 +399,16 @@ function createShipExcel(cl) {
   const skus = (_skusByCluster[cl] || []).filter(s => (s.to_ship || 0) > 0);
   if (!skus.length) { alert('Нет позиций к поставке для ' + cl); return; }
   const rows = [['Баркод', 'Количество']];
-  skus.forEach(s => rows.push(['', s.to_ship]));
+  skus.forEach(s => {
+    const bcs = (s.barcodes || []);
+    if (bcs.length > 0) {
+      bcs.forEach(bc => rows.push([bc, s.to_ship]));
+    } else {
+      rows.push(['', s.to_ship]);
+    }
+  });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{ wch: 20 }, { wch: 14 }];
+  ws['!cols'] = [{ wch: 22 }, { wch: 14 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Поставка');
   const date = new Date().toISOString().slice(0, 10);
@@ -485,8 +493,11 @@ async function loadStatus() {
           const shipCell = (s.to_ship || 0) > 0
             ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)" title="Нет остатков ни в одном кластере">⚠</span>' : ''}`
             : `<span style="color:var(--ink-muted)">—</span>`;
+          const bcs = s.barcodes || [];
+          const bcCell = bcs.length ? `<div class="sku-barcodes">${bcs.map(b => esc(b)).join('<br>')}</div>` : `<span style="color:var(--ink-muted)">—</span>`;
           return `<tr class="${rowCls}">
               <td class="sku-name">${label}</td>
+              <td>${bcCell}</td>
               <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
               <td class="sku-k">${kDisp}</td>
               <td class="sku-ship">${shipCell}</td>
@@ -504,7 +515,7 @@ async function loadStatus() {
           </div>
           <div class="ac-body">
             <table><thead><tr>
-              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
+              <th>SKU</th><th>Баркод</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
             </tr></thead><tbody>${skuRows}</tbody></table>
             <div class="ac-footer">
               <button class="btn-ship" onclick="createShipExcel('${cl}')">📦 Создать поставку</button>
