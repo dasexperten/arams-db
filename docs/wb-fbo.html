@@ -393,10 +393,35 @@
 const OWNER = 'dasexperten';
 const REPO  = 'arams-db';
 const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/wb-fbo-status.json`;
+const SKU_DB_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/WB-SKU.xlsx`;
 const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/wb-fbo-monthly.yml/runs?per_page=10`;
 
 const CLUSTER_ORDER = ['Центральный','Южный','Волга','Восточный','Северо-западный'];
 let _skusByCluster = {};
+let _skuBarcodes   = {}; // {sku: [barcode, ...]} from WB-SKU.xlsx
+
+async function loadSkuDb() {
+  try {
+    const r = await fetch(SKU_DB_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const buf = await r.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    // header: ['SKU', 'Артикул WB (nm_id)', 'Баркод']
+    const map = {};
+    for (let i = 1; i < rows.length; i++) {
+      const sku = String(rows[i][0] || '').trim();
+      const bc  = String(rows[i][2] || '').trim();
+      if (!sku || !bc) continue;
+      if (!map[sku]) map[sku] = [];
+      if (!map[sku].includes(bc)) map[sku].push(bc);
+    }
+    _skuBarcodes = map;
+  } catch (e) {
+    console.warn('[sku-db] WB-SKU.xlsx load failed:', e.message);
+  }
+}
 
 function createShipExcel(cl) {
   const skus = (_skusByCluster[cl] || []).filter(s => (s.to_ship || 0) > 0);
@@ -404,7 +429,9 @@ function createShipExcel(cl) {
   const rows = [['Баркод', 'Количество']];
   const redCells = [];
   skus.forEach(s => {
-    const bcs = s.barcodes || [];
+    const bcs = (_skuBarcodes[s.sku] && _skuBarcodes[s.sku].length > 0)
+      ? _skuBarcodes[s.sku]
+      : (s.barcodes || []);
     const bc = bcs.length > 0 ? bcs[0] : '';
     if (bcs.length > 1) redCells.push(rows.length); // row index (0-based, header=0)
     rows.push([bc, s.to_ship]);
@@ -499,7 +526,9 @@ async function loadStatus() {
           const shipCell = (s.to_ship || 0) > 0
             ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)" title="Нет остатков ни в одном кластере">⚠</span>' : ''}`
             : `<span style="color:var(--ink-muted)">—</span>`;
-          const bcs = s.barcodes || [];
+          const bcs = (_skuBarcodes[s.sku] && _skuBarcodes[s.sku].length > 0)
+            ? _skuBarcodes[s.sku]
+            : (s.barcodes || []);
           const bcCell = bcs.length === 0
             ? `<span style="color:var(--ink-muted)">—</span>`
             : bcs.length === 1
@@ -655,13 +684,14 @@ function toggleAc(hdr) {
   if (!isOpen) { hdr.classList.add('open'); body.classList.add('open'); }
 }
 
-function loadAll() {
+async function loadAll() {
   ['status-loading','runs-loading'].forEach(id => document.getElementById(id).classList.remove('hidden'));
   ['status-error','metrics-grid','oos-banner','clusters-section',
    'skus-section','runs-error','runs-wrap'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
+  await loadSkuDb(); // load barcode DB first so accordion renders with correct barcodes
   loadStatus();
   loadRuns();
 }
