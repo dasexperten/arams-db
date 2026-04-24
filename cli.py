@@ -1273,8 +1273,9 @@ def cmd_init_ozon_fbo_db(_: argparse.Namespace) -> int:
 def cmd_ping_ozon_fbo(_: argparse.Namespace) -> int:
     with OzonFBOAPI() as api:
         resp = api.ping()
-    items = (resp.get("result") or {}).get("items") or []
-    print(f"ozon-fbo ping ok — products visible: {len(items)} (sample)")
+    rows = (resp.get("result") or {}).get("rows") or []
+    total = (resp.get("result") or {}).get("total") or 0
+    print(f"ozon-fbo ping ok — fbo stock rows visible: {total} total, {len(rows)} in sample")
     return 0
 
 
@@ -1284,6 +1285,23 @@ def cmd_sync_ozon_stocks(_: argparse.Namespace) -> int:
     with OzonFBOAPI() as api:
         result = ozon_fbo_etl.sync_stocks(api, run_date)
     print(f"ozon stocks: {result}")
+    return 0
+
+
+def cmd_debug_ozon_fbo(_: argparse.Namespace) -> int:
+    """Print first row of stock and first row of sales analytics for field inspection."""
+    import json as _json
+    with OzonFBOAPI() as api:
+        stock_resp = api.stock_on_warehouses(offset=0, limit=1)
+        print("=== stock_on_warehouses (limit=1) ===")
+        print(_json.dumps(stock_resp, ensure_ascii=False, indent=2))
+
+        from datetime import date as _date, timedelta as _td
+        d_to = _date.today().isoformat()
+        d_from = (_date.today() - _td(days=7)).isoformat()
+        sales_resp = api.analytics_data(date_from=d_from, date_to=d_to, limit=1)
+        print("=== analytics/data (limit=1, last 7 days) ===")
+        print(_json.dumps(sales_resp, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -2143,6 +2161,7 @@ def build_parser() -> argparse.ArgumentParser:
     # ── Ozon FBO ──────────────────────────────────────────────────────────────
     sub.add_parser("init-ozon-fbo-db", help="Create ozon_fbo.db schema (idempotent)").set_defaults(func=cmd_init_ozon_fbo_db)
     sub.add_parser("ping-ozon-fbo", help="Test Ozon FBO credentials").set_defaults(func=cmd_ping_ozon_fbo)
+    sub.add_parser("debug-ozon-fbo", help="Print raw stock + analytics API response (field inspection)").set_defaults(func=cmd_debug_ozon_fbo)
     sub.add_parser("sync-ozon-stocks", help="Fetch Ozon FBO stocks into SQLite").set_defaults(func=cmd_sync_ozon_stocks)
 
     sos = sub.add_parser("sync-ozon-sales", help="Fetch Ozon ordered_units analytics (last N days)")
