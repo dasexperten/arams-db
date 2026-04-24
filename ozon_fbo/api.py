@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Iterator
 
 from ozon_seller import OzonSellerClient
 
@@ -105,6 +106,73 @@ class OzonFBOAPI:
             except Exception as e:
                 print(f"  ERR {label}  → {e}")
 
+
+    def finance_transactions_iter(
+        self,
+        date_from: str,
+        date_to: str,
+        operation_types: list[str] | None = None,
+        page_size: int = 1000,
+    ) -> Iterator[dict]:
+        """Iterate /v3/finance/transaction/list, yielding individual operations.
+
+        Response rows look like:
+          {"operation_type": "MarketplaceServiceItemStorageFee",
+           "amount": -150.5,
+           "items": [{"sku": 123456789, "name": "..."}]}
+        """
+        page = 1
+        while True:
+            body: dict = {
+                "filter": {
+                    "date": {
+                        "from": f"{date_from}T00:00:00.000Z",
+                        "to":   f"{date_to}T23:59:59.999Z",
+                    },
+                    "transaction_type": "all",
+                },
+                "page": page,
+                "page_size": page_size,
+            }
+            if operation_types:
+                body["filter"]["operation_type"] = operation_types
+            resp = self.c.post("/v3/finance/transaction/list", body)
+            result = resp.get("result") or {}
+            ops = result.get("operations") or []
+            for op in ops:
+                yield op
+            page_count = int(result.get("page_count") or 1)
+            if page >= page_count or not ops:
+                break
+            page += 1
+
+    def storage_fees_by_sku(self, days: int = 30) -> dict[str, float]:
+        """Return {sku_str: total_storage_fee_rub} for the last N days.
+
+        Calls /v3/finance/transaction/list filtered to storage-related operations.
+        Returns empty dict on any API error (graceful degradation).
+        """
+        date_to = date.today().isoformat()
+        date_from = (date.today() - timedelta(days=days)).isoformat()
+        storage_op_types = [
+            "MarketplaceServiceItemStorageFee",
+            "ClientReturnAgentOperationItemStorageFee",
+        ]
+        fees: dict[str, float] = {}
+        try:
+            for op in self.finance_transactions_iter(
+                date_from=date_from,
+                date_to=date_to,
+                operation_types=storage_op_types,
+            ):
+                amount = float(op.get("amount") or 0)
+                for item in (op.get("items") or []):
+                    sku = str(item.get("sku") or "").strip()
+                    if sku:
+                        fees[sku] = fees.get(sku, 0.0) + abs(amount)
+        except Exception:
+            pass
+        return fees
 
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
         """Yield {sku, orders_30d} dicts for all SKUs in the last N days."""
