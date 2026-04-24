@@ -1352,7 +1352,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
                 cluster_stats[cl] = {"to_ship": 0, "sku_count": 0, "oos": 0, "deficit": 0}
             cluster_stats[cl]["sku_count"] += 1
             cluster_stats[cl]["to_ship"] += (p.get("to_ship") or 0)
-            if "🔴 Товар вышел" in (p.get("flag") or ""):
+            if p.get("global_oos"):
                 cluster_stats[cl]["oos"] += 1
             if p.get("zone") == "DEFICIT":
                 cluster_stats[cl]["deficit"] += 1

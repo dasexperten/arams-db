@@ -426,14 +426,14 @@ async function loadStatus() {
 
     if (d.oos_count > 0) {
       const b = document.getElementById('oos-banner');
-      b.textContent = `⚠ ${d.oos_count} позиций out-of-stock — приоритетная отгрузка`;
+      b.textContent = `⚠ ${d.oos_count} позиций Stock-Out (нет остатков ни в одном кластере) — приоритетная отгрузка`;
       b.classList.remove('hidden');
     }
 
     grid.innerHTML =
       metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent') +
       metricCard(d.to_ship_count,      'SKU × кластеров', '') +
-      metricCard(d.oos_count,          'Out of stock',    d.oos_count > 0 ? 'danger' : '') +
+      metricCard(d.oos_count,          'Stock-Out',        d.oos_count > 0 ? 'danger' : '') +
       metricCard(d.overstock_count,    'Overstock',       '');
 
     // Aggregate K per SKU (for color coding)
@@ -468,7 +468,7 @@ async function loadStatus() {
       document.getElementById('clusters-section').classList.remove('hidden');
       document.getElementById('cluster-accordion').innerHTML = clKeys.map(cl => {
         const c = clusters[cl] || {};
-        const oosHtml = (c.oos > 0) ? `<span class="cluster-oos"> · ${c.oos} OOS</span>` : '';
+        const oosHtml = (c.oos > 0) ? `<span class="cluster-oos"> · ${c.oos} Stock-Out</span>` : '';
         const clSkus = (skusByCluster[cl] || []).sort((a, b) =>
           ((b.to_ship || 0) - (a.to_ship || 0)) || ((b.sales_30d || 0) - (a.sales_30d || 0))
         );

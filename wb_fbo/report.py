@@ -133,7 +133,7 @@ def build_summary(plans: list[dict]) -> dict:
     to_ship_units = sum(p.get("to_ship") or 0 for p in plans)
     normal = sum(1 for p in plans if p.get("zone") == ZONE_NORMAL and not (p.get("to_ship") or 0) > 0)
     overstock = sum(1 for p in plans if p.get("zone") == ZONE_OVERSTOCK)
-    oos = sum(1 for p in plans if "🔴 Товар вышел" in (p.get("flag") or ""))
+    oos = sum(1 for p in plans if p.get("global_oos"))
     unknown_pack = sum(1 for p in plans if "Unknown pack" in (p.get("flag") or ""))
 
     cluster_ship: dict[str, int] = {}
