@@ -70,7 +70,7 @@ class OzonFBOAPI:
                 "date_from": date_from,
                 "date_to": date_to,
                 "metrics": metrics or ["ordered_units"],
-                "dimension": dimension or ["item_code"],
+                "dimensions": dimension or ["item_code"],
                 "filters": [],
                 "limit": limit,
                 "offset": offset,
