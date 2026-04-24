@@ -446,7 +446,7 @@ async function loadStatus() {
 
     grid.innerHTML =
       metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent',   null) +
-      metricCard(d.to_ship_count,      'SKU × кластеров', '',          null) +
+      metricCard(d.to_ship_count,      'Топ-5 продаж',    '',          'top5') +
       metricCard(d.oos_count,          'Stock-Out',        d.oos_count > 0 ? 'danger' : '', 'stockout') +
       metricCard(d.overstock_count,    'Overstock',        '',          'overstock');
 
@@ -505,7 +505,7 @@ async function loadStatus() {
             : bcs.length === 1
               ? `<div class="sku-barcodes">${esc(bcs[0])}</div>`
               : `<div class="sku-barcodes" style="color:var(--d-rot)" title="Несколько баркодов — уточни вручную">${esc(bcs[0])}</div>`;
-          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}">
+          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}">
               <td class="sku-name">${label}</td>
               <td>${bcCell}</td>
               <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
@@ -609,15 +609,22 @@ function filterAccordion(type) {
   document.getElementById('clusters-section').classList.remove('hidden');
 
   // Show/hide rows
-  document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
-    if (!_activeFilter) {
-      row.style.display = '';
-    } else if (_activeFilter === 'stockout') {
+  document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => row.style.display = '');
+  if (_activeFilter === 'stockout') {
+    document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
       row.style.display = row.dataset.oos === 'true' ? '' : 'none';
-    } else if (_activeFilter === 'overstock') {
+    });
+  } else if (_activeFilter === 'overstock') {
+    document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
       row.style.display = row.dataset.zone === 'OVERSTOCK' ? '' : 'none';
-    }
-  });
+    });
+  } else if (_activeFilter === 'top5') {
+    document.querySelectorAll('#cluster-accordion .ac-item').forEach(item => {
+      const rows = Array.from(item.querySelectorAll('tbody tr'));
+      rows.sort((a, b) => parseInt(b.dataset.sales || 0) - parseInt(a.dataset.sales || 0));
+      rows.forEach((row, i) => { row.style.display = i < 5 ? '' : 'none'; });
+    });
+  }
 
   if (_activeFilter) {
     document.getElementById('clusters-section').scrollIntoView({ behavior: 'smooth', block: 'start' });

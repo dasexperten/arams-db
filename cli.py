@@ -1368,6 +1368,7 @@ def cmd_wb_fbo_monthly(args: argparse.Namespace) -> int:
                 "zone": p.get("zone"),
                 "to_ship": p.get("to_ship") or 0,
                 "flag": p.get("flag") or "",
+                "global_oos": bool(p.get("global_oos")),
                 "barcodes": barcodes_map.get(p.get("sku") or "", []),
             }
             for p in plans
