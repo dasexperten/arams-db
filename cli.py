@@ -22,6 +22,11 @@ from wb_fbo import etl as fbo_etl
 from wb_fbo import calc as fbo_calc
 from wb_fbo import report as fbo_report
 from wb_fbo import sku_export as fbo_sku_export
+from ozon_fbo import OzonFBOAPI
+from ozon_fbo import db as ozon_fbo_db
+from ozon_fbo import etl as ozon_fbo_etl
+from ozon_fbo import calc as ozon_fbo_calc
+from ozon_fbo import report as ozon_fbo_report
 
 
 _REPLIED_PATH = Path(__file__).parent / "data" / "replied_reviews.json"
@@ -1257,6 +1262,250 @@ def cmd_wb_sku_db(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── Ozon FBO ────────────────────────────────────────────────────────────────
+
+def cmd_init_ozon_fbo_db(_: argparse.Namespace) -> int:
+    ozon_fbo_db.init_schema()
+    print("ozon_fbo.db schema ok")
+    return 0
+
+
+def cmd_ping_ozon_fbo(_: argparse.Namespace) -> int:
+    with OzonFBOAPI() as api:
+        resp = api.ping()
+    items = (resp.get("result") or {}).get("items") or []
+    print(f"ozon-fbo ping ok — products visible: {len(items)} (sample)")
+    return 0
+
+
+def cmd_sync_ozon_stocks(_: argparse.Namespace) -> int:
+    ozon_fbo_db.init_schema()
+    run_date = date.today().isoformat()
+    with OzonFBOAPI() as api:
+        result = ozon_fbo_etl.sync_stocks(api, run_date)
+    print(f"ozon stocks: {result}")
+    return 0
+
+
+def cmd_sync_ozon_sales(args: argparse.Namespace) -> int:
+    ozon_fbo_db.init_schema()
+    with OzonFBOAPI() as api:
+        result = ozon_fbo_etl.sync_sales(api, days=args.days)
+    print(f"ozon sales: {result}")
+    return 0
+
+
+def cmd_calc_ozon_fbo(_: argparse.Namespace) -> int:
+    with ozon_fbo_db.connect() as conn:
+        rows = ozon_fbo_db.load_plan_inputs(conn)
+    if not rows:
+        print("no data — run sync-ozon-stocks + sync-ozon-sales first")
+        return 1
+    plans = ozon_fbo_calc.calculate_plan(rows)
+    run_date = date.today().isoformat()
+    with ozon_fbo_db.connect() as conn:
+        ozon_fbo_db.upsert_plans(conn, plans, run_date)
+    print(f"plans: {len(plans)} rows")
+    return 0
+
+
+def cmd_report_ozon_fbo(_: argparse.Namespace) -> int:
+    run_date = date.today().isoformat()
+    with ozon_fbo_db.connect() as conn:
+        plans = [dict(r) for r in conn.execute(
+            "SELECT * FROM ozon_fbo_plans WHERE run_date = ? ORDER BY cluster, sku",
+            (run_date,),
+        )]
+    if not plans:
+        print(f"no plans for {run_date} — run calc-ozon-fbo first")
+        return 1
+    out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+    print(f"excel written: {out_path}")
+    return 0
+
+
+def cmd_list_ozon_warehouses(_: argparse.Namespace) -> int:
+    """Print all Ozon warehouse names from DB with cluster mapping."""
+    from ozon_fbo.clusters import warehouse_to_cluster
+    with ozon_fbo_db.connect() as conn:
+        rows = conn.execute(
+            "SELECT DISTINCT warehouse FROM ozon_fbo_stocks ORDER BY warehouse"
+        ).fetchall()
+    if not rows:
+        print("no warehouse data in ozon_fbo.db — run sync-ozon-stocks first")
+        return 1
+    print(f"{'Warehouse':<40} {'Cluster'}")
+    print("-" * 60)
+    for row in rows:
+        wh = row[0] or ""
+        print(f"{wh:<40} {warehouse_to_cluster(wh)}")
+    return 0
+
+
+def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
+    """END-TO-END: ping → sync stocks → sync sales → calc → excel → telegram → status JSON."""
+    import html as html_mod
+
+    ozon_fbo_db.init_schema()
+    run_date = date.today().isoformat()
+    started_at = datetime.utcnow().isoformat()
+    exit_code = 0
+
+    print(f"[ozon-fbo-monthly] start run_date={run_date}", flush=True)
+
+    # 1. Ping
+    try:
+        with OzonFBOAPI() as api:
+            api.ping()
+        print("[ozon-fbo-monthly] ping ok", flush=True)
+    except Exception as e:
+        msg = f"Ozon-FBO: ошибка аутентификации — {e}"
+        print(f"[ozon-fbo-monthly] FATAL: {msg}", flush=True)
+        _tg_send_text(msg)
+        return 2
+
+    # 2. Sync stocks
+    stocks_result: dict = {}
+    try:
+        with OzonFBOAPI() as api:
+            stocks_result = ozon_fbo_etl.sync_stocks(api, run_date)
+        print(f"[ozon-fbo-monthly] stocks: {stocks_result}", flush=True)
+    except Exception as e:
+        print(f"[ozon-fbo-monthly] stocks FAILED: {e}", flush=True)
+        exit_code = 1
+
+    # 3. Sync sales
+    sales_result: dict = {}
+    try:
+        with OzonFBOAPI() as api:
+            sales_result = ozon_fbo_etl.sync_sales(api, days=30)
+        print(f"[ozon-fbo-monthly] sales: {sales_result}", flush=True)
+    except Exception as e:
+        print(f"[ozon-fbo-monthly] sales FAILED: {e}", flush=True)
+        exit_code = 1
+
+    if exit_code == 1 and not stocks_result and not sales_result:
+        print("[ozon-fbo-monthly] both stocks and sales failed — aborting", flush=True)
+        return 2
+
+    # 4. Calc
+    with ozon_fbo_db.connect() as conn:
+        rows = ozon_fbo_db.load_plan_inputs(conn)
+    if not rows:
+        print("[ozon-fbo-monthly] no data to calculate — aborting", flush=True)
+        return 2
+
+    plans = ozon_fbo_calc.calculate_plan(rows)
+    with ozon_fbo_db.connect() as conn:
+        ozon_fbo_db.upsert_plans(conn, plans, run_date)
+    print(f"[ozon-fbo-monthly] plans: {len(plans)} rows", flush=True)
+
+    # 5. Excel
+    try:
+        out_path = ozon_fbo_report.write_excel(plans, run_date, Path("output"))
+        print(f"[ozon-fbo-monthly] excel: {out_path}", flush=True)
+    except Exception as e:
+        print(f"[ozon-fbo-monthly] excel FAILED: {e}", flush=True)
+        return 2
+
+    # 6. Log to DB
+    summary = ozon_fbo_report.build_summary(plans)
+    with ozon_fbo_db.connect() as conn:
+        ozon_fbo_db.log_run(
+            conn,
+            run_date=run_date,
+            stocks_rows=stocks_result.get("rows_fetched", 0),
+            sales_rows=sales_result.get("rows_fetched", 0),
+            plans_created=len(plans),
+            warnings=sum(1 for p in plans if p.get("flag")),
+            excel_path=str(out_path),
+            exit_code=exit_code,
+            started_at=started_at,
+            finished_at=datetime.utcnow().isoformat(),
+        )
+
+    # 7. Write status JSON for dashboard
+    try:
+        cluster_stats: dict[str, dict] = {}
+        for p in plans:
+            cl = p.get("cluster") or "?"
+            if cl not in cluster_stats:
+                cluster_stats[cl] = {"to_ship": 0, "sku_count": 0, "oos": 0, "deficit": 0}
+            cluster_stats[cl]["sku_count"] += 1
+            cluster_stats[cl]["to_ship"] += (p.get("to_ship") or 0)
+            if p.get("global_oos"):
+                cluster_stats[cl]["oos"] += 1
+            if p.get("zone") == "DEFICIT":
+                cluster_stats[cl]["deficit"] += 1
+
+        sku_list = [
+            {
+                "sku": p.get("sku"),
+                "cluster": p.get("cluster"),
+                "stock": p.get("stock") or 0,
+                "sales_30d": p.get("sales_30d") or 0,
+                "k": round(p["k"], 2) if p.get("k") is not None else None,
+                "zone": p.get("zone"),
+                "to_ship": p.get("to_ship") or 0,
+                "flag": p.get("flag") or "",
+                "global_oos": bool(p.get("global_oos")),
+            }
+            for p in plans
+        ]
+
+        status_json = {
+            "run_date": run_date,
+            "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "stocks_rows": stocks_result.get("rows_fetched", 0),
+            "sales_rows": sales_result.get("rows_fetched", 0),
+            "total_skus": summary["total"],
+            "to_ship_count": summary["to_ship_count"],
+            "to_ship_units": summary["to_ship_units"],
+            "oos_count": summary["oos"],
+            "overstock_count": summary["overstock"],
+            "unknown_pack": summary["unknown_pack"],
+            "exit_code": exit_code,
+            "clusters": cluster_stats,
+            "skus": sku_list,
+        }
+        Path("docs").mkdir(exist_ok=True)
+        Path("docs/ozon-fbo-status.json").write_text(
+            json.dumps(status_json, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print("[ozon-fbo-monthly] status JSON written to docs/ozon-fbo-status.json", flush=True)
+    except Exception as e:
+        print(f"[ozon-fbo-monthly] status JSON FAILED: {e}", flush=True)
+
+    # 8. Telegram sendDocument
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if token and chat_id:
+        cluster_lines = "\n".join(
+            f"  {cl}: <b>{qty}</b> шт"
+            for cl, qty in sorted(summary.get("cluster_ship", {}).items(), key=lambda x: -x[1])
+            if qty > 0
+        )
+        caption = (
+            f"<b>📦 Ozon-FBO план готов · {run_date}</b>\n\n"
+            f"Обработано: <b>{summary['total']}</b> SKU × кластер\n"
+            f"К поставке: <b>{summary['to_ship_count']}</b> позиций, "
+            f"<b>{summary['to_ship_units']}</b> шт. суммарно\n"
+            f"В норме: <b>{summary['normal']}</b> позиций\n"
+            f"Overstock (блок): <b>{summary['overstock']}</b> позиций\n"
+            f"Out-of-stock 🔴: <b>{summary['oos']}</b> позиций\n"
+            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций"
+            + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
+        )
+        try:
+            _tg_send_document(token, chat_id, out_path, caption)
+            print("[ozon-fbo-monthly] telegram: sent ok", flush=True)
+        except Exception as e:
+            print(f"[ozon-fbo-monthly] telegram FAILED: {e}", flush=True)
+            exit_code = 1
+
+    return exit_code
+
+
 def cmd_report_wb_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with fbo_db.connect() as conn:
@@ -1890,6 +2139,20 @@ def build_parser() -> argparse.ArgumentParser:
     sku_db_p.add_argument("--output-dir", default="docs", help="Output directory (default: docs/)")
     sku_db_p.add_argument("--run-date", default=None, help="Specific run_date (default: latest)")
     sku_db_p.set_defaults(func=cmd_wb_sku_db)
+
+    # ── Ozon FBO ──────────────────────────────────────────────────────────────
+    sub.add_parser("init-ozon-fbo-db", help="Create ozon_fbo.db schema (idempotent)").set_defaults(func=cmd_init_ozon_fbo_db)
+    sub.add_parser("ping-ozon-fbo", help="Test Ozon FBO credentials").set_defaults(func=cmd_ping_ozon_fbo)
+    sub.add_parser("sync-ozon-stocks", help="Fetch Ozon FBO stocks into SQLite").set_defaults(func=cmd_sync_ozon_stocks)
+
+    sos = sub.add_parser("sync-ozon-sales", help="Fetch Ozon ordered_units analytics (last N days)")
+    sos.add_argument("--days", type=int, default=30)
+    sos.set_defaults(func=cmd_sync_ozon_sales)
+
+    sub.add_parser("calc-ozon-fbo", help="Calculate Ozon FBO supply plan").set_defaults(func=cmd_calc_ozon_fbo)
+    sub.add_parser("report-ozon-fbo", help="Generate Excel supply plan into output/").set_defaults(func=cmd_report_ozon_fbo)
+    sub.add_parser("ozon-fbo-monthly", help="END-TO-END: ping → sync → calc → excel → telegram").set_defaults(func=cmd_ozon_fbo_monthly)
+    sub.add_parser("list-ozon-warehouses", help="Show Ozon warehouse → cluster mapping from DB").set_defaults(func=cmd_list_ozon_warehouses)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")

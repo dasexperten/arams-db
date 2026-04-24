@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ozon FBO · Das Experten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@400;500;600;700&family=Fraunces:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --d-teal:       #48B097;
+    --d-teal-soft:  #9DD7C7;
+    --d-teal-bg:    #E7F4F0;
+    --d-slate:      #5B7A8C;
+    --d-gold:       #F5C747;
+    --d-gold-bg:    #FDF3D4;
+    --d-rot:        #E26B5F;
+    --d-rot-bg:     #FCE5E2;
+    --d-blue:       #4A7FC1;
+    --d-blue-bg:    #E3ECF5;
+    --card-bg:      #FFFFFF;
+    --panel-bg:     #F6F7F8;
+    --ink:          #384553;
+    --ink-soft:     #7B8896;
+    --ink-muted:    #A9B2BB;
+    --hairline:     #E4E8EC;
+    --brand-schwarz: #282229;
+    --brand-blue:    #005BFF;
+    --brand-gold:    #FEF004;
+    --warn:          #E26B5F;
+    --font-display:  'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-body:     'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-narrow:   'Archivo Narrow', 'Archivo', Arial, sans-serif;
+    --font-accent:   'Fraunces', Georgia, serif;
+    --font-mono:     'JetBrains Mono', ui-monospace, monospace;
+    --shadow-card:   0 1px 2px rgba(26,21,25,.04), 0 0 0 1px var(--hairline);
+    --shadow-raised: 0 4px 16px -6px rgba(26,21,25,.10), 0 0 0 1px var(--hairline);
+    --r-sm: 4px; --r-md: 6px; --r-lg: 10px; --r-pill: 999px;
+    --t-fast: 120ms; --t-base: 200ms;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--panel-bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 32px; height: 56px;
+    box-shadow: 0 1px 4px rgba(26,21,25,.06);
+  }
+  .nav-brand { font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: var(--ink); }
+  .nav-sep { width: 1px; height: 18px; background: var(--hairline); }
+  .nav-tag { font-family: var(--font-narrow); font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
+  .ozon-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #005BFF; color: #fff; border-radius: var(--r-pill);
+    font-family: var(--font-narrow); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 10px;
+  }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 0 32px 96px; }
+
+  .hero { padding: 48px 0 36px; border-bottom: 1px solid var(--hairline); margin-bottom: 32px; }
+  .eyebrow {
+    font-family: var(--font-narrow); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: #005BFF;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  }
+  .hero-title {
+    font-family: var(--font-display); font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 800; line-height: 1.05; letter-spacing: -0.025em; color: var(--ink);
+  }
+  .hero-sub { margin-top: 10px; font-size: 13px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+  .section-title { padding: 40px 0 6px; font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+
+  .oos-banner { background: var(--d-rot-bg); border: 1px solid rgba(226,107,95,0.3); border-radius: var(--r-lg); padding: 12px 18px; color: var(--d-rot); font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .metric-card {
+    background: var(--card-bg); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card); padding: 20px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .metric-card.clickable { cursor: pointer; transition: box-shadow var(--t-base), transform var(--t-base); }
+  .metric-card.clickable:hover { box-shadow: var(--shadow-raised); transform: translateY(-2px); }
+  .metric-card.filter-active { outline: 2px solid #005BFF; outline-offset: 2px; }
+  .metric-value { font-family: var(--font-display); font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .metric-value.accent { color: #005BFF; }
+  .metric-value.danger { color: var(--d-rot); }
+  .metric-label { font-family: var(--font-narrow); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+
+  .accordion { display: flex; flex-direction: column; gap: 8px; }
+  .ac-item { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  .ac-header { display: flex; align-items: center; gap: 20px; padding: 20px 24px; cursor: pointer; transition: background var(--t-fast); user-select: none; }
+  .ac-header:hover { background: var(--panel-bg); }
+  .ac-header.open { border-bottom: 1px solid var(--hairline); }
+  .ac-chevron { font-size: 18px; color: var(--ink-muted); transition: transform var(--t-base); margin-left: auto; }
+  .ac-header.open .ac-chevron { transform: rotate(180deg); }
+  .ac-body { display: none; }
+  .ac-body.open { display: block; }
+  .ac-footer { padding: 16px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--hairline); background: var(--panel-bg); }
+  .btn-ship { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: var(--r-md); background: #005BFF; color: #fff; font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; border: 0; transition: opacity var(--t-fast); }
+  .btn-ship:hover { opacity: 0.88; }
+  .cluster-name { font-family: var(--font-narrow); font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #005BFF; flex: 1; }
+  .cluster-num { font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cluster-unit { font-family: var(--font-narrow); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-top: 2px; }
+  .cluster-meta { font-size: 13px; font-weight: 500; color: var(--ink-soft); min-width: 150px; flex-shrink: 0; }
+  .cluster-oos { color: var(--d-rot); margin-left: 4px; font-weight: 700; }
+
+  .table-wrap { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { background: var(--panel-bg); }
+  th { text-align: left; padding: 12px 16px; font-family: var(--font-narrow); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 1px solid var(--hairline); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); color: var(--ink); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--panel-bg); }
+
+  tr.sku-global-def  { background: var(--d-teal-bg); }
+  tr.sku-global-def  .sku-name { color: var(--d-teal); }
+  tr.sku-global-def  .sku-k   { color: var(--d-teal); font-weight: 700; }
+  tr.sku-global-over { background: var(--d-rot-bg); }
+  tr.sku-global-over .sku-name { color: var(--d-rot); }
+  tr.sku-global-over .sku-k   { color: var(--d-rot); font-weight: 700; }
+  tr.sku-neutral { background: #fff; }
+  tr.sku-good { background: var(--d-teal-bg); }
+  tr.sku-good .sku-name { color: var(--d-teal); }
+  tr.sku-bad  { background: var(--d-rot-bg); }
+  tr.sku-bad  .sku-name { color: var(--d-rot); }
+  .sku-name  { font-weight: 700; font-size: 14px; }
+  .sku-k     { font-weight: 600; color: var(--ink-soft); }
+  .sku-ship  { font-weight: 800; color: var(--ink); }
+  .sku-agg-k { font-size: 11px; opacity: 0.6; font-weight: 400; }
+
+  .run-num  { color: var(--ink-muted); font-family: var(--font-mono); font-size: 13px; }
+  .run-link { color: #005BFF; text-decoration: none; font-weight: 600; font-size: 13px; }
+  .run-link:hover { text-decoration: underline; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-pill); font-family: var(--font-narrow); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .badge-ok   { background: #E6F4EC; color: #2E7D4F; }
+  .badge-fail { background: var(--d-rot-bg); color: var(--d-rot); }
+  .badge-run  { background: var(--d-gold-bg); color: #8A6000; }
+  .badge-skip { background: var(--panel-bg); color: var(--ink-muted); }
+
+  .action-block { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 24px; }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .action-note { margin-top: 12px; font-size: 13px; color: var(--ink-soft); }
+
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: var(--r-md); font-family: var(--font-body); font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; border: 0; transition: opacity var(--t-fast); white-space: nowrap; }
+  .pill-primary { background: #005BFF; color: #fff; }
+  .pill-primary:hover { opacity: 0.88; }
+  .pill-ghost { background: #fff; color: var(--ink-soft); box-shadow: 0 0 0 1px var(--hairline); }
+  .pill-ghost:hover { background: var(--panel-bg); }
+
+  .loading { color: var(--ink-muted); font-size: 14px; padding: 32px 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); }
+  .err-msg  { color: var(--d-rot); font-size: 14px; padding: 12px 0; }
+  .hidden   { display: none !important; }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footer { border-top: 1px solid var(--hairline); padding: 20px 32px; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-narrow); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .footer a { color: var(--ink-muted); text-decoration: none; }
+  .footer a:hover { color: var(--ink); }
+
+  @media (max-width: 900px) {
+    .metrics-grid { grid-template-columns: repeat(2,1fr); }
+    .page { padding: 0 16px 64px; }
+    .nav { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-brand">DAS EXPERTEN</span>
+  <span class="ozon-badge">OZON</span>
+  <div class="nav-sep"></div>
+  <span class="nav-tag">FBO · Supply Plan</span>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="eyebrow">Ozon FBO · Supply Planning</div>
+    <h1 class="hero-title">Пульт управления<br>поставками Ozon</h1>
+    <p class="hero-sub" id="hero-sub"></p>
+  </div>
+
+  <div id="oos-banner" class="oos-banner hidden"></div>
+
+  <div id="status-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем данные...</div>
+  <div id="status-error" class="err-msg hidden"></div>
+  <div id="metrics-grid" class="metrics-grid hidden"></div>
+
+  <div id="clusters-section" class="hidden">
+    <div class="section-title">По кластерам</div>
+    <div class="accordion" id="cluster-accordion" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="section-title">Действия</div>
+  <div class="action-block">
+    <div class="action-row">
+      <a class="pill pill-primary"
+         href="https://github.com/dasexperten/arams-db/actions/workflows/ozon-fbo-monthly.yml"
+         target="_blank">Запустить расчёт в GitHub Actions →</a>
+      <button class="pill pill-ghost" onclick="loadAll()">Обновить данные</button>
+    </div>
+    <p class="action-note">
+      Нажми «Run workflow» в GitHub Actions. Excel-файл придёт в Telegram после завершения.
+    </p>
+  </div>
+
+  <div class="section-title">История прогонов</div>
+  <div id="runs-loading" class="loading"><span class="spinner"></span>&nbsp;загружаем историю...</div>
+  <div id="runs-error" class="err-msg hidden"></div>
+  <div id="runs-wrap" class="hidden">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Дата запуска</th><th>Статус</th><th>Длительность</th><th>Лог</th>
+        </tr></thead>
+        <tbody id="runs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <span>© 2025 DAS EXPERTEN · Ozon-FBO</span>
+  <a href="https://github.com/dasexperten/arams-db" target="_blank">GitHub ↗</a>
+</footer>
+
+<script>
+const OWNER = 'dasexperten';
+const REPO  = 'arams-db';
+const STATUS_URL = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/docs/ozon-fbo-status.json`;
+const RUNS_URL   = `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/ozon-fbo-monthly.yml/runs?per_page=10`;
+
+const CLUSTER_ORDER = ['Москва','Санкт-Петербург','Екатеринбург','Казань','Краснодар','Ростов-на-Дону','Новосибирск','Хабаровск'];
+let _skusByCluster = {};
+
+function createShipExcel(cl) {
+  const skus = (_skusByCluster[cl] || []).filter(s => (s.to_ship || 0) > 0);
+  if (!skus.length) { alert('Нет позиций к поставке для ' + cl); return; }
+  const rows = [['SKU', 'Количество']];
+  skus.forEach(s => { rows.push([s.sku || '', s.to_ship]); });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{ wch: 22 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Поставка');
+  const dt = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `ozon_fbo_${cl}_${dt}.xlsx`);
+}
+
+async function loadStatus() {
+  const loadEl = document.getElementById('status-loading');
+  const errEl  = document.getElementById('status-error');
+  const grid   = document.getElementById('metrics-grid');
+  try {
+    const r = await fetch(STATUS_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+
+    loadEl.classList.add('hidden');
+    grid.classList.remove('hidden');
+
+    if (d.run_date) {
+      document.getElementById('hero-sub').textContent =
+        `run_date=${d.run_date}  ·  stocks=${fmt(d.stocks_rows)}  ·  sales=${fmt(d.sales_rows)}`;
+    }
+
+    if (d.oos_count > 0) {
+      const b = document.getElementById('oos-banner');
+      b.textContent = `⚠ ${d.oos_count} позиций Stock-Out (нет остатков ни в одном кластере) — приоритетная отгрузка`;
+      b.classList.remove('hidden');
+    }
+
+    grid.innerHTML =
+      metricCard(fmt(d.to_ship_units), 'Штук к поставке', 'accent',   null) +
+      metricCard(d.to_ship_count,      'Топ-5 продаж',    '',          'top5') +
+      metricCard(d.oos_count,          'Stock-Out',        d.oos_count > 0 ? 'danger' : '', 'stockout') +
+      metricCard(d.overstock_count,    'Overstock',        '',          'overstock');
+
+    const skuAgg = {};
+    (d.skus || []).forEach(s => {
+      const key = s.sku || '';
+      if (!skuAgg[key]) skuAgg[key] = { stock: 0, sales: 0 };
+      skuAgg[key].stock += (s.stock || 0);
+      skuAgg[key].sales += (s.sales_30d || 0);
+    });
+    const skuColorMap = {};
+    Object.entries(skuAgg).forEach(([sku, v]) => {
+      if (v.sales === 0) return;
+      const k = v.stock / v.sales;
+      skuColorMap[sku] = k >= 2.0 ? 'red' : k < 0.7 ? 'green' : 'neutral';
+    });
+
+    const skusByCluster = {};
+    _skusByCluster = skusByCluster;
+    (d.skus || []).forEach(s => {
+      const cl = s.cluster || '';
+      if (!skusByCluster[cl]) skusByCluster[cl] = [];
+      skusByCluster[cl].push(s);
+    });
+
+    const clusters = d.clusters || {};
+    const clKeys = CLUSTER_ORDER.filter(k => clusters[k]);
+    Object.keys(clusters).forEach(k => { if (!CLUSTER_ORDER.includes(k) && k !== 'UNKNOWN') clKeys.push(k); });
+    if (clKeys.length) {
+      document.getElementById('clusters-section').classList.remove('hidden');
+      document.getElementById('cluster-accordion').innerHTML = clKeys.map(cl => {
+        const c = clusters[cl] || {};
+        const oosHtml = (c.oos > 0) ? `<span class="cluster-oos"> · ${c.oos} Stock-Out</span>` : '';
+        const clSkus = (skusByCluster[cl] || []).sort((a, b) =>
+          ((b.to_ship || 0) - (a.to_ship || 0)) || ((b.sales_30d || 0) - (a.sales_30d || 0))
+        );
+        const skuRows = clSkus.map(s => {
+          const col = skuColorMap[s.sku || ''];
+          const rowCls = col === 'red' ? 'sku-global-over' : col === 'green' ? 'sku-global-def' : col === 'neutral' ? 'sku-neutral' : (s.zone === 'DEFICIT' ? 'sku-good' : s.zone === 'OVERSTOCK' ? 'sku-bad' : '');
+          const kDisp = s.k != null ? Number(s.k).toFixed(2) : '—';
+          const agg = skuAgg[s.sku || ''];
+          const aggKDisp = (agg && agg.sales > 0) ? (agg.stock / agg.sales).toFixed(2) : null;
+          const label = aggKDisp && col
+            ? `${esc(s.sku || '')} <span class="sku-agg-k" title="Общий К по всем кластерам">(К=${aggKDisp})</span>`
+            : esc(s.sku || '');
+          const oos = (skuAgg[s.sku || '']?.stock === 0);
+          const shipCell = (s.to_ship || 0) > 0
+            ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)">⚠</span>' : ''}`
+            : `<span style="color:var(--ink-muted)">—</span>`;
+          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}">
+              <td class="sku-name">${label}</td>
+              <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
+              <td class="sku-k">${kDisp}</td>
+              <td class="sku-ship">${shipCell}</td>
+            </tr>`;
+        }).join('');
+        return `<div class="ac-item">
+          <div class="ac-header" onclick="toggleAc(this)">
+            <div class="cluster-name">${esc(cl)}</div>
+            <div style="min-width:130px;flex-shrink:0">
+              <div class="cluster-num">${fmt(c.to_ship || 0)}</div>
+              <div class="cluster-unit">шт. к поставке</div>
+            </div>
+            <div class="cluster-meta">${c.sku_count || 0} SKU${oosHtml}</div>
+            <div class="ac-chevron">▾</div>
+          </div>
+          <div class="ac-body">
+            <table><thead><tr>
+              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
+            </tr></thead><tbody>${skuRows}</tbody></table>
+            <div class="ac-footer">
+              <button class="btn-ship" onclick="createShipExcel('${cl}')">📦 Создать поставку</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+  } catch (e) {
+    loadEl.classList.add('hidden');
+    errEl.classList.remove('hidden');
+    errEl.textContent = e.message.includes('404')
+      ? '⚠ Расчёт ещё не выполнялся — запустите workflow в GitHub Actions.'
+      : `Ошибка: ${e.message}`;
+  }
+}
+
+async function loadRuns() {
+  const loadEl = document.getElementById('runs-loading');
+  const errEl  = document.getElementById('runs-error');
+  const wrap   = document.getElementById('runs-wrap');
+  const tbody  = document.getElementById('runs-tbody');
+  try {
+    const r = await fetch(RUNS_URL, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    const runs = data.workflow_runs || [];
+    loadEl.classList.add('hidden');
+    wrap.classList.remove('hidden');
+    if (!runs.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--ink-muted)">Нет прогонов</td></tr>';
+      return;
+    }
+    tbody.innerHTML = runs.map(run => {
+      const cr = run.created_at ? new Date(run.created_at) : null;
+      const up = run.updated_at ? new Date(run.updated_at) : null;
+      const dur = cr && up ? Math.max(0, Math.round((up - cr) / 60000)) + ' мин' : '—';
+      return `<tr>
+        <td class="run-num">#${run.run_number}</td>
+        <td>${cr ? cr.toLocaleString('ru-RU') : '—'}</td>
+        <td>${runBadge(run.conclusion, run.status)}</td>
+        <td style="color:var(--ink-muted)">${dur}</td>
+        <td><a class="run-link" href="${esc(run.html_url)}" target="_blank">↗ лог</a></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    loadEl.classList.add('hidden');
+    errEl.classList.remove('hidden');
+    errEl.textContent = `Ошибка загрузки истории: ${e.message}`;
+  }
+}
+
+function metricCard(value, label, cls, filterType) {
+  const extra = filterType
+    ? ` clickable" data-filter="${filterType}" onclick="filterAccordion('${filterType}')`
+    : '';
+  return `<div class="metric-card${extra}">
+    <div class="metric-value${cls ? ' ' + cls : ''}">${value ?? '—'}</div>
+    <div class="metric-label">${label}</div>
+  </div>`;
+}
+
+let _activeFilter = null;
+function filterAccordion(type) {
+  const same = _activeFilter === type;
+  _activeFilter = same ? null : type;
+  document.querySelectorAll('.metric-card').forEach(c => c.classList.remove('filter-active'));
+  if (_activeFilter) {
+    const card = document.querySelector(`.metric-card[data-filter="${_activeFilter}"]`);
+    if (card) card.classList.add('filter-active');
+  }
+  document.querySelectorAll('.ac-header').forEach(h => {
+    h.classList.add('open'); h.nextElementSibling.classList.add('open');
+  });
+  document.getElementById('clusters-section').classList.remove('hidden');
+  document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => row.style.display = '');
+  if (_activeFilter === 'stockout') {
+    document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
+      row.style.display = row.dataset.oos === 'true' ? '' : 'none';
+    });
+  } else if (_activeFilter === 'overstock') {
+    document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
+      row.style.display = row.dataset.zone === 'OVERSTOCK' ? '' : 'none';
+    });
+  } else if (_activeFilter === 'top5') {
+    document.querySelectorAll('#cluster-accordion .ac-item').forEach(item => {
+      const rows = Array.from(item.querySelectorAll('tbody tr'));
+      rows.sort((a, b) => parseInt(b.dataset.sales || 0) - parseInt(a.dataset.sales || 0));
+      rows.forEach((row, i) => { row.style.display = i < 5 ? '' : 'none'; });
+    });
+  }
+  if (_activeFilter) document.getElementById('clusters-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function runBadge(conclusion, status) {
+  if (status === 'in_progress' || status === 'queued')
+    return `<span class="badge badge-run"><span class="spinner"></span> В процессе</span>`;
+  if (conclusion === 'success')   return `<span class="badge badge-ok">success</span>`;
+  if (conclusion === 'failure')   return `<span class="badge badge-fail">failure</span>`;
+  if (conclusion === 'cancelled') return `<span class="badge badge-skip">cancelled</span>`;
+  return `<span class="badge badge-skip">${conclusion || status || '?'}</span>`;
+}
+
+function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleAc(hdr) {
+  const body = hdr.nextElementSibling;
+  const isOpen = hdr.classList.contains('open');
+  document.querySelectorAll('.ac-header.open').forEach(h => {
+    h.classList.remove('open'); h.nextElementSibling.classList.remove('open');
+  });
+  if (!isOpen) { hdr.classList.add('open'); body.classList.add('open'); }
+}
+
+function loadAll() {
+  ['status-loading','runs-loading'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  ['status-error','metrics-grid','oos-banner','clusters-section','runs-error','runs-wrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  loadStatus();
+  loadRuns();
+}
+
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+</body>
+</html>
