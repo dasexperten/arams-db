@@ -33,7 +33,11 @@ def sync_sales(api: OzonFBOAPI, days: int = 30) -> dict:
     for item in api.analytics_sales_iter(days=days):
         rows.append(item)
 
+    regional = sum(1 for r in rows if r.get("warehouse"))
+    print(f"[ozon-fbo-etl] sync_sales: {len(rows)} rows total, "
+          f"{regional} with region, {len(rows) - regional} without (global)", flush=True)
+
     with fbo_db.connect() as conn:
         fbo_db.upsert_sales(conn, rows, run_date)
 
-    return {"rows_fetched": len(rows), "run_date": run_date}
+    return {"rows_fetched": len(rows), "run_date": run_date, "regional_rows": regional}

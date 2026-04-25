@@ -197,6 +197,8 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         ):
             sales_global[str(row[0])] = int(row[1] or 0)
 
+    # sku_meta: numeric_sku → (offer_id, item_name) — needed to recover ghost-OOS entries
+    sku_meta: dict[str, tuple[str, str]] = {}
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
         """SELECT sku, offer_id, warehouse, SUM(present_stock) as qty, MAX(item_name) as item_name
@@ -212,6 +214,8 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         cluster = warehouse_to_cluster(warehouse_name)
         key = (offer_id, cluster)
 
+        sku_meta[numeric_sku] = (offer_id, row[4] or "")
+
         if key not in cluster_data:
             if has_regional_sales:
                 sales_30d = sales_map.get((numeric_sku, cluster), 0)
@@ -225,6 +229,28 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
                 "item_name": row[4] or "",
             }
         cluster_data[key]["stock"] += int(row[3] or 0)
+
+    # Ghost-OOS recovery: when using regional sales, some (sku, cluster) pairs have
+    # sales > 0 but stock = 0 in every warehouse of that cluster, so Ozon's stock API
+    # returns no row for them.  Add those pairs with stock = 0 so calc.py can
+    # recommend a shipment.
+    if has_regional_sales:
+        for (numeric_sku, cluster), qty in sales_map.items():
+            if qty <= 0:
+                continue
+            meta = sku_meta.get(numeric_sku)
+            if meta is None:
+                continue  # SKU not in stock data at all — skip
+            offer_id, item_name = meta
+            key = (offer_id, cluster)
+            if key not in cluster_data:
+                cluster_data[key] = {
+                    "sku": offer_id,
+                    "cluster": cluster,
+                    "stock": 0,
+                    "sales_30d": qty,
+                    "item_name": item_name,
+                }
 
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
