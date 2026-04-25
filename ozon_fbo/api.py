@@ -164,13 +164,12 @@ class OzonFBOAPI:
           1. Top-level operation_type matches a storage name → use op.amount
           2. Service line items inside operations[].services[] of OTHER
              operation types → sum services[].price with matching name
-        Both are collected.
 
-        Per-operation attribution to SKUs:
-          a) If items[] non-empty → distribute charge equally across items
-          b) If items[] empty → add to "unattributed pool" which is then
-             distributed across stock_by_sku proportionally by current stock
-             (so SKUs with more inventory get a larger share of bulk fees)
+        Per-SKU attribution: ONLY via items[] in each charging operation.
+        If items[] is empty we LOG the orphan charge but DO NOT distribute it,
+        because Ozon gives free-storage periods to certain SKUs/categories,
+        and smearing across all stock would over-charge SKUs in the free period.
+        SKUs that never appear in any storage operation → 0 fee (correct).
         Returns empty dict on any API error (graceful degradation).
         """
         date_to = date.today().isoformat()
@@ -224,18 +223,12 @@ class OzonFBOAPI:
         except Exception:
             pass
 
-        # Distribute unattributed pool by stock volume (units) if provided.
-        if unattributed_pool > 0 and stock_by_sku:
-            total_stock = sum(max(0, v) for v in stock_by_sku.values())
-            if total_stock > 0:
-                for sku_key, qty in stock_by_sku.items():
-                    if qty > 0:
-                        share = unattributed_pool * (qty / total_stock)
-                        fees[sku_key] = fees.get(sku_key, 0.0) + share
+        attributed_total = sum(fees.values())
         print(
             f"[storage_fees_by_sku] attributed_ops={n_attributed_ops} "
             f"unattributed_ops={n_unattributed_ops} "
-            f"unattributed_pool={unattributed_pool:.2f} руб "
+            f"unattributed_pool={unattributed_pool:.2f} руб (NOT distributed) "
+            f"attributed_total={attributed_total:.2f} руб "
             f"sku_count={len(fees)}",
             flush=True,
         )

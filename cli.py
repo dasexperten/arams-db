@@ -1449,33 +1449,22 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
         return 2
 
     # 3b. Fetch storage fees (best-effort — won't abort on failure)
+    # Only SKUs that actually appear in storage operations' items[] get a fee.
+    # SKUs in Ozon's free-storage period or otherwise not charged → null.
     storage_fees: dict = {}
     try:
-        # Build numeric_sku → offer_id mapping AND offer_id → total_stock map.
-        # The first lets us remap Finance API keys; the second lets the API
-        # distribute bulk (no-items) charges proportionally to current stock.
-        with ozon_fbo_db.connect() as conn:
-            sku_id_to_offer: dict[str, str] = {}
-            stock_by_offer: dict[str, int] = {}
-            for sku_id, offer_id, total_stock in conn.execute(
-                """SELECT sku, offer_id, SUM(present_stock)
-                   FROM ozon_fbo_stocks
-                   WHERE offer_id IS NOT NULL AND run_date = (SELECT MAX(run_date) FROM ozon_fbo_stocks)
-                   GROUP BY sku, offer_id"""
-            ):
-                sku_id_to_offer[str(sku_id)] = str(offer_id)
-                stock_by_offer[str(offer_id)] = stock_by_offer.get(str(offer_id), 0) + int(total_stock or 0)
-
         with OzonFBOAPI() as api:
-            # Pass numeric-SKU → stock map so bulk fees (no items[]) get distributed too.
-            stock_by_numeric_sku = {
-                num_sku: stock_by_offer.get(offer, 0)
-                for num_sku, offer in sku_id_to_offer.items()
-            }
-            storage_fees = api.storage_fees_by_sku(days=30, stock_by_sku=stock_by_numeric_sku)
+            storage_fees = api.storage_fees_by_sku(days=30)
         print(f"[ozon-fbo-monthly] storage fees raw: {len(storage_fees)} keys", flush=True)
 
         # Remap numeric Ozon SKU IDs → offer_id (vendor codes) so they match plan rows.
+        with ozon_fbo_db.connect() as conn:
+            sku_id_to_offer = {
+                str(r[0]): str(r[1])
+                for r in conn.execute(
+                    "SELECT DISTINCT sku, offer_id FROM ozon_fbo_stocks WHERE offer_id IS NOT NULL"
+                )
+            }
         remapped: dict[str, float] = {}
         unmapped = 0
         for k, v in storage_fees.items():
@@ -1486,7 +1475,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
                 unmapped += 1
         storage_fees = remapped
         total_fees = sum(storage_fees.values())
-        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} offer_ids, "
+        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} offer_ids charged, "
               f"total {total_fees:.2f} руб ({unmapped} numeric IDs not in stocks DB)", flush=True)
     except Exception as e:
         print(f"[ozon-fbo-monthly] storage fees FAILED (non-fatal): {e}", flush=True)
