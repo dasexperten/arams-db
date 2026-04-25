@@ -91,9 +91,16 @@ class OzonFBOAPI:
             {"dimensions": ["day"]},
             {"dimension":  ["sku", "day"]},
             {"dimensions": ["sku", "day"]},
+            # regional dimensions — key candidates for delivery-region sales
+            {"dimension":  ["delivery_region"]},
+            {"dimension":  ["sku", "delivery_region"]},
+            {"dimension":  ["region"]},
+            {"dimension":  ["sku", "region"]},
+            {"dimension":  ["delivery_city"]},
+            {"dimension":  ["sku", "delivery_city"]},
         ]
         base = {"date_from": d_from, "date_to": d_to,
-                "metrics": ["ordered_units"], "filters": [], "limit": 1, "offset": 0}
+                "metrics": ["ordered_units"], "filters": [], "limit": 3, "offset": 0}
         for combo in combos:
             body = {**base, **combo}
             key = list(combo.keys())[0]
@@ -102,7 +109,11 @@ class OzonFBOAPI:
             try:
                 resp = self.c.post("/v1/analytics/data", body)
                 rows = (resp.get("result") or {}).get("data") or []
-                print(f"  OK  {label}  rows={len(rows)}")
+                sample = ""
+                if rows:
+                    d = rows[0].get("dimensions") or []
+                    sample = " dims=" + str([x.get("name") for x in d])
+                print(f"  OK  {label}  rows={len(rows)}{sample}")
             except Exception as e:
                 print(f"  ERR {label}  → {e}")
 
@@ -212,39 +223,46 @@ class OzonFBOAPI:
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
         """Yield {sku, warehouse(=delivery region), orders_30d} per (sku, region).
 
-        Source: /v2/posting/fbo/list aggregated by analytics_data.region
-        (delivery region, i.e. WHERE the customer is). City is used only as
-        a tie-breaker when region is missing.
+        Three data paths, tried in order:
+          1. FBO postings → analytics_data.region  (most granular, buyer's region)
+          2. /v1/analytics/data dimension=delivery_region  (aggregated but regional)
+          3. /v1/analytics/data dimension=sku  (global totals — last resort, wrong but visible)
 
-        IMPORTANT: This pipeline NEVER uses analytics_data.warehouse_name
-        (fulfillment warehouse). Per Aram, fulfillment-warehouse data is
-        forbidden — it reflects routing decisions, not buyer demand.
-
-        If postings fail, falls through to dimension=["sku"] global totals
-        (no regional breakdown) so the failure is loud and obvious.
+        NEVER uses analytics_data.warehouse_name (fulfillment warehouse).
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
 
-        # Primary & only correct source: per-region from FBO postings.
+        # Path 1: FBO postings with analytics_data.region
         try:
             results = list(self._sales_from_postings(date_from, date_to, page_size))
-            n = len(results)
-            n_unknown = sum(1 for r in results if not r.get("warehouse"))
-            print(f"[ozon-fbo] sales source: FBO postings → {n} (sku,region) rows, "
-                  f"{n_unknown} without region", flush=True)
-            yield from results
-            return
+            n_regional = sum(1 for r in results if r.get("warehouse"))
+            n_unknown = len(results) - n_regional
+            print(f"[ozon-fbo] path1 FBO postings → {len(results)} rows, "
+                  f"{n_regional} with region, {n_unknown} without", flush=True)
+            if n_regional > 0:
+                yield from results
+                return
+            print(f"[ozon-fbo] path1: analytics_data.region empty for all postings "
+                  f"— trying analytics/data delivery_region", flush=True)
         except Exception as e:
-            print(f"[ozon-fbo] ⚠️  postings failed ({type(e).__name__}: {e})", flush=True)
-            print(f"[ozon-fbo] ⚠️  NOT falling back to fulfillment warehouse "
-                  f"(forbidden); using GLOBAL totals — every cluster will show "
-                  f"the same national number, which is WRONG but at least visible.",
-                  flush=True)
+            print(f"[ozon-fbo] path1 FAILED ({type(e).__name__}: {e})", flush=True)
 
-        # Last-resort fallback: global totals. Every cluster gets the same number,
-        # so the wrongness is obvious in the dashboard.
-        print("[ozon-fbo] sales source: GLOBAL totals (no regional breakdown)", flush=True)
+        # Path 2: /v1/analytics/data with delivery_region dimension
+        try:
+            results2 = list(self._analytics_by_delivery_region(
+                date_from, date_to, page_size))
+            n2 = len(results2)
+            print(f"[ozon-fbo] path2 analytics/delivery_region → {n2} rows", flush=True)
+            if n2 > 0:
+                yield from results2
+                return
+            print(f"[ozon-fbo] path2: no rows returned", flush=True)
+        except Exception as e:
+            print(f"[ozon-fbo] path2 FAILED ({type(e).__name__}: {e})", flush=True)
+
+        # Path 3: global totals — every cluster gets same national number (wrong but visible)
+        print("[ozon-fbo] path3 GLOBAL totals — no regional breakdown", flush=True)
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -263,6 +281,42 @@ class OzonFBOAPI:
                 units = int(float(mets[0])) if mets else 0
                 if sku_id:
                     yield {"sku": sku_id, "warehouse": None, "orders_30d": units}
+            if len(rows) < page_size:
+                break
+            offset += len(rows)
+
+    def _analytics_by_delivery_region(
+        self, date_from: str, date_to: str, page_size: int = 1000
+    ):
+        """Yield {sku, warehouse(=delivery region name), orders_30d} from
+        /v1/analytics/data with dimension=[sku, delivery_region].
+
+        This is the buyer's delivery region — correct for demand planning.
+        """
+        offset = 0
+        while True:
+            resp = self.c.post(
+                "/v1/analytics/data",
+                {
+                    "date_from": date_from,
+                    "date_to": date_to,
+                    "metrics": ["ordered_units"],
+                    "dimension": ["sku", "delivery_region"],
+                    "filters": [],
+                    "limit": page_size,
+                    "offset": offset,
+                },
+            )
+            rows = (resp.get("result") or {}).get("data") or []
+            for row in rows:
+                dims = row.get("dimensions") or []
+                mets = row.get("metrics") or []
+                # dims[0] = sku, dims[1] = delivery_region
+                sku_id = dims[0].get("id", "") if len(dims) > 0 else ""
+                region = dims[1].get("name", "") if len(dims) > 1 else ""
+                units = int(float(mets[0])) if mets else 0
+                if sku_id and units > 0:
+                    yield {"sku": sku_id, "warehouse": region, "orders_30d": units}
             if len(rows) < page_size:
                 break
             offset += len(rows)

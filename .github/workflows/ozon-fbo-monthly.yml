@@ -187,6 +187,22 @@ jobs:
           PYEOF
           true
 
+      - name: Probe analytics dimensions (delivery_region check)
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys
+          sys.path.insert(0, '.')
+          try:
+              from ozon_fbo.api import OzonFBOAPI
+              with OzonFBOAPI() as api:
+                  print("=== probe_analytics ===")
+                  api.probe_analytics()
+          except Exception as e:
+              print(f"probe_analytics failed: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |
