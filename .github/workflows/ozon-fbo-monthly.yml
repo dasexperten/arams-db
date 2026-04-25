@@ -145,7 +145,7 @@ jobs:
           PYEOF
           true
 
-      - name: Debug DE208AA — every storage op that mentions it
+      - name: Debug — dump ALL OperationMarketplaceServiceStorage ops in full
         if: always()
         run: |
           python - <<'PYEOF'
@@ -156,38 +156,25 @@ jobs:
           try:
               from ozon_seller.client import OzonSellerClient
 
-              # Find DE208AA numeric SKU(s) from stocks DB
               conn = sqlite3.connect('ozon_fbo.db')
-              numeric_skus = [
+              de208_numeric = [
                   str(r[0]) for r in conn.execute(
                       "SELECT DISTINCT sku FROM ozon_fbo_stocks WHERE offer_id LIKE 'DE208%' AND offer_id IS NOT NULL"
                   )
               ]
-              print(f"DE208* numeric SKU IDs: {numeric_skus}")
-              for sku_id in numeric_skus:
-                  for r in conn.execute(
-                      "SELECT offer_id, warehouse, present_stock FROM ozon_fbo_stocks "
-                      "WHERE sku = ? AND run_date = (SELECT MAX(run_date) FROM ozon_fbo_stocks)",
-                      (int(sku_id),)
-                  ):
-                      print(f"  numeric={sku_id}  offer_id={r[0]}  warehouse={r[1]}  stock={r[2]}")
+              print(f"DE208* numeric SKU IDs from stocks DB: {de208_numeric}")
+              # Build full numeric → offer_id map for SKU annotation
+              sku_to_offer = {
+                  str(r[0]): str(r[1]) for r in conn.execute(
+                      "SELECT DISTINCT sku, offer_id FROM ozon_fbo_stocks WHERE offer_id IS NOT NULL"
+                  )
+              }
               conn.close()
-              if not numeric_skus:
-                  print("DE208 not found in stocks DB"); sys.exit(0)
-              numeric_set = set(numeric_skus)
 
               c = OzonSellerClient()
               date_to = date.today().isoformat()
               date_from = (date.today() - timedelta(days=30)).isoformat()
-              storage_names = {
-                  "OperationMarketplaceServiceStorage", "MarketplaceServiceStorageItem",
-                  "TemporaryStorage", "OperationMarketplaceItemTemporaryStorageRedistribution",
-                  "MarketplaceServiceItemTemporaryStorage", "MarketplaceServiceItemTemporaryStorageRedistribution",
-                  "MarketplaceServiceItemDisposalDetailed", "MarketplaceServiceStockDisposal",
-              }
-              total_charge = 0.0
-              total_attributed = 0.0
-              ops_count = 0
+              storage_ops = []
               page = 1
               while True:
                   resp = c.post("/v3/finance/transaction/list", {
@@ -201,46 +188,45 @@ jobs:
                   ops = result.get("operations") or []
                   page_count = int(result.get("page_count") or 1)
                   for op in ops:
-                      charge = 0.0
-                      if op.get("operation_type") in storage_names:
-                          charge += abs(float(op.get("amount") or 0))
-                      for svc in (op.get("services") or []):
-                          if svc.get("name") in storage_names:
-                              charge += abs(float(svc.get("price") or 0))
-                      if charge == 0:
-                          continue
-                      items = op.get("items") or []
-                      item_skus = [str(it.get("sku")) for it in items]
-                      if any(s in numeric_set for s in item_skus):
-                          ops_count += 1
-                          total_charge += charge
-                          per_item = charge / len(items) if items else 0
-                          attributed = per_item * sum(1 for s in item_skus if s in numeric_set)
-                          total_attributed += attributed
-                          print(f"\nop_id={op.get('operation_id')}  type={op.get('operation_type')}  "
-                                f"date={op.get('operation_date')}  charge={charge}  items_count={len(items)}  "
-                                f"per_item={per_item:.2f}  attributed_to_DE208={attributed:.2f}")
-                          if len(items) <= 10:
-                              for it in items:
-                                  s = str(it.get("sku"))
-                                  marker = " ⭐DE208" if s in numeric_set else ""
-                                  print(f"    sku={s} name={it.get('name','')[:60]}{marker}")
-                          else:
-                              print(f"    ({len(items)} items, showing only DE208 matches)")
-                              for it in items:
-                                  s = str(it.get("sku"))
-                                  if s in numeric_set:
-                                      print(f"    ⭐ sku={s} name={it.get('name','')[:60]}")
+                      if op.get("operation_type") == "OperationMarketplaceServiceStorage":
+                          storage_ops.append(op)
                   if page >= page_count or not ops:
                       break
                   page += 1
-              print(f"\n========== SUMMARY for DE208 ==========")
-              print(f"  Storage ops mentioning DE208: {ops_count}")
-              print(f"  Total raw charge across those ops: {total_charge:.2f} руб")
-              print(f"  Attributed to DE208 (charge/items_count × matches): {total_attributed:.2f} руб")
+
+              print(f"\nTotal OperationMarketplaceServiceStorage ops in 30 days: {len(storage_ops)}")
+              total_amount = sum(abs(float(op.get("amount") or 0)) for op in storage_ops)
+              print(f"Total amount: {total_amount:.2f} руб")
+              print(f"\n=== Full dump of ALL OperationMarketplaceServiceStorage ops ===")
+              by_offer = defaultdict(float)
+              for op in storage_ops:
+                  amt = abs(float(op.get("amount") or 0))
+                  items = op.get("items") or []
+                  posting = op.get("posting") or {}
+                  print(f"\nop_id={op.get('operation_id')}  date={op.get('operation_date')}  "
+                        f"amount={amt:.2f}  items_count={len(items)}  posting_number={posting.get('posting_number','')}  "
+                        f"warehouse_id={posting.get('warehouse_id', '')}")
+                  if not items:
+                      print("    items[] EMPTY")
+                  for it in items:
+                      s = str(it.get("sku"))
+                      offer = sku_to_offer.get(s, "(not in stocks DB)")
+                      mark = " ⭐DE208" if s in de208_numeric else ""
+                      print(f"    sku={s} offer_id={offer}{mark}  name={it.get('name','')[:50]}")
+                      # Attribute to offer (assuming whole amount per item is wrong but try)
+                      if offer != "(not in stocks DB)":
+                          # Equal split for comparison
+                          by_offer[offer] += amt / len(items) if items else 0
+              print(f"\n=== Top 20 offer_ids by equal-split attribution ===")
+              for offer, total in sorted(by_offer.items(), key=lambda x: -x[1])[:20]:
+                  print(f"  {total:10.2f} руб  {offer}")
+              if "DE208AA" in by_offer:
+                  print(f"\n  DE208AA share: {by_offer['DE208AA']:.2f} руб (sum-divided)")
+              else:
+                  print(f"\n  DE208AA NOT FOUND in any items[] of OperationMarketplaceServiceStorage ops!")
           except Exception as e:
               import traceback
-              print(f"DE208 debug failed: {e}")
+              print(f"debug failed: {e}")
               traceback.print_exc()
           PYEOF
           true
