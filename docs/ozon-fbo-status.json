@@ -1,150 +1,150 @@
 {
   "run_date": "2026-04-25",
-  "generated_at": "2026-04-25T20:15:45Z",
+  "generated_at": "2026-04-25T20:39:26Z",
   "stocks_rows": 368,
-  "sales_rows": 3881,
+  "sales_rows": 3882,
   "total_skus": 509,
-  "to_ship_count": 271,
-  "to_ship_units": 7752,
+  "to_ship_count": 158,
+  "to_ship_units": 6420,
   "oos_count": 23,
   "overstock_count": 232,
   "unknown_pack": 102,
   "exit_code": 0,
   "clusters": {
     "Алматы": {
-      "to_ship": 72,
+      "to_ship": 0,
       "sku_count": 20,
       "oos": 1,
       "deficit": 6
     },
     "Астана": {
-      "to_ship": 24,
+      "to_ship": 0,
       "sku_count": 21,
       "oos": 1,
       "deficit": 2
     },
     "Беларусь": {
-      "to_ship": 240,
+      "to_ship": 192,
       "sku_count": 23,
       "oos": 1,
       "deficit": 10
     },
     "Воронеж": {
-      "to_ship": 156,
+      "to_ship": 120,
       "sku_count": 24,
       "oos": 1,
       "deficit": 9
     },
     "Екатеринбург": {
-      "to_ship": 432,
+      "to_ship": 420,
       "sku_count": 24,
       "oos": 1,
       "deficit": 8
     },
     "Иркутск": {
-      "to_ship": 324,
+      "to_ship": 240,
       "sku_count": 20,
       "oos": 1,
       "deficit": 20
     },
     "Казань": {
-      "to_ship": 288,
+      "to_ship": 264,
       "sku_count": 25,
       "oos": 1,
       "deficit": 10
     },
     "Калининград": {
-      "to_ship": 324,
+      "to_ship": 144,
       "sku_count": 23,
       "oos": 1,
       "deficit": 22
     },
     "Краснодар": {
-      "to_ship": 204,
+      "to_ship": 180,
       "sku_count": 24,
       "oos": 1,
       "deficit": 7
     },
     "Красноярск": {
-      "to_ship": 444,
+      "to_ship": 324,
       "sku_count": 24,
       "oos": 1,
       "deficit": 23
     },
     "Махачкала": {
-      "to_ship": 108,
+      "to_ship": 0,
       "sku_count": 20,
       "oos": 1,
       "deficit": 9
     },
     "Москва": {
-      "to_ship": 2256,
+      "to_ship": 2268,
       "sku_count": 31,
       "oos": 1,
       "deficit": 17
     },
     "Невинномысск": {
-      "to_ship": 84,
+      "to_ship": 36,
       "sku_count": 23,
       "oos": 1,
       "deficit": 6
     },
     "Новосибирск": {
-      "to_ship": 624,
+      "to_ship": 600,
       "sku_count": 22,
       "oos": 1,
       "deficit": 19
     },
     "Омск": {
-      "to_ship": 204,
+      "to_ship": 120,
       "sku_count": 22,
       "oos": 1,
       "deficit": 15
     },
     "Пермь": {
-      "to_ship": 132,
+      "to_ship": 36,
       "sku_count": 24,
       "oos": 1,
       "deficit": 10
     },
     "Ростов-на-Дону": {
-      "to_ship": 252,
+      "to_ship": 168,
       "sku_count": 23,
       "oos": 1,
       "deficit": 14
     },
     "Самара": {
-      "to_ship": 132,
+      "to_ship": 108,
       "sku_count": 23,
       "oos": 1,
       "deficit": 6
     },
     "Санкт-Петербург": {
-      "to_ship": 684,
+      "to_ship": 672,
       "sku_count": 25,
       "oos": 1,
       "deficit": 13
     },
     "Уфа": {
-      "to_ship": 72,
+      "to_ship": 48,
       "sku_count": 24,
       "oos": 1,
       "deficit": 5
     },
     "Хабаровск": {
-      "to_ship": 444,
+      "to_ship": 420,
       "sku_count": 24,
       "oos": 1,
       "deficit": 15
     },
     "Тула": {
-      "to_ship": 180,
+      "to_ship": 60,
       "sku_count": 14,
       "oos": 1,
       "deficit": 14
     },
     "Армения": {
-      "to_ship": 72,
+      "to_ship": 0,
       "sku_count": 6,
       "oos": 1,
       "deficit": 6
@@ -235,7 +235,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -290,7 +290,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -400,7 +400,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -411,7 +411,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -422,7 +422,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -444,7 +444,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -477,7 +477,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -488,7 +488,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -499,7 +499,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -521,7 +521,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -554,7 +554,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -587,7 +587,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -609,7 +609,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -620,7 +620,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -631,7 +631,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -642,7 +642,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -664,7 +664,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -686,7 +686,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -697,7 +697,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -719,7 +719,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -741,7 +741,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -752,7 +752,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -807,7 +807,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -873,7 +873,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -895,7 +895,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -939,7 +939,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -950,7 +950,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1082,7 +1082,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1159,7 +1159,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1236,7 +1236,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1258,7 +1258,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1269,7 +1269,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1302,7 +1302,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1313,7 +1313,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1335,7 +1335,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1368,7 +1368,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1412,7 +1412,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1423,7 +1423,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1445,7 +1445,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1456,7 +1456,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1500,7 +1500,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1522,7 +1522,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1533,7 +1533,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1555,7 +1555,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1577,7 +1577,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1588,7 +1588,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1599,7 +1599,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1610,7 +1610,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1632,7 +1632,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1643,7 +1643,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1687,7 +1687,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1698,7 +1698,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1753,7 +1753,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1775,7 +1775,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1797,7 +1797,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1907,7 +1907,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2017,7 +2017,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2028,7 +2028,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2072,7 +2072,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2094,7 +2094,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2160,7 +2160,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2223,7 +2223,7 @@
       "sku": "DE119AA",
       "cluster": "Казань",
       "stock": 0,
-      "sales_30d": 35,
+      "sales_30d": 36,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
@@ -2270,7 +2270,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2369,16 +2369,16 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Уфа",
-      "stock": 343,
+      "stock": 342,
       "sales_30d": 19,
-      "k": 18.05,
+      "k": 18.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "flag": "",
@@ -2479,7 +2479,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2611,7 +2611,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2644,7 +2644,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2655,7 +2655,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2666,7 +2666,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2688,7 +2688,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2699,7 +2699,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2710,7 +2710,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2732,7 +2732,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2743,7 +2743,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2765,7 +2765,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2798,7 +2798,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2809,7 +2809,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2853,7 +2853,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2886,7 +2886,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -2897,7 +2897,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -2996,7 +2996,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3004,7 +3004,7 @@
       "sku": "DE125",
       "cluster": "Москва",
       "stock": 0,
-      "sales_30d": 157,
+      "sales_30d": 158,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 168,
@@ -3102,11 +3102,11 @@
     {
       "sku": "DE125",
       "cluster": "Уфа",
-      "stock": 14,
+      "stock": 12,
       "sales_30d": 37,
-      "k": 0.38,
+      "k": 0.32,
       "zone": "DEFICIT",
-      "to_ship": 24,
+      "to_ship": 36,
       "flag": "⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3128,7 +3128,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3205,7 +3205,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3245,11 +3245,11 @@
     {
       "sku": "DE130",
       "cluster": "Москва",
-      "stock": 104,
-      "sales_30d": 211,
+      "stock": 103,
+      "sales_30d": 212,
       "k": 0.49,
       "zone": "DEFICIT",
-      "to_ship": 108,
+      "to_ship": 120,
       "flag": "",
       "global_oos": false
     },
@@ -3337,7 +3337,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3381,7 +3381,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3458,7 +3458,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3590,7 +3590,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3876,7 +3876,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4074,7 +4074,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4261,7 +4261,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4316,7 +4316,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4411,9 +4411,9 @@
     {
       "sku": "DE206AA",
       "cluster": "Казань",
-      "stock": 111,
+      "stock": 113,
       "sales_30d": 68,
-      "k": 1.63,
+      "k": 1.66,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "flag": "",
@@ -4459,7 +4459,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4613,7 +4613,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4668,7 +4668,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4690,7 +4690,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4712,7 +4712,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4723,7 +4723,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4756,7 +4756,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4767,7 +4767,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4888,7 +4888,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4910,7 +4910,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4943,7 +4943,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4998,7 +4998,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5042,7 +5042,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5086,7 +5086,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5130,7 +5130,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5152,7 +5152,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5229,7 +5229,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5317,7 +5317,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5603,7 +5603,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -5625,7 +5625,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -5647,7 +5647,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -5691,7 +5691,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -5702,7 +5702,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 12,
+      "to_ship": 0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
