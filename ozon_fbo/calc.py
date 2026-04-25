@@ -41,6 +41,25 @@ def detect_pack_size(vendor_code: str) -> int | None:
         return 288 if not _is_set(suffix) else 144
 
 
+def ship_threshold(vendor_code: str) -> int | None:
+    """Minimum 30-day cluster sales required to recommend a shipment.
+
+    Below this threshold the cluster's monthly volume is too low to justify
+    logistics cost — we don't ship even when stock is below target.
+    The SKU still appears in the report with to_ship=0 + explanatory flag,
+    so it stays visible on the dashboard.
+
+    DE2## (пасты)   → 36
+    DE1## (щётки)   → 144
+    """
+    vc = (vendor_code or "").strip()
+    m = _SKU_RE.match(vc)
+    if not m:
+        return None
+    series = int(m.group(1))
+    return 36 if series == 2 else 144
+
+
 def _is_set(suffix: str | None) -> bool:
     if not suffix:
         return False
@@ -131,6 +150,12 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
             target = sales * K_TARGET
             raw = target - stock
             to_ship = roundup_to_multiple(raw, pack_size)
+            # Min-volume gate: not worth shipping to a low-volume cluster.
+            # SKU stays in the row (visible on dashboard), but to_ship=0.
+            threshold = ship_threshold(sku)
+            if threshold is not None and sales < threshold and to_ship > 0:
+                flags.append(f"Продажи {sales} < {threshold}/мес — поставка в кластер не нужна")
+                to_ship = 0
 
         total_stk = sku_total_stock.get(sku, 0)
         total_sal = sku_total_sales.get(sku, 0)
