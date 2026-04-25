@@ -1,6 +1,6 @@
 {
   "run_date": "2026-04-25",
-  "generated_at": "2026-04-25T16:15:14Z",
+  "generated_at": "2026-04-25T16:25:09Z",
   "stocks_rows": 371,
   "sales_rows": 3864,
   "total_skus": 513,
@@ -6070,9 +6070,9 @@
     {
       "sku": "DE210",
       "cluster": "Уфа",
-      "stock": 226,
+      "stock": 225,
       "sales_30d": 36,
-      "k": 6.28,
+      "k": 6.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "storage_fee_month": null,
@@ -6309,7 +6309,7 @@
     }
   ],
   "unknown_warehouses": {
-    "(пусто)": 1852,
+    "(пусто)": 1853,
     "Никольское": 3,
     "Александровск": 2,
     "Еманжелинск": 2,
