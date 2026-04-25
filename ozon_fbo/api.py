@@ -157,16 +157,20 @@ class OzonFBOAPI:
                 break
             page += 1
 
-    def storage_fees_by_sku(self, days: int = 30) -> dict[str, float]:
+    def storage_fees_by_sku(self, days: int = 30, stock_by_sku: dict[str, int] | None = None) -> dict[str, float]:
         """Return {sku_key: total_storage_fee_rub} for the last N days.
 
         Storage charges appear in /v3/finance/transaction/list two ways:
-          1. As top-level operations whose operation_type matches a storage name —
-             use op.amount, distributed across items[].
-          2. As service line items inside operations[].services[] of OTHER
-             operation types — sum services with matching name, distribute
-             across items[].
-        Both paths are collected.
+          1. Top-level operation_type matches a storage name → use op.amount
+          2. Service line items inside operations[].services[] of OTHER
+             operation types → sum services[].price with matching name
+        Both are collected.
+
+        Per-operation attribution to SKUs:
+          a) If items[] non-empty → distribute charge equally across items
+          b) If items[] empty → add to "unattributed pool" which is then
+             distributed across stock_by_sku proportionally by current stock
+             (so SKUs with more inventory get a larger share of bulk fees)
         Returns empty dict on any API error (graceful degradation).
         """
         date_to = date.today().isoformat()
@@ -189,35 +193,52 @@ class OzonFBOAPI:
             "MarketplaceReturnStorageServiceInTheWarehouseFbsItem",
         }
         fees: dict[str, float] = {}
+        unattributed_pool = 0.0
+        n_attributed_ops = 0
+        n_unattributed_ops = 0
         try:
-            # Use transaction_type=services filter to narrow the iterator.
-            # Implementation note: finance_transactions_iter doesn't currently
-            # expose this knob; we still get the same data, just iterate more.
             for op in self.finance_transactions_iter(
                 date_from=date_from,
                 date_to=date_to,
                 transaction_type="services",
             ):
                 charge = 0.0
-                # Path 1: top-level operation_type is a storage type.
                 if op.get("operation_type") in storage_names:
                     charge += abs(float(op.get("amount") or 0))
-                # Path 2: service line items within this operation.
                 for svc in (op.get("services") or []):
                     if svc.get("name") in storage_names:
                         charge += abs(float(svc.get("price") or 0))
                 if charge == 0:
                     continue
                 items = op.get("items") or []
-                if not items:
-                    continue
-                per_item = charge / len(items)
-                for item in items:
-                    key = str(item.get("offer_id") or item.get("sku") or "").strip()
-                    if key:
-                        fees[key] = fees.get(key, 0.0) + per_item
+                if items:
+                    per_item = charge / len(items)
+                    for item in items:
+                        key = str(item.get("offer_id") or item.get("sku") or "").strip()
+                        if key:
+                            fees[key] = fees.get(key, 0.0) + per_item
+                    n_attributed_ops += 1
+                else:
+                    unattributed_pool += charge
+                    n_unattributed_ops += 1
         except Exception:
             pass
+
+        # Distribute unattributed pool by stock volume (units) if provided.
+        if unattributed_pool > 0 and stock_by_sku:
+            total_stock = sum(max(0, v) for v in stock_by_sku.values())
+            if total_stock > 0:
+                for sku_key, qty in stock_by_sku.items():
+                    if qty > 0:
+                        share = unattributed_pool * (qty / total_stock)
+                        fees[sku_key] = fees.get(sku_key, 0.0) + share
+        print(
+            f"[storage_fees_by_sku] attributed_ops={n_attributed_ops} "
+            f"unattributed_ops={n_unattributed_ops} "
+            f"unattributed_pool={unattributed_pool:.2f} руб "
+            f"sku_count={len(fees)}",
+            flush=True,
+        )
         return fees
 
     def fbo_postings_iter(
