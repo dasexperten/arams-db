@@ -44,6 +44,10 @@ def detect_pack_size(vendor_code: str) -> int | None:
 # Все заказы округляются вверх до кратного 12 — единый шаг для пасты и щётки.
 SHIP_STEP = 12
 
+# Не везём в кластер если за 30д там продано меньше этого порога —
+# хвостовой шум (1–5 продаж не стоят отгрузки 12 шт).
+MIN_SHIP_SALES = 6
+
 
 def _is_set(suffix: str | None) -> bool:
     if not suffix:
@@ -126,9 +130,9 @@ def calculate_plan(rows: list[dict]) -> list[dict]:
         if pack_size is None:
             flags.append(f"⚠️ Unknown pack для SKU {sku}")
 
-        # Top up to 30 days of this cluster's sales, rounded up to multiples of 12.
-        # No min-volume threshold — ship to every cluster with sales > stock.
-        if sales > 0 and stock < sales * K_TARGET:
+        # Skip long-tail clusters: 1–5 sales/30d isn't worth a 12-unit shipment.
+        # 6+ → top up to 30 days of cluster's sales, rounded up to multiples of 12.
+        if sales >= MIN_SHIP_SALES and stock < sales * K_TARGET:
             target = sales * K_TARGET
             raw = target - stock
             to_ship = roundup_to_multiple(raw, SHIP_STEP)
