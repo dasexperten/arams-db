@@ -259,6 +259,21 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
                     "item_name": item_name,
                 }
 
+    # Никакого UNKNOWN кластера в плане. Если что-то осталось не замаплено —
+    # это видно в status.json в поле unknown_warehouses (диагностика),
+    # и должно быть исправлено добавлением ключевых слов в clusters.py.
+    unknown_keys = [k for k in cluster_data if k[1] == "UNKNOWN"]
+    if unknown_keys:
+        unk_total = sum(cluster_data[k]["sales_30d"] for k in unknown_keys)
+        print(
+            f"[ozon-fbo-db] WARNING: {len(unknown_keys)} (sku, UNKNOWN) entries "
+            f"with {unk_total} unattributed sales — check status.json "
+            f"unknown_warehouses to add missing region/city keywords",
+            flush=True,
+        )
+        for k in unknown_keys:
+            del cluster_data[k]
+
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
 
