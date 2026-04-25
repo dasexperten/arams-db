@@ -1453,7 +1453,27 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
     try:
         with OzonFBOAPI() as api:
             storage_fees = api.storage_fees_by_sku(days=30)
-        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} SKUs", flush=True)
+        print(f"[ozon-fbo-monthly] storage fees raw: {len(storage_fees)} keys", flush=True)
+        # Finance API returns numeric Ozon SKU IDs; remap to offer_id (vendor codes)
+        # so they match the plan's sku field (which equals offer_id).
+        with ozon_fbo_db.connect() as conn:
+            sku_id_to_offer = {
+                str(r[0]): str(r[1])
+                for r in conn.execute(
+                    "SELECT DISTINCT sku, offer_id FROM ozon_fbo_stocks WHERE offer_id IS NOT NULL"
+                )
+            }
+        remapped: dict[str, float] = {}
+        unmapped = 0
+        for k, v in storage_fees.items():
+            offer = sku_id_to_offer.get(k)
+            if offer:
+                remapped[offer] = remapped.get(offer, 0.0) + v
+            else:
+                unmapped += 1
+        storage_fees = remapped
+        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} offer_ids "
+              f"({unmapped} numeric IDs not in stocks DB)", flush=True)
     except Exception as e:
         print(f"[ozon-fbo-monthly] storage fees FAILED (non-fatal): {e}", flush=True)
 
