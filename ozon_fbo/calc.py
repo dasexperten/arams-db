@@ -117,8 +117,10 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
                 flags.append("⚠️ Продажи=0 из-за дефицита — нужна ручная проверка")
                 zone = ZONE_DEFICIT
             else:
-                flags.append("Нет продаж за 30 дней")
-                zone = ZONE_NORMAL
+                # Stock without any regional demand = worst overstock
+                # (warehouse storage fee burning, no rotation).
+                flags.append("Нет продаж за 30 дней — оверсток")
+                zone = ZONE_OVERSTOCK
         else:
             k = stock / sales
             zone = classify_zone(k)
