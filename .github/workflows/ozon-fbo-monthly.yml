@@ -261,6 +261,48 @@ jobs:
           PYEOF
           true
 
+      - name: Probe potential warehousing-cost API endpoints
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          from datetime import date, timedelta
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              c = OzonSellerClient()
+              d_to = date.today().isoformat()
+              d_from = (date.today() - timedelta(days=30)).isoformat()
+              candidates = [
+                  ("POST", "/v1/analytics/warehousing_cost",
+                   {"date_from": d_from, "date_to": d_to, "limit": 5, "offset": 0}),
+                  ("POST", "/v2/analytics/warehousing_cost",
+                   {"date_from": d_from, "date_to": d_to, "limit": 5, "offset": 0}),
+                  ("POST", "/v1/finance/warehousing",
+                   {"date_from": d_from, "date_to": d_to}),
+                  ("POST", "/v1/analytics/storage_cost",
+                   {"date_from": d_from, "date_to": d_to, "limit": 5}),
+                  ("POST", "/v1/supply/warehousing-cost",
+                   {"date_from": d_from, "date_to": d_to}),
+                  ("POST", "/v1/finance/storage",
+                   {"filter": {"date": {"from": f"{d_from}T00:00:00.000Z",
+                                        "to": f"{d_to}T23:59:59.999Z"}},
+                    "page": 1, "page_size": 5}),
+              ]
+              for method, path, body in candidates:
+                  try:
+                      resp = c.post(path, body)
+                      keys = list(resp.keys())[:8]
+                      print(f"  OK  {path}  → keys={keys}")
+                      if resp and keys != ['message', 'code']:
+                          print(json.dumps(resp, ensure_ascii=False)[:400])
+                  except Exception as e:
+                      print(f"  ERR {path}  → {e}")
+          except Exception as e:
+              print(f"probe failed: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |
