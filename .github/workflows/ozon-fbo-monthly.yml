@@ -181,13 +181,15 @@ jobs:
                   ops = result.get("operations") or []
                   page_count = int(result.get("page_count") or 1)
                   for op in ops:
-                      op_type_amounts[op.get("operation_type") or "(none)"] += abs(float(op.get("amount") or 0))
+                      ot = op.get("operation_type") or "(none)"
+                      op_type_amounts[ot] += abs(float(op.get("amount") or 0))
+                      # Sample top-level OperationMarketplaceServiceStorage ops
+                      if ot == "OperationMarketplaceServiceStorage" and len(storage_sample_ops) < 5:
+                          storage_sample_ops.append(op)
                       for svc in (op.get("services") or []):
                           name = svc.get("name") or "(none)"
                           price = abs(float(svc.get("price") or 0))
                           service_totals[name] += price
-                          if ("Storage" in name or "хранен" in name.lower()) and len(storage_sample_ops) < 5:
-                              storage_sample_ops.append(op)
                   total += len(ops)
                   if page >= page_count or not ops:
                       break

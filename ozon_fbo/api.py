@@ -171,11 +171,20 @@ class OzonFBOAPI:
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
-        # Names that mean "storage / placement charge"
+        # Names that mean "storage / placement / disposal charge"
         storage_names = {
+            # Main FBO storage (~207k руб/30d in our account)
             "OperationMarketplaceServiceStorage",
             "MarketplaceServiceStorageItem",
+            # Temporary storage at PVZ/SC
+            "TemporaryStorage",
+            "OperationMarketplaceItemTemporaryStorageRedistribution",
+            "MarketplaceServiceItemTemporaryStorage",
+            "MarketplaceServiceItemTemporaryStorageRedistribution",
+            # Disposal / write-off (charged when stock removed from warehouse)
+            "MarketplaceServiceItemDisposalDetailed",
             "MarketplaceServiceStockDisposal",
+            # FBS return placement (PVZ / warehouse)
             "MarketplaceReturnStorageServiceAtThePickupPointFbsItem",
             "MarketplaceReturnStorageServiceInTheWarehouseFbsItem",
         }
