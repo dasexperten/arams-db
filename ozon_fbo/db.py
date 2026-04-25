@@ -230,10 +230,9 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
             }
         cluster_data[key]["stock"] += int(row[3] or 0)
 
-    # Ghost-OOS recovery: when using regional sales, some (sku, cluster) pairs have
-    # sales > 0 but stock = 0 in every warehouse of that cluster, so Ozon's stock API
-    # returns no row for them.  Add those pairs with stock = 0 so calc.py can
-    # recommend a shipment.
+    # Ozon's stock API omits rows where present_stock = 0.  When regional sales
+    # show that a cluster had demand for a SKU but no stock row exists for that
+    # (sku, cluster), add it with stock=0 so calc.py can recommend a shipment.
     if has_regional_sales:
         for (numeric_sku, cluster), qty in sales_map.items():
             if qty <= 0:
