@@ -210,20 +210,23 @@ class OzonFBOAPI:
             offset += len(result)
 
     def analytics_sales_iter(self, days: int = 30, page_size: int = 1000):
-        """Yield {sku, warehouse, orders_30d} dicts for all SKUs in the last N days.
+        """Yield {sku, warehouse(=delivery region), orders_30d} per (sku, region).
 
-        Primary: aggregate FBO postings by buyer's region (analytics_data.region).
-        Fallback 1: dimension=["sku","warehouse"] in /v1/analytics/data.
-        Fallback 2: dimension=["sku"] — global totals (warehouse=None).
+        Source: /v2/posting/fbo/list aggregated by analytics_data.region
+        (delivery region, i.e. WHERE the customer is). City is used only as
+        a tie-breaker when region is missing.
 
-        Prints which source was used so it's visible in workflow logs whether we
-        actually got per-region data or silently fell through to warehouse/global.
+        IMPORTANT: This pipeline NEVER uses analytics_data.warehouse_name
+        (fulfillment warehouse). Per Aram, fulfillment-warehouse data is
+        forbidden — it reflects routing decisions, not buyer demand.
+
+        If postings fail, falls through to dimension=["sku"] global totals
+        (no regional breakdown) so the failure is loud and obvious.
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
 
-        # Primary: per-region from FBO postings. Buffer fully so a mid-flight
-        # error doesn't yield partial data before the fallback kicks in.
+        # Primary & only correct source: per-region from FBO postings.
         try:
             results = list(self._sales_from_postings(date_from, date_to, page_size))
             n = len(results)
@@ -233,23 +236,13 @@ class OzonFBOAPI:
             yield from results
             return
         except Exception as e:
-            print(f"[ozon-fbo] postings failed ({type(e).__name__}: {e}); "
-                  f"falling back to /v1/analytics/data dimension=sku,warehouse")
+            print(f"[ozon-fbo] ⚠️  postings failed ({type(e).__name__}: {e})")
+            print(f"[ozon-fbo] ⚠️  NOT falling back to fulfillment warehouse "
+                  f"(forbidden); using GLOBAL totals — every cluster will show "
+                  f"the same national number, which is WRONG but at least visible.")
 
-        # Fallback 1: per-warehouse from analytics endpoint (fulfillment warehouse,
-        # NOT buyer's region — results will be biased by stockout routing).
-        try:
-            results = list(self._analytics_sales_by_warehouse(date_from, date_to, page_size))
-            print(f"[ozon-fbo] sales source: analytics/data sku,warehouse → "
-                  f"{len(results)} rows (fulfillment warehouse, not region)")
-            yield from results
-            return
-        except Exception as e:
-            print(f"[ozon-fbo] sku,warehouse failed ({type(e).__name__}: {e}); "
-                  f"falling back to GLOBAL totals")
-
-        # Fallback 2: global totals — warehouse=None means "all clusters"
-        print("[ozon-fbo] sales source: GLOBAL totals (no regional breakdown)")
+        # Last-resort fallback: global totals. Every cluster gets the same number,
+        # so the wrongness is obvious in the dashboard.
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -273,54 +266,36 @@ class OzonFBOAPI:
             offset += len(rows)
 
     def _sales_from_postings(self, date_from: str, date_to: str, page_size: int = 1000):
-        """Aggregate FBO postings into {sku, warehouse(=region), orders_30d}.
+        """Aggregate FBO postings by buyer's delivery region.
 
-        Groups strictly by analytics_data.region (buyer's delivery region).
-        Does NOT fall back to warehouse_name — if region is missing, posting is
-        counted under "" (UNKNOWN cluster) so we don't silently mix in
-        fulfillment-warehouse data.
+        Strict region-only grouping:
+          1. Use analytics_data.region (delivery region, e.g. "Ставропольский край")
+          2. If region is missing → fall back to analytics_data.city
+          3. If both missing → key as "" (UNKNOWN cluster)
+
+        analytics_data.warehouse_name (fulfillment warehouse) is NEVER used here.
         """
         sales: dict[tuple[str, str], int] = {}
         cancelled = {"cancelled", "cancelled_from_backend", "cancelled_from_admin"}
-        total = kept = 0
+        total = kept = no_region = 0
         for posting in self.fbo_postings_iter(date_from, date_to, page_size):
             total += 1
             if posting.get("status") in cancelled:
                 continue
             ad = posting.get("analytics_data") or {}
-            region = str(ad.get("region") or "")
+            # Region first, then city — NEVER warehouse_name.
+            location = str(ad.get("region") or ad.get("city") or "")
+            if not location:
+                no_region += 1
             for product in (posting.get("products") or []):
                 sku = str(product.get("sku") or "")
                 qty = int(product.get("quantity") or 0)
                 if sku and qty > 0:
-                    key = (sku, region)
+                    key = (sku, location)
                     sales[key] = sales.get(key, 0) + qty
                     kept += 1
-        print(f"[ozon-fbo] FBO postings: {total} total, {kept} non-cancelled items aggregated")
-        for (sku, region), units in sales.items():
-            yield {"sku": sku, "warehouse": region, "orders_30d": units}
+        print(f"[ozon-fbo] FBO postings: {total} total, {kept} items aggregated, "
+              f"{no_region} postings without region/city")
+        for (sku, location), units in sales.items():
+            yield {"sku": sku, "warehouse": location, "orders_30d": units}
 
-    def _analytics_sales_by_warehouse(self, date_from: str, date_to: str, page_size: int = 1000):
-        """Yield {sku, warehouse, orders_30d} with per-warehouse breakdown."""
-        offset = 0
-        while True:
-            resp = self.analytics_data(
-                date_from=date_from,
-                date_to=date_to,
-                metrics=["ordered_units"],
-                dimension=["sku", "warehouse"],
-                offset=offset,
-                limit=page_size,
-            )
-            rows = (resp.get("result") or {}).get("data") or []
-            for row in rows:
-                dims = row.get("dimensions") or []
-                mets = row.get("metrics") or []
-                sku_id = dims[0].get("id", "") if dims else ""
-                warehouse = dims[1].get("id", "") if len(dims) > 1 else ""
-                units = int(float(mets[0])) if mets else 0
-                if sku_id:
-                    yield {"sku": sku_id, "warehouse": warehouse, "orders_30d": units}
-            if len(rows) < page_size:
-                break
-            offset += len(rows)
