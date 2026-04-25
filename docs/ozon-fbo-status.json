@@ -1,8 +1,8 @@
 {
   "run_date": "2026-04-25",
-  "generated_at": "2026-04-25T19:41:29Z",
-  "stocks_rows": 369,
-  "sales_rows": 3878,
+  "generated_at": "2026-04-25T20:15:45Z",
+  "stocks_rows": 368,
+  "sales_rows": 3881,
   "total_skus": 509,
   "to_ship_count": 271,
   "to_ship_units": 7752,
@@ -159,7 +159,6 @@
       "k": 71.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -171,7 +170,6 @@
       "k": 47.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -183,7 +181,6 @@
       "k": 52.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -195,7 +192,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -207,7 +203,6 @@
       "k": 22.92,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -219,7 +214,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -231,7 +225,6 @@
       "k": 0.04,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1047.0,
       "flag": "⚠️ Возможен дефицит — проверь вручную",
       "global_oos": false
     },
@@ -243,19 +236,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE105AAAA",
       "cluster": "Краснодар",
-      "stock": 70,
-      "sales_30d": 29,
-      "k": 2.41,
+      "stock": 69,
+      "sales_30d": 30,
+      "k": 2.3,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -267,7 +258,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -279,7 +269,6 @@
       "k": 135.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -291,7 +280,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 132,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -303,7 +291,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -315,7 +302,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1047.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -327,7 +313,6 @@
       "k": 161.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -339,7 +324,6 @@
       "k": 4.9,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -351,7 +335,6 @@
       "k": 1.47,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -363,7 +346,6 @@
       "k": 46.36,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -375,7 +357,6 @@
       "k": 0.03,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 1047.0,
       "flag": "⚠️ Возможен дефицит — проверь вручную",
       "global_oos": false
     },
@@ -387,7 +368,6 @@
       "k": 30.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -399,7 +379,6 @@
       "k": 2.98,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1047.0,
       "flag": "",
       "global_oos": false
     },
@@ -411,7 +390,6 @@
       "k": 8.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -423,7 +401,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -435,7 +412,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -447,7 +423,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -459,7 +434,6 @@
       "k": 60.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -471,7 +445,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -483,7 +456,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -495,7 +467,6 @@
       "k": 218.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -507,7 +478,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -519,7 +489,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -531,7 +500,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -543,7 +511,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -555,7 +522,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -567,7 +533,6 @@
       "k": 24.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -579,7 +544,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -591,7 +555,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -603,7 +566,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -615,7 +577,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -627,7 +588,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -639,7 +599,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -651,7 +610,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -663,7 +621,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -675,7 +632,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -687,7 +643,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -699,7 +654,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -711,7 +665,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -723,7 +676,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -735,7 +687,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -747,7 +698,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -759,7 +709,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -771,7 +720,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -783,7 +731,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -795,7 +742,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -807,7 +753,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -819,7 +764,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -831,7 +775,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -843,7 +786,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -855,7 +797,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -867,7 +808,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -879,7 +819,6 @@
       "k": 66.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -891,7 +830,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -903,7 +841,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -915,7 +852,6 @@
       "k": 103.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -927,7 +863,6 @@
       "k": 106.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -939,7 +874,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -951,7 +885,6 @@
       "k": 49.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -963,7 +896,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -975,7 +907,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -987,7 +918,6 @@
       "k": 69.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -999,7 +929,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1011,7 +940,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1023,7 +951,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1035,7 +962,6 @@
       "k": 33.2,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1047,7 +973,6 @@
       "k": 3.27,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1059,7 +984,6 @@
       "k": 52.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1071,7 +995,6 @@
       "k": 10.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE111",
       "global_oos": false
     },
@@ -1083,7 +1006,6 @@
       "k": 44.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1095,7 +1017,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "Нет продаж за 30 дней — оверсток; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1107,7 +1028,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1119,7 +1039,6 @@
       "k": 11.58,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1131,7 +1050,6 @@
       "k": 7.06,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1143,7 +1061,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1155,7 +1072,6 @@
       "k": 6.62,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1167,19 +1083,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Краснодар",
-      "stock": 80,
-      "sales_30d": 16,
-      "k": 5.0,
+      "stock": 79,
+      "sales_30d": 17,
+      "k": 4.65,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1191,7 +1105,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1203,19 +1116,17 @@
       "k": 139.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
     {
       "sku": "DE112",
       "cluster": "Москва",
-      "stock": 194,
-      "sales_30d": 112,
-      "k": 1.73,
+      "stock": 192,
+      "sales_30d": 114,
+      "k": 1.68,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1227,7 +1138,6 @@
       "k": 20.43,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1239,7 +1149,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1251,7 +1160,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 582.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1263,7 +1171,6 @@
       "k": 15.31,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1275,7 +1182,6 @@
       "k": 12.7,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1287,7 +1193,6 @@
       "k": 15.22,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1299,7 +1204,6 @@
       "k": 1.9,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1311,7 +1215,6 @@
       "k": 48.1,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1323,7 +1226,6 @@
       "k": 2.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 582.0,
       "flag": "⚠️ Unknown pack для SKU DE112",
       "global_oos": false
     },
@@ -1335,7 +1237,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1347,7 +1248,6 @@
       "k": 131.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1359,7 +1259,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1371,7 +1270,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1383,7 +1281,6 @@
       "k": 67.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1395,7 +1292,6 @@
       "k": 8.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1407,7 +1303,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1419,7 +1314,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1431,7 +1325,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1443,7 +1336,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1455,7 +1347,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -1467,7 +1358,6 @@
       "k": 16.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1479,7 +1369,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1491,7 +1380,6 @@
       "k": 1.14,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1503,7 +1391,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1515,7 +1402,6 @@
       "k": 59.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -1527,7 +1413,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1539,7 +1424,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1551,7 +1435,6 @@
       "k": 60.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1563,7 +1446,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1575,7 +1457,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1587,7 +1468,6 @@
       "k": 9.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1599,7 +1479,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1611,7 +1490,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1623,7 +1501,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1635,7 +1512,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1647,7 +1523,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1659,7 +1534,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1671,7 +1545,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1683,7 +1556,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1695,7 +1567,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1707,7 +1578,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1719,7 +1589,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1731,7 +1600,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1743,7 +1611,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1755,7 +1622,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1767,7 +1633,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1779,7 +1644,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1791,7 +1655,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
     },
@@ -1803,7 +1666,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -1815,7 +1677,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -1827,7 +1688,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1839,7 +1699,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1851,7 +1710,6 @@
       "k": 86.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1863,7 +1721,6 @@
       "k": 27.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1875,7 +1732,6 @@
       "k": 19.86,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1887,7 +1743,6 @@
       "k": 0.92,
       "zone": "NORMAL",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1899,7 +1754,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1911,7 +1765,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1923,7 +1776,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1935,7 +1787,6 @@
       "k": 9.8,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1947,7 +1798,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -1959,7 +1809,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -1971,7 +1820,6 @@
       "k": 2.98,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -1983,7 +1831,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -1995,7 +1842,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2007,7 +1853,6 @@
       "k": 7.78,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2019,7 +1864,6 @@
       "k": 37.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2031,7 +1875,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2043,7 +1886,6 @@
       "k": 23.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2055,7 +1897,6 @@
       "k": 0.4,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2067,7 +1908,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2079,7 +1919,6 @@
       "k": 31.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2091,7 +1930,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2103,7 +1941,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -2115,7 +1952,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -2127,7 +1963,6 @@
       "k": 68.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2139,7 +1974,6 @@
       "k": 38.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2151,7 +1985,6 @@
       "k": 74.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2163,7 +1996,6 @@
       "k": 29.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2175,7 +2007,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -2187,7 +2018,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2199,7 +2029,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2211,7 +2040,6 @@
       "k": 5.37,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2223,7 +2051,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -2235,7 +2062,6 @@
       "k": 84.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2247,7 +2073,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2259,7 +2084,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -2271,7 +2095,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2283,7 +2106,6 @@
       "k": 176.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2295,7 +2117,6 @@
       "k": 11.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2307,7 +2128,6 @@
       "k": 116.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2319,7 +2139,6 @@
       "k": 180.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -2331,7 +2150,6 @@
       "k": 65.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2343,7 +2161,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2355,7 +2172,6 @@
       "k": 62.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2367,7 +2183,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2379,19 +2194,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Екатеринбург",
-      "stock": 133,
+      "stock": 132,
       "sales_30d": 46,
-      "k": 2.89,
+      "k": 2.87,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2403,7 +2216,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2415,7 +2227,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2427,7 +2238,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2439,7 +2249,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2451,7 +2260,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2463,7 +2271,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2471,11 +2278,10 @@
       "sku": "DE119AA",
       "cluster": "Москва",
       "stock": 0,
-      "sales_30d": 273,
+      "sales_30d": 274,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 276,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2487,7 +2293,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2499,7 +2304,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2511,7 +2315,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2523,7 +2326,6 @@
       "k": 9.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2535,7 +2337,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2547,7 +2348,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2559,7 +2359,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 96,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2571,7 +2370,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2583,7 +2381,6 @@
       "k": 18.05,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2595,7 +2392,6 @@
       "k": 2.54,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -2607,7 +2403,6 @@
       "k": 47.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2619,7 +2414,6 @@
       "k": 55.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2631,7 +2425,6 @@
       "k": 19.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2643,7 +2436,6 @@
       "k": 7.32,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2655,7 +2447,6 @@
       "k": 17.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2667,7 +2458,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2679,7 +2469,6 @@
       "k": 3.51,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2691,7 +2480,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2703,7 +2491,6 @@
       "k": 2.62,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2715,7 +2502,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2727,7 +2513,6 @@
       "k": 81.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2739,7 +2524,6 @@
       "k": 0.61,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2751,7 +2535,6 @@
       "k": 35.4,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2763,7 +2546,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2775,7 +2557,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2787,7 +2568,6 @@
       "k": 32.09,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2799,7 +2579,6 @@
       "k": 6.96,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2811,7 +2590,6 @@
       "k": 8.46,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2823,7 +2601,6 @@
       "k": 0.34,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2835,7 +2612,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2847,7 +2623,6 @@
       "k": 32.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -2859,7 +2634,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2871,7 +2645,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2883,7 +2656,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2895,7 +2667,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2907,7 +2678,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2919,7 +2689,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2931,7 +2700,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2943,7 +2711,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2955,7 +2722,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2967,7 +2733,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2979,7 +2744,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -2991,7 +2755,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3003,7 +2766,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3015,7 +2777,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3027,7 +2788,6 @@
       "k": 150.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "",
       "global_oos": false
     },
@@ -3039,7 +2799,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3051,7 +2810,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3063,7 +2821,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3075,7 +2832,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3087,7 +2843,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3099,7 +2854,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3111,7 +2865,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -3123,7 +2876,6 @@
       "k": 14.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1755.0,
       "flag": "⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3135,7 +2887,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3147,7 +2898,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3159,7 +2909,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3171,7 +2920,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3183,7 +2931,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 120,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3195,7 +2942,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3203,11 +2949,10 @@
       "sku": "DE125",
       "cluster": "Казань",
       "stock": 0,
-      "sales_30d": 56,
+      "sales_30d": 57,
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3219,7 +2964,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3231,7 +2975,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3243,7 +2986,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3255,7 +2997,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3267,7 +3008,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 168,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3279,7 +3019,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3291,7 +3030,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3303,7 +3041,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3315,7 +3052,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3327,7 +3063,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3339,7 +3074,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3351,7 +3085,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 192,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3363,19 +3096,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
     {
       "sku": "DE125",
       "cluster": "Уфа",
-      "stock": 15,
+      "stock": 14,
       "sales_30d": 37,
-      "k": 0.41,
+      "k": 0.38,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3387,7 +3118,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1755.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
     },
@@ -3399,7 +3129,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3411,7 +3140,6 @@
       "k": 140.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3423,7 +3151,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3435,7 +3162,6 @@
       "k": 11.24,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3447,7 +3173,6 @@
       "k": 0.51,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3459,7 +3184,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3471,7 +3195,6 @@
       "k": 5.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3483,7 +3206,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3495,7 +3217,6 @@
       "k": 1.16,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3507,7 +3228,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3519,7 +3239,6 @@
       "k": 29.4,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3531,7 +3250,6 @@
       "k": 0.49,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3543,7 +3261,6 @@
       "k": 5.76,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3555,7 +3272,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3567,7 +3283,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3579,7 +3294,6 @@
       "k": 12.82,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3591,7 +3305,6 @@
       "k": 6.35,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3603,7 +3316,6 @@
       "k": 9.39,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3615,7 +3327,6 @@
       "k": 0.28,
       "zone": "DEFICIT",
       "to_ship": 84,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3627,7 +3338,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3639,7 +3349,6 @@
       "k": 27.31,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1197.0,
       "flag": "",
       "global_oos": false
     },
@@ -3651,7 +3360,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 1197.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3663,7 +3371,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -3675,7 +3382,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3687,7 +3393,6 @@
       "k": 125.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3699,7 +3404,6 @@
       "k": 5.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3711,7 +3415,6 @@
       "k": 3.4,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3723,7 +3426,6 @@
       "k": 22.47,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3735,7 +3437,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3747,7 +3448,6 @@
       "k": 1.36,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3759,7 +3459,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3771,7 +3470,6 @@
       "k": 1.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3783,7 +3481,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3795,19 +3492,17 @@
       "k": 191.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE201AA",
       "cluster": "Москва",
-      "stock": 128,
-      "sales_30d": 131,
-      "k": 0.98,
+      "stock": 127,
+      "sales_30d": 132,
+      "k": 0.96,
       "zone": "NORMAL",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3819,7 +3514,6 @@
       "k": 5.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3831,7 +3525,6 @@
       "k": 2.83,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3843,7 +3536,6 @@
       "k": 31.2,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3855,7 +3547,6 @@
       "k": 0.38,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3867,7 +3558,6 @@
       "k": 36.43,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3879,7 +3569,6 @@
       "k": 29.19,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3891,7 +3580,6 @@
       "k": 4.15,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3903,7 +3591,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3915,7 +3602,6 @@
       "k": 35.29,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 291.0,
       "flag": "",
       "global_oos": false
     },
@@ -3927,7 +3613,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 291.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3939,7 +3624,6 @@
       "k": 33.88,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -3951,7 +3635,6 @@
       "k": 14.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -3963,7 +3646,6 @@
       "k": 12.26,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -3975,7 +3657,6 @@
       "k": 1.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -3987,7 +3668,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 144,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -3999,7 +3679,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4011,7 +3690,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 72,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4023,7 +3701,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4035,7 +3712,6 @@
       "k": 1.32,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4047,7 +3723,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4059,7 +3734,6 @@
       "k": 88.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4071,7 +3745,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 468,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4083,7 +3756,6 @@
       "k": 50.41,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4095,7 +3767,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 84,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4107,7 +3778,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4119,7 +3789,6 @@
       "k": 9.54,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4131,7 +3800,6 @@
       "k": 0.39,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4143,7 +3811,6 @@
       "k": 17.38,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4155,7 +3822,6 @@
       "k": 11.69,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4167,7 +3833,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4179,7 +3844,6 @@
       "k": 4.1,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 954.0,
       "flag": "",
       "global_oos": false
     },
@@ -4191,7 +3855,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 84,
-      "storage_fee_month": 954.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4203,7 +3866,6 @@
       "k": 45.4,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4215,7 +3877,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4227,7 +3888,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4239,7 +3899,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4247,11 +3906,10 @@
       "sku": "DE203AA",
       "cluster": "Екатеринбург",
       "stock": 36,
-      "sales_30d": 69,
-      "k": 0.52,
+      "sales_30d": 68,
+      "k": 0.53,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4263,7 +3921,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4275,7 +3932,6 @@
       "k": 3.97,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4287,7 +3943,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4299,7 +3954,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 60,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4311,7 +3965,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4323,7 +3976,6 @@
       "k": 34.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4335,7 +3987,6 @@
       "k": 0.23,
       "zone": "DEFICIT",
       "to_ship": 192,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4347,7 +3998,6 @@
       "k": 15.89,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4359,7 +4009,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4371,7 +4020,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4383,7 +4031,6 @@
       "k": 4.8,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4395,7 +4042,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4407,7 +4053,6 @@
       "k": 4.35,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4419,7 +4064,6 @@
       "k": 1.04,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4431,7 +4075,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4443,7 +4086,6 @@
       "k": 4.66,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 561.0,
       "flag": "",
       "global_oos": false
     },
@@ -4455,7 +4097,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 561.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4467,7 +4108,6 @@
       "k": 142.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4479,7 +4119,6 @@
       "k": 70.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4491,7 +4130,6 @@
       "k": 4.4,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4503,7 +4141,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4515,7 +4152,6 @@
       "k": 1.03,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4527,7 +4163,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4539,7 +4174,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4551,7 +4185,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4559,11 +4192,10 @@
       "sku": "DE205AA",
       "cluster": "Краснодар",
       "stock": 44,
-      "sales_30d": 31,
-      "k": 1.42,
+      "sales_30d": 32,
+      "k": 1.38,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4575,7 +4207,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4587,7 +4218,6 @@
       "k": 93.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4599,7 +4229,6 @@
       "k": 0.46,
       "zone": "DEFICIT",
       "to_ship": 108,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4611,7 +4240,6 @@
       "k": 10.43,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4623,7 +4251,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4635,7 +4262,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4647,19 +4273,17 @@
       "k": 82.2,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE205AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 172,
+      "stock": 171,
       "sales_30d": 22,
-      "k": 7.82,
+      "k": 7.77,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4671,7 +4295,6 @@
       "k": 10.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4683,7 +4306,6 @@
       "k": 2.02,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4695,7 +4317,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4707,7 +4328,6 @@
       "k": 18.29,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 318.0,
       "flag": "",
       "global_oos": false
     },
@@ -4719,7 +4339,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 318.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4731,7 +4350,6 @@
       "k": 281.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4743,7 +4361,6 @@
       "k": 2.64,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4755,7 +4372,6 @@
       "k": 4.18,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4767,7 +4383,6 @@
       "k": 3.42,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4779,7 +4394,6 @@
       "k": 0.57,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4791,7 +4405,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4803,7 +4416,6 @@
       "k": 1.63,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4815,7 +4427,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4827,7 +4438,6 @@
       "k": 2.1,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4839,7 +4449,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4851,19 +4460,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Москва",
-      "stock": 340,
-      "sales_30d": 345,
-      "k": 0.99,
+      "stock": 339,
+      "sales_30d": 346,
+      "k": 0.98,
       "zone": "NORMAL",
       "to_ship": 12,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4875,7 +4482,6 @@
       "k": 12.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4887,7 +4493,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4899,7 +4504,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4911,31 +4515,28 @@
       "k": 4.9,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Ростов-на-Дону",
-      "stock": 204,
-      "sales_30d": 39,
-      "k": 5.23,
+      "stock": 203,
+      "sales_30d": 40,
+      "k": 5.08,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE206AA",
       "cluster": "Самара",
-      "stock": 415,
+      "stock": 414,
       "sales_30d": 35,
-      "k": 11.86,
+      "k": 11.83,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4947,7 +4548,6 @@
       "k": 7.1,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4959,7 +4559,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4971,7 +4570,6 @@
       "k": 26.77,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 1236.0,
       "flag": "",
       "global_oos": false
     },
@@ -4983,7 +4581,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 1236.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -4995,7 +4592,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -5007,7 +4603,6 @@
       "k": 70.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5019,7 +4614,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5031,7 +4625,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -5043,7 +4636,6 @@
       "k": 62.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5055,7 +4647,6 @@
       "k": 10.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5067,7 +4658,6 @@
       "k": 20.12,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5079,7 +4669,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5091,7 +4680,6 @@
       "k": 86.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5103,7 +4691,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5115,7 +4702,6 @@
       "k": 8.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5127,7 +4713,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5139,7 +4724,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5151,7 +4735,6 @@
       "k": 0.9,
       "zone": "NORMAL",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5163,7 +4746,6 @@
       "k": 68.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5175,7 +4757,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5187,7 +4768,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5199,7 +4779,6 @@
       "k": 70.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5211,7 +4790,6 @@
       "k": 1.2,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5223,7 +4801,6 @@
       "k": 512.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5235,7 +4812,6 @@
       "k": 17.78,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5247,7 +4823,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": null,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -5259,7 +4834,6 @@
       "k": 280.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5271,7 +4845,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -5283,7 +4856,6 @@
       "k": 256.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5295,7 +4867,6 @@
       "k": 1.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5307,7 +4878,6 @@
       "k": 71.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5319,7 +4889,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5331,7 +4900,6 @@
       "k": 26.12,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5343,7 +4911,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5355,7 +4922,6 @@
       "k": 65.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5367,7 +4933,6 @@
       "k": 11.88,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5379,7 +4944,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5391,7 +4955,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5403,7 +4966,6 @@
       "k": 26.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5415,7 +4977,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5427,7 +4988,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "Нет продаж за 30 дней — оверсток",
       "global_oos": false
     },
@@ -5439,7 +4999,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5451,7 +5010,6 @@
       "k": 41.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5463,7 +5021,6 @@
       "k": 41.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5475,7 +5032,6 @@
       "k": 11.83,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5487,7 +5043,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 243.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5499,7 +5054,6 @@
       "k": 96.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5511,7 +5065,6 @@
       "k": 6.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 243.0,
       "flag": "",
       "global_oos": false
     },
@@ -5523,7 +5076,6 @@
       "k": 45.5,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5535,7 +5087,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5547,7 +5098,6 @@
       "k": 8.86,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5559,7 +5109,6 @@
       "k": 22.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5571,7 +5120,6 @@
       "k": 11.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5583,7 +5131,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5595,7 +5142,6 @@
       "k": 25.12,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5607,7 +5153,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5619,7 +5164,6 @@
       "k": 13.35,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5631,7 +5175,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5643,7 +5186,6 @@
       "k": 82.29,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5655,7 +5197,6 @@
       "k": 9.24,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5667,7 +5208,6 @@
       "k": 57.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5679,7 +5219,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5691,7 +5230,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5703,7 +5241,6 @@
       "k": 190.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5715,7 +5252,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5727,7 +5263,6 @@
       "k": 55.71,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5739,7 +5274,6 @@
       "k": 41.64,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5751,7 +5285,6 @@
       "k": 103.38,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 366.0,
       "flag": "",
       "global_oos": false
     },
@@ -5763,7 +5296,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 366.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5775,7 +5307,6 @@
       "k": 59.71,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5787,7 +5318,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5799,7 +5329,6 @@
       "k": 21.11,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5811,7 +5340,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5823,7 +5351,6 @@
       "k": 2.67,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5835,7 +5362,6 @@
       "k": 2.97,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5847,7 +5373,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5855,11 +5380,10 @@
       "sku": "DE210",
       "cluster": "Казань",
       "stock": 285,
-      "sales_30d": 62,
-      "k": 4.6,
+      "sales_30d": 64,
+      "k": 4.45,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5871,7 +5395,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5879,11 +5402,10 @@
       "sku": "DE210",
       "cluster": "Краснодар",
       "stock": 83,
-      "sales_30d": 81,
-      "k": 1.02,
+      "sales_30d": 82,
+      "k": 1.01,
       "zone": "NORMAL",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5895,7 +5417,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 36,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5907,7 +5428,6 @@
       "k": 19.29,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5919,7 +5439,6 @@
       "k": 0.28,
       "zone": "DEFICIT",
       "to_ship": 432,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5931,7 +5450,6 @@
       "k": 6.59,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -5943,7 +5461,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 96,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5955,7 +5472,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -5967,43 +5483,39 @@
       "k": 4.16,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Ростов-на-Дону",
-      "stock": 102,
+      "stock": 101,
       "sales_30d": 63,
-      "k": 1.62,
+      "k": 1.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Самара",
-      "stock": 39,
+      "stock": 38,
       "sales_30d": 55,
-      "k": 0.71,
+      "k": 0.69,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Санкт-Петербург",
-      "stock": 211,
-      "sales_30d": 230,
-      "k": 0.92,
+      "stock": 210,
+      "sales_30d": 231,
+      "k": 0.91,
       "zone": "NORMAL",
       "to_ship": 24,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -6015,19 +5527,17 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE210",
       "cluster": "Уфа",
-      "stock": 225,
+      "stock": 224,
       "sales_30d": 36,
-      "k": 6.25,
+      "k": 6.22,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 804.0,
       "flag": "",
       "global_oos": false
     },
@@ -6039,7 +5549,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 48,
-      "storage_fee_month": 804.0,
       "flag": "🔴 Товар вышел",
       "global_oos": false
     },
@@ -6051,7 +5560,6 @@
       "k": null,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "Нет продаж за 30 дней — оверсток; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6063,7 +5571,6 @@
       "k": 81.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6075,7 +5582,6 @@
       "k": 45.8,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6087,7 +5593,6 @@
       "k": 36.6,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6099,7 +5604,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6111,7 +5615,6 @@
       "k": 2.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6123,7 +5626,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6135,7 +5637,6 @@
       "k": 9.33,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6147,7 +5648,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6159,7 +5659,6 @@
       "k": 0.57,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6171,7 +5670,6 @@
       "k": 113.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6183,7 +5681,6 @@
       "k": 4.75,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6195,7 +5692,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6207,7 +5703,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 12,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6219,7 +5714,6 @@
       "k": 110.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6231,7 +5725,6 @@
       "k": 0.0,
       "zone": "DEFICIT",
       "to_ship": 24,
-      "storage_fee_month": 975.0,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6243,7 +5736,6 @@
       "k": 101.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     },
@@ -6255,13 +5747,12 @@
       "k": 27.25,
       "zone": "OVERSTOCK",
       "to_ship": 0,
-      "storage_fee_month": 975.0,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
     }
   ],
   "unknown_warehouses": {
-    "(пусто)": 1868,
+    "(пусто)": 1869,
     "Лабытнанги": 3,
     "Никольское": 3,
     "Александровск": 2,
