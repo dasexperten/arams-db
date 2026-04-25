@@ -66,18 +66,16 @@ def classify_zone(k: float) -> str:
     return ZONE_OVERSTOCK
 
 
-def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = None) -> list[dict]:
+def calculate_plan(rows: list[dict]) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
     Target per cluster = 30 days of that cluster's regional sales.
     Ship enough (rounded up to pack_size) so that stock + to_ship ≥ sales_30d.
 
     Input:  [{sku, cluster, stock, sales_30d}, ...]
-            storage_fees: optional {sku_str: monthly_fee_rub} from Ozon finance API
-    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag, global_oos,
-              storage_fee_month}, ...]
+    Output: [{sku, cluster, stock, sales_30d, k, zone, pack_size, to_ship, flag,
+              global_oos}, ...]
     """
-    fees = storage_fees or {}
     sku_total_stock: dict[str, int] = {}
     sku_total_sales: dict[str, int] = {}
     for row in rows:
@@ -91,7 +89,6 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
         cluster = str(row.get("cluster") or "").strip()
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
-        storage_fee = fees.get(sku)
 
         flags: list[str] = []
         k: float | None = None
@@ -103,7 +100,7 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
             pack_size = detect_pack_size(sku)
             if pack_size is None:
                 flags.append(f"⚠️ Unknown pack для SKU {sku}")
-            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags, item_name=row.get("item_name") or "", storage_fee=storage_fee))
+            result.append(_row(sku, cluster, stock, sales, None, ZONE_NORMAL, pack_size, 0, flags, item_name=row.get("item_name") or ""))
             continue
 
         if sales == 0:
@@ -141,12 +138,12 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
         global_k = (total_stk / total_sal) if total_sal > 0 else (0.0 if total_stk == 0 else None)
         global_oos = (global_k is not None and global_k < 0.3)
         item_name = row.get("item_name") or ""
-        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name, storage_fee))
+        result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name))
 
     return result
 
 
-def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False, item_name="", storage_fee=None):
+def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos=False, item_name=""):
     return {
         "sku": sku,
         "cluster": cluster,
@@ -159,5 +156,4 @@ def _row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_
         "to_ship": to_ship,
         "flag": "; ".join(flags),
         "item_name": item_name,
-        "storage_fee_month": storage_fee,
     }

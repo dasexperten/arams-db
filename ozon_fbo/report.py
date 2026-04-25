@@ -7,7 +7,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from .calc import ZONE_DEFICIT, ZONE_NORMAL, ZONE_OVERSTOCK
 from .clusters import CLUSTER_ORDER, CLUSTER_CODES
 
-HEADERS = ["SKU", "Остаток", "Продажи", "К", "Зона", "Поставка", "Хранение ₽", "Примечание"]
+HEADERS = ["SKU", "Остаток", "Продажи", "К", "Зона", "Поставка", "Примечание"]
 
 _ZONE_FILL = {
     ZONE_DEFICIT:   PatternFill("solid", fgColor="FCEBEB"),
@@ -17,8 +17,7 @@ _ZONE_FILL = {
 
 _COL_SHIP = 6
 _COL_ZONE = 5
-_COL_STORAGE = 7
-_COL_NOTE = 8
+_COL_NOTE = 7
 
 
 def _date_str(run_date: str) -> str:
@@ -97,9 +96,7 @@ def _write_cluster_file(plans: list[dict], cluster: str, run_date: str, out_path
 
         k_display = f"{k:.2f}" if k is not None else "—"
         to_ship_display = f"{to_ship} ⚠️" if global_oos and to_ship > 0 else to_ship
-        storage_fee = item.get("storage_fee_month")
-        storage_display = round(storage_fee, 2) if storage_fee is not None else "—"
-        ws.append([sku, stock, sales, k_display, zone, to_ship_display, storage_display, flag])
+        ws.append([sku, stock, sales, k_display, zone, to_ship_display, flag])
         cur = ws.max_row
         ws.cell(row=cur, column=_COL_SHIP).font = bold
         fill = _ZONE_FILL.get(zone)

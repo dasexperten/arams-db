@@ -122,9 +122,9 @@
   .cluster-oos { color: var(--d-rot); margin-left: 4px; font-weight: 700; }
 
   .table-wrap { background: var(--card-bg); border-radius: var(--r-lg); box-shadow: var(--shadow-card); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 18px; }
   thead tr { background: var(--panel-bg); }
-  th { text-align: left; padding: 12px 16px; font-family: var(--font-narrow); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 1px solid var(--hairline); }
+  th { text-align: left; padding: 12px 16px; font-family: var(--font-narrow); font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 1px solid var(--hairline); }
   td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); color: var(--ink); }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: var(--panel-bg); }
@@ -342,15 +342,11 @@ async function loadStatus() {
           const shipCell = (s.to_ship || 0) > 0
             ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)">⚠</span>' : ''}`
             : `<span style="color:var(--ink-muted)">—</span>`;
-          const feeCell = s.storage_fee_month != null
-            ? `<span style="color:var(--ink-soft)">${Number(s.storage_fee_month).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:0})} ₽</span>`
-            : `<span style="color:var(--ink-muted)">—</span>`;
           return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}" data-ship="${s.to_ship || 0}">
               <td class="sku-name">${label}</td>
-              <td>${fmt(s.stock)}</td><td>${fmt(s.sales_30d)}</td>
+              <td><strong>${fmt(s.stock)}</strong></td><td><strong>${fmt(s.sales_30d)}</strong></td>
               <td class="sku-k">${kDisp}</td>
               <td class="sku-ship">${shipCell}</td>
-              <td>${feeCell}</td>
             </tr>`;
         }).join('');
         return `<div class="ac-item">
@@ -365,7 +361,7 @@ async function loadStatus() {
           </div>
           <div class="ac-body">
             <table><thead><tr>
-              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th><th>Хранение ₽/мес</th>
+              <th>SKU</th><th>Остаток</th><th>Продажи 30д</th><th>K</th><th>К поставке</th>
             </tr></thead><tbody>${skuRows}</tbody></table>
             <div class="ac-footer">
               <button class="btn-ship" onclick="createShipExcel('${cl}')">📦 Создать поставку</button>

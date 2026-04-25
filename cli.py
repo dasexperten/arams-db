@@ -1309,66 +1309,6 @@ def cmd_calc_ozon_fbo(_: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_debug_storage_fees(args: argparse.Namespace) -> int:
-    """Dump ALL finance transactions then filter for storage fees per SKU."""
-    import json as _json
-    from datetime import date as _date, timedelta as _td
-    days = args.days
-    date_to = _date.today().isoformat()
-    date_from = (_date.today() - _td(days=days)).isoformat()
-    storage_op_types = {
-        "MarketplaceServiceItemStorageFee",
-        "ClientReturnAgentOperationItemStorageFee",
-    }
-
-    print(f"Fetching ALL finance transactions: {date_from} → {date_to}", flush=True)
-    with OzonFBOAPI() as api:
-        all_ops = list(api.finance_transactions_iter(
-            date_from=date_from,
-            date_to=date_to,
-        ))
-
-    print(f"Total transactions fetched: {len(all_ops)}", flush=True)
-    if not all_ops:
-        print("(no transactions at all — check credentials or date range)", flush=True)
-        return 0
-
-    # Show all unique operation_type values
-    op_type_totals: dict[str, float] = {}
-    for op in all_ops:
-        t = op.get("operation_type") or "(none)"
-        op_type_totals[t] = op_type_totals.get(t, 0.0) + abs(float(op.get("amount") or 0))
-    print("\n--- All operation types found (type → total abs amount) ---")
-    for t, total in sorted(op_type_totals.items(), key=lambda x: -x[1]):
-        print(f"  {total:10.2f} руб  {t}")
-
-    # Show first 3 raw storage-fee transactions
-    storage_ops = [op for op in all_ops if op.get("operation_type") in storage_op_types]
-    print(f"\n--- Storage-fee transactions: {len(storage_ops)} ---")
-    for op in storage_ops[:3]:
-        print(_json.dumps(op, ensure_ascii=False, indent=2))
-
-    # Aggregate storage fees per SKU
-    fees: dict[str, float] = {}
-    for op in storage_ops:
-        amount = float(op.get("amount") or 0)
-        for item in (op.get("items") or []):
-            sku = str(item.get("sku") or "").strip()
-            if sku:
-                fees[sku] = fees.get(sku, 0.0) + abs(amount)
-
-    print(f"\n--- Storage fees per SKU ({len(fees)} SKUs, {days} days) ---")
-    if not fees:
-        print("  (no SKU-level storage fees found in storage-type transactions)")
-        if storage_ops:
-            print("  Sample items field of first storage op:")
-            print("  ", _json.dumps(storage_ops[0].get("items"), ensure_ascii=False))
-    else:
-        for sku, total in sorted(fees.items(), key=lambda x: -x[1]):
-            print(f"  {sku:20s}  {total:8.2f} руб")
-    return 0
-
-
 def cmd_report_ozon_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with ozon_fbo_db.connect() as conn:
@@ -1448,38 +1388,6 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
         print("[ozon-fbo-monthly] both stocks and sales failed — aborting", flush=True)
         return 2
 
-    # 3b. Fetch storage fees (best-effort — won't abort on failure)
-    # Only SKUs that actually appear in storage operations' items[] get a fee.
-    # SKUs in Ozon's free-storage period or otherwise not charged → null.
-    storage_fees: dict = {}
-    try:
-        with OzonFBOAPI() as api:
-            storage_fees = api.storage_fees_by_sku(days=30)
-        print(f"[ozon-fbo-monthly] storage fees raw: {len(storage_fees)} keys", flush=True)
-
-        # Remap numeric Ozon SKU IDs → offer_id (vendor codes) so they match plan rows.
-        with ozon_fbo_db.connect() as conn:
-            sku_id_to_offer = {
-                str(r[0]): str(r[1])
-                for r in conn.execute(
-                    "SELECT DISTINCT sku, offer_id FROM ozon_fbo_stocks WHERE offer_id IS NOT NULL"
-                )
-            }
-        remapped: dict[str, float] = {}
-        unmapped = 0
-        for k, v in storage_fees.items():
-            offer = sku_id_to_offer.get(k)
-            if offer:
-                remapped[offer] = remapped.get(offer, 0.0) + v
-            else:
-                unmapped += 1
-        storage_fees = remapped
-        total_fees = sum(storage_fees.values())
-        print(f"[ozon-fbo-monthly] storage fees: {len(storage_fees)} offer_ids charged, "
-              f"total {total_fees:.2f} руб ({unmapped} numeric IDs not in stocks DB)", flush=True)
-    except Exception as e:
-        print(f"[ozon-fbo-monthly] storage fees FAILED (non-fatal): {e}", flush=True)
-
     # 4. Calc
     with ozon_fbo_db.connect() as conn:
         rows = ozon_fbo_db.load_plan_inputs(conn)
@@ -1487,7 +1395,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
         print("[ozon-fbo-monthly] no data to calculate — aborting", flush=True)
         return 2
 
-    plans = ozon_fbo_calc.calculate_plan(rows, storage_fees=storage_fees)
+    plans = ozon_fbo_calc.calculate_plan(rows)
     with ozon_fbo_db.connect() as conn:
         ozon_fbo_db.upsert_plans(conn, plans, run_date)
     print(f"[ozon-fbo-monthly] plans: {len(plans)} rows", flush=True)
@@ -1562,7 +1470,6 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
                 "k": round(p["k"], 2) if p.get("k") is not None else None,
                 "zone": p.get("zone"),
                 "to_ship": p.get("to_ship") or 0,
-                "storage_fee_month": p.get("storage_fee_month"),
                 "flag": p.get("flag") or "",
                 "global_oos": bool(p.get("global_oos")),
             }
@@ -2271,10 +2178,6 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("report-ozon-fbo", help="Generate Excel supply plan into output/").set_defaults(func=cmd_report_ozon_fbo)
     sub.add_parser("ozon-fbo-monthly", help="END-TO-END: ping → sync → calc → excel → telegram").set_defaults(func=cmd_ozon_fbo_monthly)
     sub.add_parser("list-ozon-warehouses", help="Show Ozon warehouse → cluster mapping from DB").set_defaults(func=cmd_list_ozon_warehouses)
-
-    dsf = sub.add_parser("debug-storage-fees", help="Dump raw storage-fee transactions from Ozon Finance API")
-    dsf.add_argument("--days", type=int, default=30, help="Look-back window in days (default 30)")
-    dsf.set_defaults(func=cmd_debug_storage_fees)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")
