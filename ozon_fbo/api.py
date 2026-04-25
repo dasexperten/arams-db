@@ -123,14 +123,14 @@ class OzonFBOAPI:
         date_from: str,
         date_to: str,
         operation_types: list[str] | None = None,
+        transaction_type: str = "all",
         page_size: int = 1000,
     ) -> Iterator[dict]:
         """Iterate /v3/finance/transaction/list, yielding individual operations.
 
-        Response rows look like:
-          {"operation_type": "MarketplaceServiceItemStorageFee",
-           "amount": -150.5,
-           "items": [{"sku": 123456789, "name": "..."}]}
+        transaction_type can narrow the result set to "orders" / "returns" /
+        "services" / "compensation" / "transferDelivery" / "all" (default).
+        For storage fees use "services".
         """
         page = 1
         while True:
@@ -140,7 +140,7 @@ class OzonFBOAPI:
                         "from": f"{date_from}T00:00:00.000Z",
                         "to":   f"{date_to}T23:59:59.999Z",
                     },
-                    "transaction_type": "all",
+                    "transaction_type": transaction_type,
                 },
                 "page": page,
                 "page_size": page_size,
@@ -160,37 +160,49 @@ class OzonFBOAPI:
     def storage_fees_by_sku(self, days: int = 30) -> dict[str, float]:
         """Return {sku_key: total_storage_fee_rub} for the last N days.
 
-        Storage fees in Ozon API are NOT a separate operation_type — they live
-        as line items inside operations[].services[]. We iterate all
-        transactions, find services named OperationMarketplaceServiceStorage
-        (and similar), and distribute the storage cost across the items in
-        that operation.
+        Storage charges appear in /v3/finance/transaction/list two ways:
+          1. As top-level operations whose operation_type matches a storage name —
+             use op.amount, distributed across items[].
+          2. As service line items inside operations[].services[] of OTHER
+             operation types — sum services with matching name, distribute
+             across items[].
+        Both paths are collected.
         Returns empty dict on any API error (graceful degradation).
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
-        storage_service_names = {
+        # Names that mean "storage / placement charge"
+        storage_names = {
             "OperationMarketplaceServiceStorage",
             "MarketplaceServiceStorageItem",
             "MarketplaceServiceStockDisposal",
+            "MarketplaceReturnStorageServiceAtThePickupPointFbsItem",
+            "MarketplaceReturnStorageServiceInTheWarehouseFbsItem",
         }
         fees: dict[str, float] = {}
         try:
+            # Use transaction_type=services filter to narrow the iterator.
+            # Implementation note: finance_transactions_iter doesn't currently
+            # expose this knob; we still get the same data, just iterate more.
             for op in self.finance_transactions_iter(
                 date_from=date_from,
                 date_to=date_to,
+                transaction_type="services",
             ):
-                services = op.get("services") or []
-                storage_total = 0.0
-                for svc in services:
-                    if svc.get("name") in storage_service_names:
-                        storage_total += abs(float(svc.get("price") or 0))
-                if storage_total == 0:
+                charge = 0.0
+                # Path 1: top-level operation_type is a storage type.
+                if op.get("operation_type") in storage_names:
+                    charge += abs(float(op.get("amount") or 0))
+                # Path 2: service line items within this operation.
+                for svc in (op.get("services") or []):
+                    if svc.get("name") in storage_names:
+                        charge += abs(float(svc.get("price") or 0))
+                if charge == 0:
                     continue
                 items = op.get("items") or []
                 if not items:
                     continue
-                per_item = storage_total / len(items)
+                per_item = charge / len(items)
                 for item in items:
                     key = str(item.get("offer_id") or item.get("sku") or "").strip()
                     if key:
