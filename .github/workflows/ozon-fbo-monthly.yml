@@ -141,7 +141,7 @@ jobs:
           PYEOF
           true
 
-      - name: Debug finance/transaction/list (storage fees)
+      - name: Debug finance/transaction/list (ALL pages, find storage types)
         if: always()
         run: |
           python - <<'PYEOF'
@@ -152,41 +152,51 @@ jobs:
               from ozon_seller.client import OzonSellerClient
               c = OzonSellerClient()
               date_to = date.today().isoformat()
-              date_from = (date.today() - timedelta(days=30)).isoformat()
-              body = {
-                  "filter": {
-                      "date": {
-                          "from": f"{date_from}T00:00:00.000Z",
-                          "to":   f"{date_to}T23:59:59.999Z",
+              date_from = (date.today() - timedelta(days=60)).isoformat()
+              print(f"Scanning ALL finance transactions: {date_from} to {date_to}")
+              op_type_amounts = {}
+              storage_ops = []
+              page = 1
+              total = 0
+              while True:
+                  body = {
+                      "filter": {
+                          "date": {
+                              "from": f"{date_from}T00:00:00.000Z",
+                              "to":   f"{date_to}T23:59:59.999Z",
+                          },
+                          "transaction_type": "all",
                       },
-                      "transaction_type": "all",
-                  },
-                  "page": 1,
-                  "page_size": 5,
-              }
-              resp = c.post("/v3/finance/transaction/list", body)
-              result = resp.get("result") or resp
-              ops = (result.get("operations") or [])[:3]
-              print(f"page_count={result.get('page_count')}  sample ops:")
-              for op in ops:
-                  print(json.dumps({
-                      "operation_type": op.get("operation_type"),
-                      "operation_type_name": op.get("operation_type_name"),
-                      "amount": op.get("amount"),
-                      "items": op.get("items", [])[:2],
-                  }, ensure_ascii=False, indent=2))
-              body2 = {**body, "page_size": 1000}
-              resp2 = c.post("/v3/finance/transaction/list", body2)
-              ops2 = (resp2.get("result") or {}).get("operations") or []
-              types = sorted({o.get("operation_type","") for o in ops2})
-              print(f"\nAll operation_type values ({len(ops2)} ops):")
-              for t in types:
-                  print(f"  {t}")
+                      "page": page,
+                      "page_size": 1000,
+                  }
+                  resp = c.post("/v3/finance/transaction/list", body)
+                  result = resp.get("result") or {}
+                  ops = result.get("operations") or []
+                  page_count = int(result.get("page_count") or 1)
+                  for op in ops:
+                      t = op.get("operation_type") or "(none)"
+                      amt = abs(float(op.get("amount") or 0))
+                      op_type_amounts[t] = op_type_amounts.get(t, 0.0) + amt
+                      if "storage" in t.lower() or "хранени" in (op.get("operation_type_name") or "").lower():
+                          storage_ops.append(op)
+                  total += len(ops)
+                  if page >= page_count or not ops:
+                      break
+                  page += 1
+              print(f"\nTotal operations scanned: {total} across {page} pages")
+              print(f"\n=== All operation types (sorted by total amount) ===")
+              for t, amt in sorted(op_type_amounts.items(), key=lambda x: -x[1]):
+                  print(f"  {amt:12.2f} руб  {t}")
+              print(f"\n=== Storage-related operations: {len(storage_ops)} ===")
+              for op in storage_ops[:5]:
+                  print(json.dumps(op, ensure_ascii=False, indent=2))
           except Exception as e:
+              import traceback
               print(f"finance/transaction/list failed: {e}")
+              traceback.print_exc()
           PYEOF
           true
-
       - name: Probe analytics dimensions (delivery_region check)
         if: always()
         run: |
