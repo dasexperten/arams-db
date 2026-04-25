@@ -203,6 +203,54 @@ jobs:
           PYEOF
           true
 
+      - name: Dump all delivery_region values + cluster mapping
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json
+          from datetime import date, timedelta
+          from collections import defaultdict
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+              from ozon_fbo.clusters import warehouse_to_cluster
+              c = OzonSellerClient()
+              d_to = date.today().isoformat()
+              d_from = (date.today() - timedelta(days=30)).isoformat()
+              region_totals = defaultdict(int)
+              offset = 0
+              while True:
+                  resp = c.post("/v1/analytics/data", {
+                      "date_from": d_from, "date_to": d_to,
+                      "metrics": ["ordered_units"],
+                      "dimension": ["delivery_region"],
+                      "filters": [], "limit": 1000, "offset": offset,
+                  })
+                  rows = (resp.get("result") or {}).get("data") or []
+                  for row in rows:
+                      dims = row.get("dimensions") or []
+                      mets = row.get("metrics") or []
+                      region = dims[0].get("name", "") if dims else ""
+                      units = int(float(mets[0])) if mets else 0
+                      region_totals[region] += units
+                  if len(rows) < 1000:
+                      break
+                  offset += len(rows)
+              print(f"\nВсего регионов из API: {len(region_totals)}")
+              unknown = {r: v for r, v in region_totals.items() if warehouse_to_cluster(r) == 'UNKNOWN'}
+              mapped = {r: v for r, v in region_totals.items() if warehouse_to_cluster(r) != 'UNKNOWN'}
+              print(f"Замаплено: {len(mapped)}, UNKNOWN: {len(unknown)}")
+              print(f"\n=== UNKNOWN регионы (сортировка по продажам) ===")
+              for r, v in sorted(unknown.items(), key=lambda x: -x[1]):
+                  print(f"  {v:>6}  {r!r}")
+              print(f"\n=== Замаплено ===")
+              for r, v in sorted(mapped.items(), key=lambda x: -x[1])[:40]:
+                  print(f"  {v:>6}  {r!r:40} → {warehouse_to_cluster(r)}")
+          except Exception as e:
+              print(f"delivery_region dump failed: {type(e).__name__}: {e}")
+          PYEOF
+          true
+
       - name: Publish artifacts to repo
         if: always()
         run: |
