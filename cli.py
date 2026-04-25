@@ -1452,7 +1452,7 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
     storage_fees: dict = {}
     try:
         with OzonFBOAPI() as api:
-            storage_fees = api.storage_fees_by_sku(days=60)
+            storage_fees = api.storage_fees_by_sku(days=30)
         print(f"[ozon-fbo-monthly] storage fees raw: {len(storage_fees)} keys", flush=True)
         # Finance API returns numeric Ozon SKU IDs; remap to offer_id (vendor codes)
         # so they match the plan's sku field (which equals offer_id).

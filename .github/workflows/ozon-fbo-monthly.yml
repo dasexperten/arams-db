@@ -152,7 +152,7 @@ jobs:
               from ozon_seller.client import OzonSellerClient
               c = OzonSellerClient()
               date_to = date.today().isoformat()
-              date_from = (date.today() - timedelta(days=60)).isoformat()
+              date_from = (date.today() - timedelta(days=30)).isoformat()
               print(f"Scanning ALL finance transactions: {date_from} to {date_to}")
               op_type_amounts = {}
               storage_ops = []
