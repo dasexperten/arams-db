@@ -1437,6 +1437,27 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
 
     # 7. Write status JSON for dashboard
     try:
+        # Diagnostic: collect raw warehouse values that map to UNKNOWN cluster.
+        # This tells us what Ozon's delivery_region API is actually returning so
+        # we can extend clusters.py keyword mapping.
+        from ozon_fbo.clusters import warehouse_to_cluster as _w2c
+        unknown_warehouses: dict[str, int] = {}
+        with ozon_fbo_db.connect() as conn:
+            for r in conn.execute(
+                "SELECT warehouse, SUM(orders_30d) FROM ozon_fbo_sales "
+                "WHERE run_date = ? GROUP BY warehouse",
+                (run_date,),
+            ):
+                wh, qty = r[0] or "", int(r[1] or 0)
+                if _w2c(wh) == "UNKNOWN":
+                    label = wh if wh else "(пусто)"
+                    unknown_warehouses[label] = unknown_warehouses.get(label, 0) + qty
+        if unknown_warehouses:
+            top = sorted(unknown_warehouses.items(), key=lambda x: -x[1])[:50]
+            print(f"[ozon-fbo-monthly] UNKNOWN warehouses ({len(unknown_warehouses)} total):", flush=True)
+            for wh, qty in top:
+                print(f"    {qty:>6}  {wh!r}", flush=True)
+
         cluster_stats: dict[str, dict] = {}
         for p in plans:
             cl = p.get("cluster") or "?"
@@ -1479,6 +1500,9 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
             "exit_code": exit_code,
             "clusters": cluster_stats,
             "skus": sku_list,
+            "unknown_warehouses": dict(
+                sorted(unknown_warehouses.items(), key=lambda x: -x[1])
+            ),
         }
         Path("docs").mkdir(exist_ok=True)
         Path("docs/ozon-fbo-status.json").write_text(
