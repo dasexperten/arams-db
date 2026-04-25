@@ -145,6 +145,106 @@ jobs:
           PYEOF
           true
 
+      - name: Debug DE208AA — every storage op that mentions it
+        if: always()
+        run: |
+          python - <<'PYEOF'
+          import sys, json, sqlite3
+          from datetime import date, timedelta
+          from collections import defaultdict
+          sys.path.insert(0, '.')
+          try:
+              from ozon_seller.client import OzonSellerClient
+
+              # Find DE208AA numeric SKU(s) from stocks DB
+              conn = sqlite3.connect('ozon_fbo.db')
+              numeric_skus = [
+                  str(r[0]) for r in conn.execute(
+                      "SELECT DISTINCT sku FROM ozon_fbo_stocks WHERE offer_id LIKE 'DE208%' AND offer_id IS NOT NULL"
+                  )
+              ]
+              print(f"DE208* numeric SKU IDs: {numeric_skus}")
+              for sku_id in numeric_skus:
+                  for r in conn.execute(
+                      "SELECT offer_id, warehouse, present_stock FROM ozon_fbo_stocks "
+                      "WHERE sku = ? AND run_date = (SELECT MAX(run_date) FROM ozon_fbo_stocks)",
+                      (int(sku_id),)
+                  ):
+                      print(f"  numeric={sku_id}  offer_id={r[0]}  warehouse={r[1]}  stock={r[2]}")
+              conn.close()
+              if not numeric_skus:
+                  print("DE208 not found in stocks DB"); sys.exit(0)
+              numeric_set = set(numeric_skus)
+
+              c = OzonSellerClient()
+              date_to = date.today().isoformat()
+              date_from = (date.today() - timedelta(days=30)).isoformat()
+              storage_names = {
+                  "OperationMarketplaceServiceStorage", "MarketplaceServiceStorageItem",
+                  "TemporaryStorage", "OperationMarketplaceItemTemporaryStorageRedistribution",
+                  "MarketplaceServiceItemTemporaryStorage", "MarketplaceServiceItemTemporaryStorageRedistribution",
+                  "MarketplaceServiceItemDisposalDetailed", "MarketplaceServiceStockDisposal",
+              }
+              total_charge = 0.0
+              total_attributed = 0.0
+              ops_count = 0
+              page = 1
+              while True:
+                  resp = c.post("/v3/finance/transaction/list", {
+                      "filter": {
+                          "date": {"from": f"{date_from}T00:00:00.000Z", "to": f"{date_to}T23:59:59.999Z"},
+                          "transaction_type": "services",
+                      },
+                      "page": page, "page_size": 1000,
+                  })
+                  result = resp.get("result") or {}
+                  ops = result.get("operations") or []
+                  page_count = int(result.get("page_count") or 1)
+                  for op in ops:
+                      charge = 0.0
+                      if op.get("operation_type") in storage_names:
+                          charge += abs(float(op.get("amount") or 0))
+                      for svc in (op.get("services") or []):
+                          if svc.get("name") in storage_names:
+                              charge += abs(float(svc.get("price") or 0))
+                      if charge == 0:
+                          continue
+                      items = op.get("items") or []
+                      item_skus = [str(it.get("sku")) for it in items]
+                      if any(s in numeric_set for s in item_skus):
+                          ops_count += 1
+                          total_charge += charge
+                          per_item = charge / len(items) if items else 0
+                          attributed = per_item * sum(1 for s in item_skus if s in numeric_set)
+                          total_attributed += attributed
+                          print(f"\nop_id={op.get('operation_id')}  type={op.get('operation_type')}  "
+                                f"date={op.get('operation_date')}  charge={charge}  items_count={len(items)}  "
+                                f"per_item={per_item:.2f}  attributed_to_DE208={attributed:.2f}")
+                          if len(items) <= 10:
+                              for it in items:
+                                  s = str(it.get("sku"))
+                                  marker = " ⭐DE208" if s in numeric_set else ""
+                                  print(f"    sku={s} name={it.get('name','')[:60]}{marker}")
+                          else:
+                              print(f"    ({len(items)} items, showing only DE208 matches)")
+                              for it in items:
+                                  s = str(it.get("sku"))
+                                  if s in numeric_set:
+                                      print(f"    ⭐ sku={s} name={it.get('name','')[:60]}")
+                  if page >= page_count or not ops:
+                      break
+                  page += 1
+              print(f"\n========== SUMMARY for DE208 ==========")
+              print(f"  Storage ops mentioning DE208: {ops_count}")
+              print(f"  Total raw charge across those ops: {total_charge:.2f} руб")
+              print(f"  Attributed to DE208 (charge/items_count × matches): {total_attributed:.2f} руб")
+          except Exception as e:
+              import traceback
+              print(f"DE208 debug failed: {e}")
+              traceback.print_exc()
+          PYEOF
+          true
+
       - name: Debug finance — scan services[] for storage charges
         if: always()
         run: |
