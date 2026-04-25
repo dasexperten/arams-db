@@ -156,7 +156,7 @@ jobs:
           try:
               from ozon_seller.client import OzonSellerClient
 
-              conn = sqlite3.connect('ozon_fbo.db')
+              conn = sqlite3.connect('data/ozon_fbo.db')
               de208_numeric = [
                   str(r[0]) for r in conn.execute(
                       "SELECT DISTINCT sku FROM ozon_fbo_stocks WHERE offer_id LIKE 'DE208%' AND offer_id IS NOT NULL"
