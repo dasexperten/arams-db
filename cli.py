@@ -1309,6 +1309,49 @@ def cmd_calc_ozon_fbo(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_debug_storage_fees(args: argparse.Namespace) -> int:
+    """Dump raw storage-fee transactions from /v3/finance/transaction/list."""
+    days = args.days
+    from datetime import date as _date, timedelta as _td
+    date_to = _date.today().isoformat()
+    date_from = (_date.today() - _td(days=days)).isoformat()
+    storage_op_types = [
+        "MarketplaceServiceItemStorageFee",
+        "ClientReturnAgentOperationItemStorageFee",
+    ]
+    print(f"Fetching storage fee transactions: {date_from} → {date_to}", flush=True)
+    with OzonFBOAPI() as api:
+        ops = list(api.finance_transactions_iter(
+            date_from=date_from,
+            date_to=date_to,
+            operation_types=storage_op_types,
+        ))
+    print(f"\nTotal transactions: {len(ops)}", flush=True)
+    if not ops:
+        print("(no storage-fee transactions found for this period)", flush=True)
+        return 0
+
+    # Show first 5 raw transactions
+    print("\n--- Sample transactions (first 5) ---")
+    import json as _json
+    for op in ops[:5]:
+        print(_json.dumps(op, ensure_ascii=False, indent=2))
+
+    # Aggregate per SKU
+    fees: dict[str, float] = {}
+    for op in ops:
+        amount = float(op.get("amount") or 0)
+        for item in (op.get("items") or []):
+            sku = str(item.get("sku") or "").strip()
+            if sku:
+                fees[sku] = fees.get(sku, 0.0) + abs(amount)
+
+    print(f"\n--- Per-SKU totals ({len(fees)} SKUs) ---")
+    for sku, total in sorted(fees.items(), key=lambda x: -x[1]):
+        print(f"  {sku:20s}  {total:8.2f} руб за {days} дней")
+    return 0
+
+
 def cmd_report_ozon_fbo(_: argparse.Namespace) -> int:
     run_date = date.today().isoformat()
     with ozon_fbo_db.connect() as conn:
@@ -2188,6 +2231,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("report-ozon-fbo", help="Generate Excel supply plan into output/").set_defaults(func=cmd_report_ozon_fbo)
     sub.add_parser("ozon-fbo-monthly", help="END-TO-END: ping → sync → calc → excel → telegram").set_defaults(func=cmd_ozon_fbo_monthly)
     sub.add_parser("list-ozon-warehouses", help="Show Ozon warehouse → cluster mapping from DB").set_defaults(func=cmd_list_ozon_warehouses)
+
+    dsf = sub.add_parser("debug-storage-fees", help="Dump raw storage-fee transactions from Ozon Finance API")
+    dsf.add_argument("--days", type=int, default=30, help="Look-back window in days (default 30)")
+    dsf.set_defaults(func=cmd_debug_storage_fees)
 
     sd = sub.add_parser("sync-daily", help="Fetch daily campaign stats")
     sd.add_argument("--from", dest="date_from")

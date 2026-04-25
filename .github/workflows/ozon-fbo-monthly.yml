@@ -55,6 +55,10 @@ jobs:
       - name: Run Ozon FBO daily
         run: python cli.py ozon-fbo-monthly
 
+      - name: Debug storage fees per SKU (Finance API)
+        if: always()
+        run: python cli.py debug-storage-fees --days 30 || true
+
       - name: Debug raw API response (field names)
         if: always()
         run: python cli.py debug-ozon-fbo || true
