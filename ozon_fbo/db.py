@@ -197,8 +197,18 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         ):
             sales_global[str(row[0])] = int(row[1] or 0)
 
-    # sku_meta: numeric_sku → (offer_id, item_name) — needed to recover ghost-OOS entries
+    # sku_meta: numeric_sku → (offer_id, item_name).
+    # Built from ALL historical stock runs so globally-OOS products still get
+    # their vendor code (offer_id) and appear in the plan when they have sales.
     sku_meta: dict[str, tuple[str, str]] = {}
+    for row in conn.execute(
+        """SELECT sku, offer_id, MAX(item_name)
+           FROM ozon_fbo_stocks
+           WHERE offer_id IS NOT NULL AND offer_id != ''
+           GROUP BY sku, offer_id"""
+    ):
+        sku_meta[str(row[0] or "")] = (row[1], row[2] or "")
+
     cluster_data: dict[tuple, dict] = {}
     for row in conn.execute(
         """SELECT sku, offer_id, warehouse, SUM(present_stock) as qty, MAX(item_name) as item_name
@@ -214,8 +224,6 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
         cluster = warehouse_to_cluster(warehouse_name)
         key = (offer_id, cluster)
 
-        sku_meta[numeric_sku] = (offer_id, row[4] or "")
-
         if key not in cluster_data:
             if has_regional_sales:
                 sales_30d = sales_map.get((numeric_sku, cluster), 0)
@@ -230,16 +238,16 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
             }
         cluster_data[key]["stock"] += int(row[3] or 0)
 
-    # Ozon's stock API omits rows where present_stock = 0.  When regional sales
-    # show that a cluster had demand for a SKU but no stock row exists for that
-    # (sku, cluster), add it with stock=0 so calc.py can recommend a shipment.
+    # For every (sku, cluster) that has regional sales > 0 but no stock row,
+    # add an entry with stock=0 so calc.py can recommend a shipment.
+    # Uses sku_meta from all history so globally-OOS SKUs are included.
     if has_regional_sales:
         for (numeric_sku, cluster), qty in sales_map.items():
             if qty <= 0:
                 continue
             meta = sku_meta.get(numeric_sku)
             if meta is None:
-                continue  # SKU not in stock data at all — skip
+                continue  # never stocked — no vendor code available
             offer_id, item_name = meta
             key = (offer_id, cluster)
             if key not in cluster_data:
