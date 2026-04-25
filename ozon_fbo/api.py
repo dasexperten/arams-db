@@ -160,22 +160,25 @@ class OzonFBOAPI:
     def storage_fees_by_sku(self, days: int = 30) -> dict[str, float]:
         """Return {sku_str: total_storage_fee_rub} for the last N days.
 
-        Calls /v3/finance/transaction/list filtered to storage-related operations.
+        Fetches all /v3/finance/transaction/list transactions (no operation_type
+        filter — Ozon's API ignores or rejects list-typed filter values) and
+        filters for storage operations in Python.
         Returns empty dict on any API error (graceful degradation).
         """
         date_to = date.today().isoformat()
         date_from = (date.today() - timedelta(days=days)).isoformat()
-        storage_op_types = [
+        storage_op_types = {
             "MarketplaceServiceItemStorageFee",
             "ClientReturnAgentOperationItemStorageFee",
-        ]
+        }
         fees: dict[str, float] = {}
         try:
             for op in self.finance_transactions_iter(
                 date_from=date_from,
                 date_to=date_to,
-                operation_types=storage_op_types,
             ):
+                if op.get("operation_type") not in storage_op_types:
+                    continue
                 amount = float(op.get("amount") or 0)
                 for item in (op.get("items") or []):
                     sku = str(item.get("sku") or "").strip()
@@ -354,4 +357,3 @@ class OzonFBOAPI:
               f"{no_region} postings without region/city", flush=True)
         for (sku, location), units in sales.items():
             yield {"sku": sku, "warehouse": location, "orders_30d": units}
-
