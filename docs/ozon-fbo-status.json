@@ -1,150 +1,150 @@
 {
   "run_date": "2026-04-25",
-  "generated_at": "2026-04-25T13:43:45Z",
+  "generated_at": "2026-04-25T13:58:56Z",
   "stocks_rows": 372,
-  "sales_rows": 3854,
+  "sales_rows": 3855,
   "total_skus": 515,
-  "to_ship_count": 24,
-  "to_ship_units": 3312,
+  "to_ship_count": 273,
+  "to_ship_units": 7620,
   "oos_count": 25,
   "overstock_count": 235,
   "unknown_pack": 102,
   "exit_code": 0,
   "clusters": {
     "Алматы": {
-      "to_ship": 0,
+      "to_ship": 72,
       "sku_count": 20,
       "oos": 1,
       "deficit": 6
     },
     "Астана": {
-      "to_ship": 0,
+      "to_ship": 24,
       "sku_count": 21,
       "oos": 1,
       "deficit": 2
     },
     "Беларусь": {
-      "to_ship": 0,
+      "to_ship": 240,
       "sku_count": 23,
       "oos": 1,
       "deficit": 10
     },
     "Воронеж": {
-      "to_ship": 0,
+      "to_ship": 156,
       "sku_count": 24,
       "oos": 1,
       "deficit": 9
     },
     "Екатеринбург": {
-      "to_ship": 252,
+      "to_ship": 456,
       "sku_count": 25,
       "oos": 1,
       "deficit": 9
     },
     "Иркутск": {
-      "to_ship": 0,
+      "to_ship": 324,
       "sku_count": 20,
       "oos": 1,
       "deficit": 20
     },
     "Казань": {
-      "to_ship": 72,
+      "to_ship": 300,
       "sku_count": 26,
       "oos": 2,
       "deficit": 11
     },
     "Калининград": {
-      "to_ship": 0,
+      "to_ship": 324,
       "sku_count": 23,
       "oos": 1,
       "deficit": 22
     },
     "Краснодар": {
-      "to_ship": 72,
+      "to_ship": 216,
       "sku_count": 25,
       "oos": 1,
       "deficit": 8
     },
     "Красноярск": {
-      "to_ship": 72,
+      "to_ship": 420,
       "sku_count": 24,
       "oos": 1,
       "deficit": 23
     },
     "Махачкала": {
-      "to_ship": 0,
+      "to_ship": 108,
       "sku_count": 20,
       "oos": 1,
       "deficit": 9
     },
     "Москва": {
-      "to_ship": 1908,
+      "to_ship": 2148,
       "sku_count": 31,
       "oos": 1,
       "deficit": 17
     },
     "Невинномысск": {
-      "to_ship": 0,
+      "to_ship": 84,
       "sku_count": 23,
       "oos": 1,
       "deficit": 6
     },
     "Новосибирск": {
-      "to_ship": 396,
+      "to_ship": 612,
       "sku_count": 22,
       "oos": 1,
       "deficit": 19
     },
     "Омск": {
-      "to_ship": 0,
+      "to_ship": 204,
       "sku_count": 22,
       "oos": 1,
       "deficit": 15
     },
     "Пермь": {
-      "to_ship": 0,
+      "to_ship": 132,
       "sku_count": 24,
       "oos": 1,
       "deficit": 10
     },
     "Ростов-на-Дону": {
-      "to_ship": 72,
+      "to_ship": 252,
       "sku_count": 24,
       "oos": 1,
       "deficit": 14
     },
     "Самара": {
-      "to_ship": 72,
+      "to_ship": 120,
       "sku_count": 23,
       "oos": 1,
       "deficit": 6
     },
     "Санкт-Петербург": {
-      "to_ship": 72,
+      "to_ship": 672,
       "sku_count": 27,
       "oos": 2,
       "deficit": 15
     },
     "Уфа": {
-      "to_ship": 0,
+      "to_ship": 60,
       "sku_count": 24,
       "oos": 1,
       "deficit": 4
     },
     "Хабаровск": {
-      "to_ship": 324,
+      "to_ship": 444,
       "sku_count": 24,
       "oos": 1,
       "deficit": 15
     },
     "Тула": {
-      "to_ship": 0,
+      "to_ship": 180,
       "sku_count": 14,
       "oos": 1,
       "deficit": 14
     },
     "Армения": {
-      "to_ship": 0,
+      "to_ship": 72,
       "sku_count": 6,
       "oos": 1,
       "deficit": 6
@@ -194,9 +194,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -218,9 +218,9 @@
       "sales_30d": 14,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 14 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -230,9 +230,9 @@
       "sales_30d": 25,
       "k": 0.04,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; Продажи 25 < 144/мес — поставка в кластер не нужна",
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
       "global_oos": false
     },
     {
@@ -242,9 +242,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -266,9 +266,9 @@
       "sales_30d": 16,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 16 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -290,9 +290,9 @@
       "sales_30d": 124,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 132,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 124 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -302,9 +302,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -314,9 +314,9 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 24 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -374,9 +374,9 @@
       "sales_30d": 54,
       "k": 0.04,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 60,
       "storage_fee_month": null,
-      "flag": "⚠️ Возможен дефицит — проверь вручную; Продажи 54 < 144/мес — поставка в кластер не нужна",
+      "flag": "⚠️ Возможен дефицит — проверь вручную",
       "global_oos": false
     },
     {
@@ -422,9 +422,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -434,9 +434,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -446,9 +446,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -470,9 +470,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -482,9 +482,9 @@
       "sales_30d": 19,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 19 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -506,9 +506,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -518,9 +518,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -530,9 +530,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -542,9 +542,9 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 8 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -554,9 +554,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -590,9 +590,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -602,9 +602,9 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 6 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -614,9 +614,9 @@
       "sales_30d": 19,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 19 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -626,9 +626,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -638,9 +638,9 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 6 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -650,9 +650,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -662,9 +662,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -674,9 +674,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -686,9 +686,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -698,9 +698,9 @@
       "sales_30d": 52,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 60,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 52 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -710,9 +710,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -722,9 +722,9 @@
       "sales_30d": 10,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 10 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -734,9 +734,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -746,9 +746,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -758,9 +758,9 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 8 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -770,9 +770,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -782,9 +782,9 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 22 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -794,9 +794,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -806,9 +806,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -818,9 +818,9 @@
       "sales_30d": 10,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 10 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -866,7 +866,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -938,7 +938,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -962,7 +962,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -974,7 +974,7 @@
       "sales_30d": 16,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -1010,7 +1010,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -1022,7 +1022,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE111",
       "global_oos": false
@@ -1106,7 +1106,7 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1142,7 +1142,7 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1166,7 +1166,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1190,7 +1190,7 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1238,7 +1238,7 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1250,7 +1250,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE112",
       "global_oos": false
@@ -1334,9 +1334,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1358,9 +1358,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1370,9 +1370,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1406,9 +1406,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1418,9 +1418,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1430,9 +1430,9 @@
       "sales_30d": 26,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 26 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1442,9 +1442,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1478,9 +1478,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1502,9 +1502,9 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 17 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1526,9 +1526,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1538,7 +1538,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1562,7 +1562,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1574,7 +1574,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1598,7 +1598,7 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1610,7 +1610,7 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1622,7 +1622,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1634,7 +1634,7 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1646,7 +1646,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1658,7 +1658,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1670,7 +1670,7 @@
       "sales_30d": 28,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1682,7 +1682,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1694,7 +1694,7 @@
       "sales_30d": 10,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1706,7 +1706,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1718,7 +1718,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1730,7 +1730,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1742,7 +1742,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1754,7 +1754,7 @@
       "sales_30d": 18,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1766,7 +1766,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1778,7 +1778,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1790,7 +1790,7 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE115",
       "global_oos": false
@@ -1826,9 +1826,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1838,9 +1838,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1883,12 +1883,12 @@
       "sku": "DE116AAAA",
       "cluster": "Екатеринбург",
       "stock": 22,
-      "sales_30d": 23,
-      "k": 0.96,
+      "sales_30d": 24,
+      "k": 0.92,
       "zone": "NORMAL",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "Продажи 23 < 144/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -1898,9 +1898,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1910,9 +1910,9 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 22 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1922,9 +1922,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1946,9 +1946,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -1994,9 +1994,9 @@
       "sales_30d": 27,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 27 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2014,9 +2014,9 @@
     {
       "sku": "DE116AAAA",
       "cluster": "Пермь",
-      "stock": 260,
+      "stock": 259,
       "sales_30d": 7,
-      "k": 37.14,
+      "k": 37.0,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "storage_fee_month": null,
@@ -2030,9 +2030,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2054,9 +2054,9 @@
       "sales_30d": 35,
       "k": 0.4,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "Продажи 35 < 144/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -2066,9 +2066,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2090,9 +2090,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2186,9 +2186,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2198,9 +2198,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2246,9 +2246,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2270,9 +2270,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2342,9 +2342,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2366,9 +2366,9 @@
       "sales_30d": 27,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 27 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2378,17 +2378,17 @@
       "sales_30d": 15,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 15 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Екатеринбург",
-      "stock": 141,
+      "stock": 140,
       "sales_30d": 43,
-      "k": 3.28,
+      "k": 3.26,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "storage_fee_month": null,
@@ -2402,9 +2402,9 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 13 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2414,9 +2414,9 @@
       "sales_30d": 34,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 34 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2426,9 +2426,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2438,9 +2438,9 @@
       "sales_30d": 54,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 60,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 54 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2450,9 +2450,9 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 12 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2462,9 +2462,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2474,7 +2474,7 @@
       "sales_30d": 267,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 288,
+      "to_ship": 276,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -2486,9 +2486,9 @@
       "sales_30d": 10,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 10 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2498,9 +2498,9 @@
       "sales_30d": 42,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 48,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 42 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2510,9 +2510,9 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 8 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2534,9 +2534,9 @@
       "sales_30d": 18,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 18 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2546,21 +2546,21 @@
       "sales_30d": 15,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 15 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
       "sku": "DE119AA",
       "cluster": "Санкт-Петербург",
       "stock": 0,
-      "sales_30d": 82,
+      "sales_30d": 83,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 84,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 82 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2570,9 +2570,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2666,9 +2666,9 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 9 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2690,9 +2690,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2714,9 +2714,9 @@
       "sales_30d": 14,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 14 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2738,7 +2738,7 @@
       "sales_30d": 168,
       "k": 0.65,
       "zone": "DEFICIT",
-      "to_ship": 144,
+      "to_ship": 60,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -2762,9 +2762,9 @@
       "sales_30d": 26,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 26 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2774,9 +2774,9 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 12 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2822,9 +2822,9 @@
       "sales_30d": 83,
       "k": 0.37,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 60,
       "storage_fee_month": null,
-      "flag": "Продажи 83 < 144/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -2834,9 +2834,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2858,9 +2858,9 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 17 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2870,9 +2870,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2882,9 +2882,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2894,9 +2894,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2906,9 +2906,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2918,9 +2918,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2930,9 +2930,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2942,9 +2942,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2954,9 +2954,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2966,9 +2966,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2978,9 +2978,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -2990,9 +2990,9 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 24 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3002,9 +3002,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3014,9 +3014,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3038,9 +3038,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3050,9 +3050,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3062,9 +3062,9 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 6 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3074,9 +3074,9 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 13 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3086,9 +3086,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3098,9 +3098,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3134,7 +3134,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3146,7 +3146,7 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3158,7 +3158,7 @@
       "sales_30d": 38,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3170,7 +3170,7 @@
       "sales_30d": 19,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3182,7 +3182,7 @@
       "sales_30d": 113,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 120,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3194,7 +3194,7 @@
       "sales_30d": 15,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3206,7 +3206,7 @@
       "sales_30d": 55,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 60,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3218,7 +3218,7 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3230,7 +3230,7 @@
       "sales_30d": 29,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3242,7 +3242,7 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3254,7 +3254,7 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3266,7 +3266,7 @@
       "sales_30d": 152,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 156,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3278,7 +3278,7 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3290,7 +3290,7 @@
       "sales_30d": 33,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3302,7 +3302,7 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3314,7 +3314,7 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3326,7 +3326,7 @@
       "sales_30d": 21,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3338,7 +3338,7 @@
       "sales_30d": 39,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3350,7 +3350,7 @@
       "sales_30d": 182,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 192,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3362,7 +3362,7 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3374,7 +3374,7 @@
       "sales_30d": 36,
       "k": 0.83,
       "zone": "NORMAL",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3386,7 +3386,7 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE125",
       "global_oos": true
@@ -3398,9 +3398,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3422,9 +3422,9 @@
       "sales_30d": 15,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 15 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3446,9 +3446,9 @@
       "sales_30d": 47,
       "k": 0.51,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "Продажи 47 < 144/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -3458,9 +3458,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3482,9 +3482,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3506,9 +3506,9 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 22 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3526,11 +3526,11 @@
     {
       "sku": "DE130",
       "cluster": "Москва",
-      "stock": 111,
+      "stock": 110,
       "sales_30d": 201,
       "k": 0.55,
       "zone": "DEFICIT",
-      "to_ship": 288,
+      "to_ship": 96,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -3554,9 +3554,9 @@
       "sales_30d": 27,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 27 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3566,9 +3566,9 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 9 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3614,9 +3614,9 @@
       "sales_30d": 112,
       "k": 0.28,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 84,
       "storage_fee_month": null,
-      "flag": "Продажи 112 < 144/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -3626,9 +3626,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3650,9 +3650,9 @@
       "sales_30d": 27,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 27 < 144/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3662,9 +3662,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": true
     },
     {
@@ -3698,9 +3698,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3758,9 +3758,9 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 9 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3782,9 +3782,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3806,9 +3806,9 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 12 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3878,9 +3878,9 @@
       "sales_30d": 8,
       "k": 0.38,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "Продажи 8 < 36/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -3926,9 +3926,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3950,9 +3950,9 @@
       "sales_30d": 14,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 14 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -3994,9 +3994,9 @@
     {
       "sku": "DE202AA",
       "cluster": "Воронеж",
-      "stock": 80,
-      "sales_30d": 59,
-      "k": 1.36,
+      "stock": 77,
+      "sales_30d": 60,
+      "k": 1.28,
       "zone": "OVERSTOCK",
       "to_ship": 0,
       "storage_fee_month": null,
@@ -4010,7 +4010,7 @@
       "sales_30d": 131,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 144,
+      "to_ship": 132,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4022,9 +4022,9 @@
       "sales_30d": 32,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 32 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4046,9 +4046,9 @@
       "sales_30d": 28,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 28 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4070,7 +4070,7 @@
       "sales_30d": 48,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4091,10 +4091,10 @@
       "sku": "DE202AA",
       "cluster": "Москва",
       "stock": 0,
-      "sales_30d": 444,
+      "sales_30d": 445,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 468,
+      "to_ship": 456,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4118,7 +4118,7 @@
       "sales_30d": 76,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 108,
+      "to_ship": 84,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4130,9 +4130,9 @@
       "sales_30d": 21,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 21 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4154,7 +4154,7 @@
       "sales_30d": 69,
       "k": 0.42,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -4190,9 +4190,9 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 12 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4214,7 +4214,7 @@
       "sales_30d": 73,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 108,
+      "to_ship": 84,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4238,9 +4238,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4250,9 +4250,9 @@
       "sales_30d": 16,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 16 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4262,9 +4262,9 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 24 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4286,9 +4286,9 @@
       "sales_30d": 18,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 18 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4310,9 +4310,9 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 22 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4322,7 +4322,7 @@
       "sales_30d": 53,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 60,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4334,9 +4334,9 @@
       "sales_30d": 21,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 21 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4382,7 +4382,7 @@
       "sales_30d": 43,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4394,9 +4394,9 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 13 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4418,9 +4418,9 @@
       "sales_30d": 26,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 26 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4454,9 +4454,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4478,7 +4478,7 @@
       "sales_30d": 47,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4526,9 +4526,9 @@
       "sales_30d": 17,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 17 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4550,9 +4550,9 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 6 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4562,9 +4562,9 @@
       "sales_30d": 23,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 23 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4574,9 +4574,9 @@
       "sales_30d": 6,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 6 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4598,9 +4598,9 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 13 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4618,9 +4618,9 @@
     {
       "sku": "DE205AA",
       "cluster": "Москва",
-      "stock": 90,
-      "sales_30d": 189,
-      "k": 0.48,
+      "stock": 89,
+      "sales_30d": 190,
+      "k": 0.47,
       "zone": "DEFICIT",
       "to_ship": 108,
       "storage_fee_month": null,
@@ -4646,9 +4646,9 @@
       "sales_30d": 22,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 22 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4658,9 +4658,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4718,9 +4718,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4742,9 +4742,9 @@
       "sales_30d": 19,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 19 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4814,9 +4814,9 @@
       "sales_30d": 21,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 21 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4838,9 +4838,9 @@
       "sales_30d": 13,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 13 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4862,9 +4862,9 @@
       "sales_30d": 24,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 24 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4874,9 +4874,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4910,7 +4910,7 @@
       "sales_30d": 46,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -4922,9 +4922,9 @@
       "sales_30d": 11,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 11 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -4982,9 +4982,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5006,7 +5006,7 @@
       "sales_30d": 42,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -5042,9 +5042,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5102,9 +5102,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5126,9 +5126,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5150,9 +5150,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5162,9 +5162,9 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 5 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5174,9 +5174,9 @@
       "sales_30d": 30,
       "k": 0.97,
       "zone": "NORMAL",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "Продажи 30 < 36/мес — поставка в кластер не нужна",
+      "flag": "",
       "global_oos": false
     },
     {
@@ -5198,9 +5198,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5210,9 +5210,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5270,9 +5270,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5282,9 +5282,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5318,9 +5318,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5390,9 +5390,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5414,9 +5414,9 @@
       "sales_30d": 4,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 4 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5450,9 +5450,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5462,9 +5462,9 @@
       "sales_30d": 33,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 33 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5486,9 +5486,9 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 9 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5510,9 +5510,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5558,9 +5558,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5606,9 +5606,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5654,9 +5654,9 @@
       "sales_30d": 3,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 3 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5678,9 +5678,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5702,9 +5702,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5750,9 +5750,9 @@
       "sales_30d": 9,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 9 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5762,9 +5762,9 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 1 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5786,9 +5786,9 @@
       "sales_30d": 7,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 7 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5834,9 +5834,9 @@
       "sales_30d": 21,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 21 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5858,9 +5858,9 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 2 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5882,9 +5882,9 @@
       "sales_30d": 26,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 26 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5918,9 +5918,9 @@
       "sales_30d": 8,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 8 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5942,9 +5942,9 @@
       "sales_30d": 18,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 18 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5966,9 +5966,9 @@
       "sales_30d": 26,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 36,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 26 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -5990,7 +5990,7 @@
       "sales_30d": 576,
       "k": 0.3,
       "zone": "DEFICIT",
-      "to_ship": 432,
+      "to_ship": 408,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -6014,7 +6014,7 @@
       "sales_30d": 83,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 144,
+      "to_ship": 84,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -6026,9 +6026,9 @@
       "sales_30d": 12,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 12 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -6062,7 +6062,7 @@
       "sales_30d": 54,
       "k": 0.78,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -6074,7 +6074,7 @@
       "sales_30d": 224,
       "k": 0.95,
       "zone": "NORMAL",
-      "to_ship": 72,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "",
       "global_oos": false
@@ -6086,9 +6086,9 @@
       "sales_30d": 15,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
-      "flag": "🔴 Товар вышел; Продажи 15 < 36/мес — поставка в кластер не нужна",
+      "flag": "🔴 Товар вышел",
       "global_oos": false
     },
     {
@@ -6110,7 +6110,7 @@
       "sales_30d": 43,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 72,
+      "to_ship": 48,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел",
       "global_oos": false
@@ -6170,7 +6170,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6194,7 +6194,7 @@
       "sales_30d": 2,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6218,7 +6218,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6230,7 +6230,7 @@
       "sales_30d": 44,
       "k": 0.57,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6266,7 +6266,7 @@
       "sales_30d": 1,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6278,7 +6278,7 @@
       "sales_30d": 5,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 12,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6302,7 +6302,7 @@
       "sales_30d": 16,
       "k": 0.0,
       "zone": "DEFICIT",
-      "to_ship": 0,
+      "to_ship": 24,
       "storage_fee_month": null,
       "flag": "🔴 Товар вышел; ⚠️ Unknown pack для SKU DE310",
       "global_oos": false
@@ -6333,7 +6333,7 @@
     }
   ],
   "unknown_warehouses": {
-    "(пусто)": 1841,
+    "(пусто)": 1842,
     "Коммунар": 4,
     "Коряжма": 4,
     "Кыштым": 4,
