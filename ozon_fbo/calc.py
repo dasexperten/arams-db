@@ -62,13 +62,6 @@ def classify_zone(k: float) -> str:
     return ZONE_OVERSTOCK
 
 
-def _min_sales_threshold(vendor_code: str) -> int:
-    m = _SKU_RE.match((vendor_code or "").strip())
-    if not m:
-        return 0
-    return 144 if int(m.group(1)) == 1 else 36
-
-
 def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = None) -> list[dict]:
     """Calculate supply plan for each (sku, cluster) pair.
 
@@ -95,9 +88,6 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
         stock = int(row.get("stock") or 0)
         sales = int(row.get("sales_30d") or 0)
         storage_fee = fees.get(sku)
-
-        if sales > 0 and sales <= _min_sales_threshold(sku):
-            continue
 
         flags: list[str] = []
         k: float | None = None
