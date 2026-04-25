@@ -342,7 +342,7 @@ async function loadStatus() {
           const shipCell = (s.to_ship || 0) > 0
             ? `<strong>${fmt(s.to_ship)}</strong>${oos ? ' <span style="color:var(--warn)">⚠</span>' : ''}`
             : `<span style="color:var(--ink-muted)">—</span>`;
-          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}" data-ship="${s.to_ship || 0}" data-k="${s.k != null ? s.k : -1}">
+          return `<tr class="${rowCls}" data-oos="${s.global_oos ? 'true' : 'false'}" data-zone="${s.zone || ''}" data-sales="${s.sales_30d || 0}" data-ship="${s.to_ship || 0}" data-k="${s.k != null ? s.k : -1}" data-stock="${s.stock || 0}">
               <td class="sku-name">${label}</td>
               <td><strong>${fmt(s.stock)}</strong></td><td><strong>${fmt(s.sales_30d)}</strong></td>
               <td class="sku-k">${kDisp}</td>
@@ -369,6 +369,7 @@ async function loadStatus() {
           </div>
         </div>`;
       }).join('');
+      sortByStock();
     }
 
   } catch (e) {
@@ -425,6 +426,16 @@ function metricCard(value, label, cls, filterType) {
   </div>`;
 }
 
+function sortByStock() {
+  document.querySelectorAll('#cluster-accordion .ac-item').forEach(item => {
+    const tbody = item.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => parseInt(b.dataset.stock || 0) - parseInt(a.dataset.stock || 0));
+    rows.forEach(row => tbody.appendChild(row));
+    rows.forEach(row => { row.style.display = ''; });
+  });
+}
+
 let _activeFilter = null;
 function filterAccordion(type) {
   const same = _activeFilter === type;
@@ -438,7 +449,7 @@ function filterAccordion(type) {
     h.classList.add('open'); h.nextElementSibling.classList.add('open');
   });
   document.getElementById('clusters-section').classList.remove('hidden');
-  document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => row.style.display = '');
+  if (!_activeFilter) { sortByStock(); }
   if (_activeFilter === 'stockout') {
     document.querySelectorAll('#cluster-accordion tbody tr').forEach(row => {
       row.style.display = row.dataset.oos === 'true' ? '' : 'none';
