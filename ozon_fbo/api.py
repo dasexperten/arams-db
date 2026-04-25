@@ -232,17 +232,19 @@ class OzonFBOAPI:
             n = len(results)
             n_unknown = sum(1 for r in results if not r.get("warehouse"))
             print(f"[ozon-fbo] sales source: FBO postings → {n} (sku,region) rows, "
-                  f"{n_unknown} without region")
+                  f"{n_unknown} without region", flush=True)
             yield from results
             return
         except Exception as e:
-            print(f"[ozon-fbo] ⚠️  postings failed ({type(e).__name__}: {e})")
+            print(f"[ozon-fbo] ⚠️  postings failed ({type(e).__name__}: {e})", flush=True)
             print(f"[ozon-fbo] ⚠️  NOT falling back to fulfillment warehouse "
                   f"(forbidden); using GLOBAL totals — every cluster will show "
-                  f"the same national number, which is WRONG but at least visible.")
+                  f"the same national number, which is WRONG but at least visible.",
+                  flush=True)
 
         # Last-resort fallback: global totals. Every cluster gets the same number,
         # so the wrongness is obvious in the dashboard.
+        print("[ozon-fbo] sales source: GLOBAL totals (no regional breakdown)", flush=True)
         offset = 0
         while True:
             resp = self.analytics_data(
@@ -295,7 +297,7 @@ class OzonFBOAPI:
                     sales[key] = sales.get(key, 0) + qty
                     kept += 1
         print(f"[ozon-fbo] FBO postings: {total} total, {kept} items aggregated, "
-              f"{no_region} postings without region/city")
+              f"{no_region} postings without region/city", flush=True)
         for (sku, location), units in sales.items():
             yield {"sku": sku, "warehouse": location, "orders_30d": units}
 

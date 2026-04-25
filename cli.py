@@ -1508,12 +1508,15 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
             f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций"
             + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
         )
-        try:
-            _tg_send_document(token, chat_id, out_path, caption)
-            print("[ozon-fbo-monthly] telegram: sent ok", flush=True)
-        except Exception as e:
-            print(f"[ozon-fbo-monthly] telegram FAILED: {e}", flush=True)
-            exit_code = 1
+        for i, p in enumerate(out_paths):
+            try:
+                cap = caption if i == 0 else f"📦 {p.stem}"
+                _tg_send_document(token, chat_id, p, cap)
+            except Exception as e:
+                print(f"[ozon-fbo-monthly] telegram FAILED ({p.name}): {e}", flush=True)
+                exit_code = 1
+        if out_paths:
+            print(f"[ozon-fbo-monthly] telegram: sent {len(out_paths)} docs", flush=True)
 
     return exit_code
 

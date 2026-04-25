@@ -24,6 +24,7 @@ jobs:
       OZON_SELLER_API_KEY: ${{ secrets.OZON_SELLER_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Checkout
