@@ -259,6 +259,54 @@ def load_plan_inputs(conn: sqlite3.Connection, run_date: str | None = None) -> l
                     "item_name": item_name,
                 }
 
+    # Distribute UNKNOWN-cluster sales proportionally across named clusters.
+    # ~50% of Ozon delivery data comes without a recognisable delivery_region
+    # (pickup points, some FBO flows). Instead of showing a fake UNKNOWN cluster,
+    # we redistribute those sales using the named-cluster share as a weight.
+    unknown_sales: dict[str, int] = {}
+    known_sales: dict[str, int] = {}
+    for (offer_id, cluster), data in cluster_data.items():
+        if cluster == "UNKNOWN":
+            unknown_sales[offer_id] = unknown_sales.get(offer_id, 0) + data["sales_30d"]
+        else:
+            known_sales[offer_id] = known_sales.get(offer_id, 0) + data["sales_30d"]
+
+    if unknown_sales:
+        unknown_total = sum(unknown_sales.values())
+        print(
+            f"[ozon-fbo-db] UNKNOWN cluster: {len(unknown_sales)} SKUs, "
+            f"{unknown_total} sales units → distributing proportionally to named clusters",
+            flush=True,
+        )
+        for (offer_id, cluster) in list(cluster_data.keys()):
+            if cluster == "UNKNOWN":
+                continue
+            unk = unknown_sales.get(offer_id, 0)
+            if unk <= 0:
+                continue
+            known = known_sales.get(offer_id, 0)
+            if known <= 0:
+                continue
+            share = cluster_data[(offer_id, cluster)]["sales_30d"] / known
+            extra = round(unk * share)
+            if extra > 0:
+                cluster_data[(offer_id, cluster)]["sales_30d"] += extra
+
+        # Products that ONLY appear in UNKNOWN (no named cluster yet):
+        # add them to cluster_data under UNKNOWN so calc.py can still plan them,
+        # but log a warning — their sales can't be attributed to a region.
+        for offer_id, unk in unknown_sales.items():
+            if known_sales.get(offer_id, 0) == 0:
+                print(
+                    f"[ozon-fbo-db] SKU {offer_id}: {unk} sales only in UNKNOWN cluster — "
+                    "keeping as-is (no named cluster to distribute to)",
+                    flush=True,
+                )
+
+        # Remove UNKNOWN entries — sales are now redistributed to named clusters
+        for key in [k for k in list(cluster_data.keys()) if k[1] == "UNKNOWN"]:
+            del cluster_data[key]
+
     return sorted(cluster_data.values(), key=lambda x: (x["sku"], x["cluster"]))
 
 
