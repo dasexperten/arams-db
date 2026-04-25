@@ -1310,45 +1310,62 @@ def cmd_calc_ozon_fbo(_: argparse.Namespace) -> int:
 
 
 def cmd_debug_storage_fees(args: argparse.Namespace) -> int:
-    """Dump raw storage-fee transactions from /v3/finance/transaction/list."""
-    days = args.days
+    """Dump ALL finance transactions then filter for storage fees per SKU."""
+    import json as _json
     from datetime import date as _date, timedelta as _td
+    days = args.days
     date_to = _date.today().isoformat()
     date_from = (_date.today() - _td(days=days)).isoformat()
-    storage_op_types = [
+    storage_op_types = {
         "MarketplaceServiceItemStorageFee",
         "ClientReturnAgentOperationItemStorageFee",
-    ]
-    print(f"Fetching storage fee transactions: {date_from} → {date_to}", flush=True)
+    }
+
+    print(f"Fetching ALL finance transactions: {date_from} → {date_to}", flush=True)
     with OzonFBOAPI() as api:
-        ops = list(api.finance_transactions_iter(
+        all_ops = list(api.finance_transactions_iter(
             date_from=date_from,
             date_to=date_to,
-            operation_types=storage_op_types,
         ))
-    print(f"\nTotal transactions: {len(ops)}", flush=True)
-    if not ops:
-        print("(no storage-fee transactions found for this period)", flush=True)
+
+    print(f"Total transactions fetched: {len(all_ops)}", flush=True)
+    if not all_ops:
+        print("(no transactions at all — check credentials or date range)", flush=True)
         return 0
 
-    # Show first 5 raw transactions
-    print("\n--- Sample transactions (first 5) ---")
-    import json as _json
-    for op in ops[:5]:
+    # Show all unique operation_type values
+    op_type_totals: dict[str, float] = {}
+    for op in all_ops:
+        t = op.get("operation_type") or "(none)"
+        op_type_totals[t] = op_type_totals.get(t, 0.0) + abs(float(op.get("amount") or 0))
+    print("\n--- All operation types found (type → total abs amount) ---")
+    for t, total in sorted(op_type_totals.items(), key=lambda x: -x[1]):
+        print(f"  {total:10.2f} руб  {t}")
+
+    # Show first 3 raw storage-fee transactions
+    storage_ops = [op for op in all_ops if op.get("operation_type") in storage_op_types]
+    print(f"\n--- Storage-fee transactions: {len(storage_ops)} ---")
+    for op in storage_ops[:3]:
         print(_json.dumps(op, ensure_ascii=False, indent=2))
 
-    # Aggregate per SKU
+    # Aggregate storage fees per SKU
     fees: dict[str, float] = {}
-    for op in ops:
+    for op in storage_ops:
         amount = float(op.get("amount") or 0)
         for item in (op.get("items") or []):
             sku = str(item.get("sku") or "").strip()
             if sku:
                 fees[sku] = fees.get(sku, 0.0) + abs(amount)
 
-    print(f"\n--- Per-SKU totals ({len(fees)} SKUs) ---")
-    for sku, total in sorted(fees.items(), key=lambda x: -x[1]):
-        print(f"  {sku:20s}  {total:8.2f} руб за {days} дней")
+    print(f"\n--- Storage fees per SKU ({len(fees)} SKUs, {days} days) ---")
+    if not fees:
+        print("  (no SKU-level storage fees found in storage-type transactions)")
+        if storage_ops:
+            print("  Sample items field of first storage op:")
+            print("  ", _json.dumps(storage_ops[0].get("items"), ensure_ascii=False))
+    else:
+        for sku, total in sorted(fees.items(), key=lambda x: -x[1]):
+            print(f"  {sku:20s}  {total:8.2f} руб")
     return 0
 
 
