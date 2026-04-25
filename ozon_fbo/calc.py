@@ -82,9 +82,11 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
     """
     fees = storage_fees or {}
     sku_total_stock: dict[str, int] = {}
+    sku_total_sales: dict[str, int] = {}
     for row in rows:
         s = str(row.get("sku") or "").strip()
         sku_total_stock[s] = sku_total_stock.get(s, 0) + max(0, int(row.get("stock") or 0))
+        sku_total_sales[s] = sku_total_sales.get(s, 0) + max(0, int(row.get("sales_30d") or 0))
 
     result = []
     for row in rows:
@@ -140,7 +142,10 @@ def calculate_plan(rows: list[dict], storage_fees: dict[str, float] | None = Non
             raw = target - stock
             to_ship = roundup_to_multiple(raw, pack_size)
 
-        global_oos = sku_total_stock.get(sku, 0) == 0
+        total_stk = sku_total_stock.get(sku, 0)
+        total_sal = sku_total_sales.get(sku, 0)
+        global_k = (total_stk / total_sal) if total_sal > 0 else (0.0 if total_stk == 0 else None)
+        global_oos = (global_k is not None and global_k < 0.3)
         item_name = row.get("item_name") or ""
         result.append(_row(sku, cluster, stock, sales, k, zone, pack_size, to_ship, flags, global_oos, item_name, storage_fee))
 

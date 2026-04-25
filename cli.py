@@ -1497,26 +1497,22 @@ def cmd_ozon_fbo_monthly(args: argparse.Namespace) -> int:
             for cl, qty in sorted(summary.get("cluster_ship", {}).items(), key=lambda x: -x[1])
             if qty > 0
         )
-        caption = (
+        dashboard_url = "https://rawcdn.githack.com/dasexperten/arams-db/main/dashboards/ozon-fbo.html"
+        msg = (
             f"<b>📦 Ozon-FBO план готов · {run_date}</b>\n\n"
-            f"Обработано: <b>{summary['total']}</b> SKU × кластер\n"
             f"К поставке: <b>{summary['to_ship_count']}</b> позиций, "
-            f"<b>{summary['to_ship_units']}</b> шт. суммарно\n"
-            f"В норме: <b>{summary['normal']}</b> позиций\n"
-            f"Overstock (блок): <b>{summary['overstock']}</b> позиций\n"
-            f"Out-of-stock 🔴: <b>{summary['oos']}</b> позиций\n"
-            f"Unknown pack ⚠️: <b>{summary['unknown_pack']}</b> позиций"
-            + (f"\n\n<b>По кластерам:</b>\n{cluster_lines}" if cluster_lines else "")
+            f"<b>{summary['to_ship_units']}</b> шт.\n"
+            f"Оверсток: <b>{summary['overstock']}</b> | "
+            f"Out-of-stock 🔴: <b>{summary['oos']}</b>\n"
+            + (f"\n<b>По кластерам:</b>\n{cluster_lines}\n" if cluster_lines else "")
+            + f"\n<a href=\"{dashboard_url}\">📊 Открыть дашборд</a>"
         )
-        for i, p in enumerate(out_paths):
-            try:
-                cap = caption if i == 0 else f"📦 {p.stem}"
-                _tg_send_document(token, chat_id, p, cap)
-            except Exception as e:
-                print(f"[ozon-fbo-monthly] telegram FAILED ({p.name}): {e}", flush=True)
-                exit_code = 1
-        if out_paths:
-            print(f"[ozon-fbo-monthly] telegram: sent {len(out_paths)} docs", flush=True)
+        try:
+            _tg_send_text(msg)
+            print(f"[ozon-fbo-monthly] telegram: sent summary", flush=True)
+        except Exception as e:
+            print(f"[ozon-fbo-monthly] telegram FAILED: {e}", flush=True)
+            exit_code = 1
 
     return exit_code
 
