@@ -104,8 +104,12 @@ jobs:
           echo "::notice::Emailer responded success=true. Mode=$MODE."
           if [ "$MODE" = "draft" ]; then
             draft_link=$(jq -r '.draft_link // empty' response.json)
-            [ -n "$draft_link" ] && echo "::notice::Draft link: $draft_link"
+            if [ -n "$draft_link" ]; then
+              echo "::notice::Draft link: $draft_link"
+            fi
           else
             archive_link=$(jq -r '.archive_doc_link // empty' response.json)
-            [ -n "$archive_link" ] && echo "::notice::Archive Doc: $archive_link"
+            if [ -n "$archive_link" ]; then
+              echo "::notice::Archive Doc: $archive_link"
+            fi
           fi
