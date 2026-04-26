@@ -67,7 +67,9 @@ jobs:
       - name: POST to emailer
         run: |
           set -e
-          http_code=$(curl -s -o response.json -w "%{http_code}" \
+          # -L follows redirects: Apps Script web apps always 302 to script.googleusercontent.com
+          # -X POST kept after -L so curl re-POSTs on the redirect
+          http_code=$(curl -sL -o response.json -w "%{http_code}" \
             -X POST "$EMAILER_URL" \
             -H "Content-Type: application/json" \
             -d @payload.json)
