@@ -67,12 +67,15 @@ jobs:
       - name: POST to emailer
         run: |
           set -e
-          # -L follows redirects: Apps Script web apps always 302 to script.googleusercontent.com
-          # -X POST kept after -L so curl re-POSTs on the redirect
+          # Apps Script always answers POST /macros/s/.../exec with 302 → script.googleusercontent.com
+          # where the JSON body lives. Per curl default, -L on 302 switches POST to GET — which is
+          # what googleusercontent.com expects. We must NOT pass -X POST here, otherwise curl would
+          # keep re-POSTing through the redirect and googleusercontent.com would 302 again.
+          # -d @payload.json makes the first request a POST automatically.
           http_code=$(curl -sL -o response.json -w "%{http_code}" \
-            -X POST "$EMAILER_URL" \
             -H "Content-Type: application/json" \
-            -d @payload.json)
+            -d @payload.json \
+            "$EMAILER_URL")
           echo "HTTP $http_code"
           echo "Response:"
           cat response.json
