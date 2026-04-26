@@ -1,0 +1,60 @@
+name: Gmail Quick Reply
+
+# Find a Gmail thread by query → read it → draft a brief reply using
+# the marketolog skill as the system prompt → post it back into the
+# same thread (draft for review, or send live). Drive trail saved.
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Gmail search query — first matching thread is used"
+        required: true
+      mode:
+        description: "draft (review in Gmail Drafts) or send (post immediately)"
+        required: false
+        default: "draft"
+        type: choice
+        options:
+          - draft
+          - send
+      additional_instructions:
+        description: "Optional extra direction (e.g. 'вежливо отказать', 'подтвердить вторник 14:00')"
+        required: false
+        default: ""
+
+jobs:
+  quick-reply:
+    runs-on: ubuntu-latest
+    env:
+      EMAILER_URL: ${{ secrets.EMAILER_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      QUERY: ${{ github.event.inputs.query }}
+      MODE: ${{ github.event.inputs.mode }}
+      ADDITIONAL_INSTRUCTIONS: ${{ github.event.inputs.additional_instructions }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets
+        run: |
+          missing=""
+          [ -z "$EMAILER_URL" ] && missing="$missing EMAILER_URL"
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Anthropic SDK
+        run: pip install "anthropic>=0.40"
+
+      - name: Run gmail_quick_reply.py
+        run: python scripts/gmail_quick_reply.py
