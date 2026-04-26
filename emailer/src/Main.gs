@@ -1,24 +1,27 @@
 /**
- * Main.gs — entry point for Emailer Apps Script web app.
+ * Main.gs — entry point for the Emailer Apps Script web app.
  *
- * Receives JSON payloads via doPost(e), routes between NEW EMAIL and REPLY modes,
- * optionally calls a skill and builds a Google Doc artifact, then sends via Gmail.
+ * Variant C: emailer is a thin sender. The CALLER prepares everything
+ * (subject, body, optional attachment link, recipient or thread_id) and POSTs
+ * a JSON payload. The emailer sends via Gmail, then ALWAYS archives the send
+ * as a Google Doc in Drive and writes a row to the log Sheet.
  *
- * Expected payload schema:
+ * Payload schema:
  *   {
- *     "task":                 string,           // human-readable task name (required)
+ *     "task":                 string,           // human-readable label (required)
  *     "recipient":            string (email),   // required if no thread_id
- *     "subject":              string,           // optional, ignored when replying
- *     "content_brief":        string,           // what to write about (required)
- *     "attachment_link":      string,           // optional, pre-made artifact link
- *     "skill_call":           string,           // optional, skill name from /.claude/skills/
- *     "context":              string,           // optional, extra info
- *     "thread_id":            string,           // optional, Gmail thread ID for replies
- *     "in_reply_to_message_id": string          // optional, specific message to reply to
+ *     "subject":              string,           // required for new email; ignored on reply
+ *     "body_html":            string,           // optional; preferred if both present
+ *     "body_text":            string,           // optional; plain-text fallback
+ *     "attachment_link":      string,           // optional; URL appended to body if not already present
+ *     "thread_id":            string,           // optional; triggers reply mode
+ *     "in_reply_to_message_id": string,         // optional
+ *     "context":              string            // optional; recorded in archive Doc
  *   }
+ *   At least one of body_html / body_text must be present.
  *
- * Returns JSON:
- *   { success, mode, message_id, thread_id, doc_link, log_id, error }
+ * Response JSON:
+ *   { success, mode, message_id, thread_id, archive_doc_link, log_id, error }
  */
 
 /**
@@ -33,7 +36,7 @@ function doPost(e) {
     mode: null,
     message_id: null,
     thread_id: null,
-    doc_link: null,
+    archive_doc_link: null,
     log_id: null,
     error: null
   };
@@ -60,8 +63,7 @@ function doPost(e) {
 }
 
 /**
- * handleEmailRequest — core routing function. Pure-ish: takes payload, returns result.
- * Used by doPost and by manual test runners inside the Apps Script editor.
+ * handleEmailRequest — core routing function.
  *
  * @param {object} payload
  * @returns {object} result envelope
@@ -72,7 +74,7 @@ function handleEmailRequest(payload) {
     mode: null,
     message_id: null,
     thread_id: null,
-    doc_link: null,
+    archive_doc_link: null,
     log_id: null,
     error: null
   };
@@ -83,18 +85,19 @@ function handleEmailRequest(payload) {
   if (!payload.task) {
     throw new Error('Missing required field: task.');
   }
-  if (!payload.content_brief) {
-    throw new Error('Missing required field: content_brief.');
+  if (!payload.body_html && !payload.body_text) {
+    throw new Error('Missing required field: body_html or body_text (at least one).');
   }
 
   var isReply = !!payload.thread_id;
   result.mode = isReply ? 'reply' : 'new';
 
-  if (!isReply && !payload.recipient) {
-    throw new Error('Missing required field: recipient (required for new emails).');
+  if (!isReply) {
+    if (!payload.recipient) throw new Error('Missing required field: recipient (required for new emails).');
+    if (!payload.subject) throw new Error('Missing required field: subject (required for new emails).');
   }
 
-  // 1. Resolve thread context if replying.
+  // 1. Resolve thread context if replying (used in archive Doc and to validate access).
   var threadContext = null;
   if (isReply) {
     if (!validateThreadAccess(payload.thread_id)) {
@@ -103,78 +106,39 @@ function handleEmailRequest(payload) {
     threadContext = getThreadContext(payload.thread_id);
   }
 
-  // 2. Build or skip the artifact.
-  var attachmentLink = payload.attachment_link || null;
-  var skillResult = null;
-
-  if (!attachmentLink) {
-    if (payload.skill_call) {
-      skillResult = callSkill(payload.skill_call, {
-        brief: payload.content_brief,
-        context: payload.context || '',
-        recipient: payload.recipient || null,
-        thread_context: threadContext
-      });
-    }
-
-    var docContent = skillResult && skillResult.content
-      ? skillResult.content
-      : payload.content_brief;
-    var docTitle = payload.task || 'Emailer Report';
-    var docId = buildReport(docContent, docTitle);
-    attachmentLink = saveToDrive(docId, getDefaultDriveFolder_());
-    result.doc_link = attachmentLink;
-  } else {
-    result.doc_link = attachmentLink;
-  }
-
-  // 3. Compose email body.
-  var composed = composeEmail(
-    {
-      task: payload.task,
-      brief: payload.content_brief,
-      context: payload.context || '',
-      subject: payload.subject || null
-    },
-    skillResult,
-    attachmentLink,
-    threadContext
-  );
-
-  // 4. Send via Gmail.
+  // 2. Send via Gmail.
   var sendResult;
   if (isReply) {
     sendResult = replyToThread(
       payload.thread_id,
-      composed.body_html,
-      composed.body_plain,
-      attachmentLink,
+      payload.body_html || null,
+      payload.body_text || null,
+      payload.attachment_link || null,
       payload.in_reply_to_message_id || null
     );
   } else {
     sendResult = sendNew(
       payload.recipient,
-      composed.subject,
-      composed.body_html,
-      composed.body_plain,
-      attachmentLink
+      payload.subject,
+      payload.body_html || null,
+      payload.body_text || null,
+      payload.attachment_link || null
     );
   }
 
-  result.success = true;
   result.message_id = sendResult.message_id;
   result.thread_id = sendResult.thread_id;
+
+  // 3. Archive Doc — ALWAYS, after successful send.
+  try {
+    result.archive_doc_link = buildArchiveDoc(payload, sendResult, threadContext);
+  } catch (archiveErr) {
+    // Archive failure is non-fatal; the email was already sent.
+    result.archive_doc_link = null;
+    result.error = 'sent_ok_but_archive_failed: ' + (archiveErr && archiveErr.message ? archiveErr.message : archiveErr);
+  }
+
+  result.success = !result.error;
   result.log_id = logOperation(payload, result);
-
   return result;
-}
-
-/**
- * Returns the default Drive folder name from PropertiesService, or a sensible default.
- * @private
- * @returns {string}
- */
-function getDefaultDriveFolder_() {
-  var folder = PropertiesService.getScriptProperties().getProperty('DEFAULT_DRIVE_FOLDER');
-  return folder && folder.length ? folder : 'Emailer Reports';
 }

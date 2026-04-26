@@ -5,13 +5,13 @@
  * is a no-op (so doPost still returns successfully during early setup).
  *
  * Columns (in order):
- *   timestamp | task | mode | recipient | thread_id | scenario |
- *   skill_called | doc_link | message_id | success | error
+ *   timestamp | task | mode | recipient | subject | thread_id |
+ *   message_id | archive_doc_link | has_attachment | success | error
  */
 
 var LOGGER_HEADERS_ = [
-  'timestamp', 'task', 'mode', 'recipient', 'thread_id', 'scenario',
-  'skill_called', 'doc_link', 'message_id', 'success', 'error'
+  'timestamp', 'task', 'mode', 'recipient', 'subject', 'thread_id',
+  'message_id', 'archive_doc_link', 'has_attachment', 'success', 'error'
 ];
 
 /**
@@ -24,43 +24,35 @@ var LOGGER_HEADERS_ = [
 function logOperation(payload, result) {
   var sheetId = PropertiesService.getScriptProperties().getProperty('LOG_SHEET_ID');
   if (!sheetId) {
-    // Logging not configured yet; not a fatal condition.
     return null;
   }
 
   var ss = SpreadsheetApp.openById(sheetId);
   var sheet = ss.getSheets()[0];
-
   ensureHeaders_(sheet);
 
   payload = payload || {};
   result = result || {};
-
-  var scenario = inferScenario_(payload);
 
   var row = [
     new Date(),
     payload.task || '',
     result.mode || (payload.thread_id ? 'reply' : 'new'),
     payload.recipient || '',
+    payload.subject || '',
     payload.thread_id || result.thread_id || '',
-    scenario,
-    payload.skill_call || '',
-    result.doc_link || payload.attachment_link || '',
     result.message_id || '',
+    result.archive_doc_link || '',
+    !!payload.attachment_link,
     result.success === true,
     result.error || ''
   ];
 
   sheet.appendRow(row);
-  var lastRow = sheet.getLastRow();
-  return String(lastRow);
+  return String(sheet.getLastRow());
 }
 
-/**
- * Ensures the first row of the sheet contains our header columns.
- * @private
- */
+/** @private */
 function ensureHeaders_(sheet) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(LOGGER_HEADERS_);
@@ -77,14 +69,4 @@ function ensureHeaders_(sheet) {
     sheet.getRange(1, 1, 1, LOGGER_HEADERS_.length).setValues([LOGGER_HEADERS_]);
     sheet.setFrozenRows(1);
   }
-}
-
-/**
- * Maps a payload to one of the three documented scenarios A/B/C.
- * @private
- */
-function inferScenario_(payload) {
-  if (payload && payload.thread_id) return 'C_reply_in_thread';
-  if (payload && payload.attachment_link) return 'A_new_with_attachment';
-  return 'B_new_with_skill_doc';
 }
