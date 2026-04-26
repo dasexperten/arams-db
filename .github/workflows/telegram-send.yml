@@ -1,0 +1,57 @@
+name: Telegram Send
+
+# Manually send a Telegram message via telegramer.
+# Recipient resolution: `to` (registered name) > `chat_id` > TELEGRAM_CHAT_ID default.
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: "Registered contact name (telegramer/contacts.json). Leave blank to use chat_id or default."
+        required: false
+        default: ""
+      chat_id:
+        description: "Direct chat_id (only if not using a registered name)"
+        required: false
+        default: ""
+      text:
+        description: "Message text (max 4096 chars)"
+        required: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TG_TO: ${{ github.event.inputs.to }}
+      TG_CHAT_ID: ${{ github.event.inputs.chat_id }}
+      TG_TEXT: ${{ github.event.inputs.text }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify TELEGRAM_BOT_TOKEN
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::error::TELEGRAM_BOT_TOKEN is not set."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install "httpx>=0.27"
+
+      - name: Send message
+        run: |
+          if [ -n "$TG_TO" ]; then
+            python -m telegramer send --to "$TG_TO" --text "$TG_TEXT"
+          elif [ -n "$TG_CHAT_ID" ]; then
+            python -m telegramer send --chat-id "$TG_CHAT_ID" --text "$TG_TEXT"
+          else
+            python -m telegramer send --text "$TG_TEXT"
+          fi
