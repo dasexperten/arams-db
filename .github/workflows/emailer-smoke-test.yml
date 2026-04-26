@@ -1,0 +1,98 @@
+name: Emailer Smoke Test
+
+# Manual one-shot smoke test for the /emailer Apps Script web app.
+# Hits POST $EMAILER_URL with action=send and optional draft_only flag.
+# No schedule — fires only when run from the Actions UI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      recipient:
+        description: "To address (default expertendas@gmail.com)"
+        required: false
+        default: "expertendas@gmail.com"
+      subject:
+        description: "Subject line"
+        required: false
+        default: "Emailer smoke test — Das Experten"
+      body:
+        description: "Plain-text body"
+        required: false
+        default: "Это пробное письмо из workflow emailer-smoke-test. Если оно дошло — emailer Apps Script web app живой и принимает action=send."
+      mode:
+        description: "send (real email) or draft (Gmail draft only)"
+        required: false
+        default: "send"
+        type: choice
+        options:
+          - send
+          - draft
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    env:
+      EMAILER_URL: ${{ secrets.EMAILER_URL }}
+      RECIPIENT: ${{ github.event.inputs.recipient }}
+      SUBJECT: ${{ github.event.inputs.subject }}
+      BODY: ${{ github.event.inputs.body }}
+      MODE: ${{ github.event.inputs.mode }}
+
+    steps:
+      - name: Verify EMAILER_URL secret present
+        run: |
+          if [ -z "$EMAILER_URL" ]; then
+            echo "::error::EMAILER_URL secret is not set. Add the Apps Script deployment URL to repository secrets first."
+            exit 1
+          fi
+
+      - name: Build payload
+        id: payload
+        run: |
+          if [ "$MODE" = "draft" ]; then
+            DRAFT_ONLY=true
+          else
+            DRAFT_ONLY=false
+          fi
+          jq -n \
+            --arg recipient "$RECIPIENT" \
+            --arg subject "$SUBJECT" \
+            --arg body "$BODY" \
+            --argjson draft_only "$DRAFT_ONLY" \
+            '{action: "send", recipient: $recipient, subject: $subject, body_plain: $body, draft_only: $draft_only, context: "emailer-smoke-test workflow"}' \
+            > payload.json
+          echo "Payload (no secrets):"
+          cat payload.json
+
+      - name: POST to emailer
+        run: |
+          set -e
+          http_code=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST "$EMAILER_URL" \
+            -H "Content-Type: application/json" \
+            -d @payload.json)
+          echo "HTTP $http_code"
+          echo "Response:"
+          cat response.json
+          echo
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Non-200 response from emailer ($http_code)"
+            exit 1
+          fi
+
+          success=$(jq -r '.success' response.json)
+          if [ "$success" != "true" ]; then
+            err=$(jq -r '.error // "unknown"' response.json)
+            echo "::error::Emailer returned success=false. Error: $err"
+            exit 1
+          fi
+
+          echo "::notice::Emailer responded success=true. Mode=$MODE."
+          if [ "$MODE" = "draft" ]; then
+            draft_link=$(jq -r '.draft_link // empty' response.json)
+            [ -n "$draft_link" ] && echo "::notice::Draft link: $draft_link"
+          else
+            archive_link=$(jq -r '.archive_doc_link // empty' response.json)
+            [ -n "$archive_link" ] && echo "::notice::Archive Doc: $archive_link"
+          fi
