@@ -531,14 +531,38 @@ Use the `primary-email` returned for sender. Use `sender-email-by-region` if a r
 - Brazil, Argentina, Colombia, Chile → **Latin America**
 - Any country not listed → use the continent name
 
-After writing — immediately save to Gmail as draft using Gmail MCP tool:
-- To: **email from Step 1B Decision Maker Block** (✅ Verified preferred; ⚠️ Probable accepted — note status in draft subject or body note); if ❌ Not found — leave blank, note "Add recipient before sending"
-- Subject: final subject line from Marketolog Gate
-- Body: final email body — gate-approved copy only
-- Do NOT send — draft only
+---
 
-Confirm to user with exactly this line:
-`"Draft saved to Gmail. Review and add attachment (.pptx) before sending."`
+### Step 3E.2 — Emailer Handoff — Draft Save ⛔ MANDATORY
+
+After Step 3E.1 returns ✅ CONVERSION PASS or ⚠️ CONVERSION WEAK (with rewrite applied), hand the final draft to the **emailer** Apps Script web app (`/emailer` in this repo — action-based Gmail operator with mandatory archiving). Do NOT call Gmail MCP directly — every outgoing draft goes through the emailer so cold outreach lives in the same auditable pipeline as replies and live sends.
+
+```
+[[GATE: emailer]]
+action: send
+draft_only: true
+recipient: [Decision Maker email from Step 1B — ✅ Verified preferred; ⚠️ Probable accepted (prefix subject with [Verify recipient]); ❌ Not found → leave blank, add note "Add recipient before sending"]
+subject: [final subject line from Marketolog Gate]
+body_plain: [final email body — gate-approved copy only, plain text]
+body_html: [optional — same body wrapped in basic <p> tags if HTML formatting is wanted]
+attachment_link: [Drive URL of the .pptx generated in Step 3D]
+context: sales-hunter cold outreach — [Country] / [Channel] / [Company name]
+```
+
+**Hard rules for the emailer payload:**
+
+- `draft_only: true` is **mandatory**. The emailer's `send` action sends immediately if this flag is missing — sales-hunter NEVER sends, only drafts.
+- `recipient` uses the DM email from Step 1B with verification status preserved in the subject prefix when ⚠️ Probable.
+- Sender entity (FROM) is resolved via the **contacts gate** above (`dee` / `deasean` / `dei`). The emailer respects the calling Apps Script's authorised Gmail account; if multiple sender aliases are configured, the alias is selected by the contacts-resolved `primary-email`.
+- `attachment_link` is the Drive share link to the .pptx returned by `DAS_PRESENTER_RESULT` (Step 3D). If the deck only exists as a local path, upload to Drive first and pass the share link.
+
+**Return signal branching:**
+
+- ✅ `{ "success": true, "mode": "draft", "draft_id": "...", "draft_link": "..." }` → confirm to user with exactly this line: `"Draft saved via emailer. Review and add attachment (.pptx) before sending: <draft_link>"`
+- 🔴 `{ "success": false, "error": "..." }` → halt for this company, surface the error verbatim to the user, do NOT silently fall back to Gmail MCP.
+- 🔴 Emailer endpoint unreachable → halt and ask the user whether to retry or fall back to manual Gmail-draft save (manual save is the documented fallback only — never the default).
+
+⛔ Reporter (Drive archive) is intentionally skipped in `draft_only` mode. The archive Doc is created automatically when the human reviews the draft and sends it through the emailer's `send` action — preserving the no-auto-send hard rule and Aram's voice review.
 
 ---
 
@@ -553,15 +577,15 @@ Confirm to user with exactly this line:
 4. **Generate ONE .pptx** for the entire market/channel (trigger das-presenter once) ⛔
 5. For each selected company individually:
    - Write personalized email draft
-   - **Gmail draft saved** ⛔ mandatory — no exceptions
+   - **Emailer draft saved (Step 3E.2)** ⛔ mandatory — no exceptions
 
 ---
 
 ## Hard Rules
 
 - Never reply on Aram's behalf in correspondence with clients.
-- Never send emails — draft only, always save to Gmail.
-- After every completed email (post all gates) — save to Gmail as draft. No exceptions.
+- Never send emails — draft only, always save via the emailer with `draft_only: true`.
+- After every completed email (post all gates) — save as draft via the emailer (Step 3E.2). No exceptions. Direct Gmail MCP calls are forbidden except as documented fallback when the emailer endpoint is unreachable.
 - Never invent ingredients, certifications, or claims not grounded in Das Experten's actual product line.
 - Never use «» quotation marks anywhere.
 - Never skip the clarifying step if the task is ambiguous — but ask only once and only if truly needed.
@@ -570,8 +594,8 @@ Confirm to user with exactly this line:
 
 ---
 
-**Version:** 1.5
-**Gate integrations:** product-knowledge (Step 3A, mandatory), marketolog (Step 3B, mandatory), legalizer-compliance (Step 3C, mandatory), das-presenter (Step 3D, single deck handoff), personizer-deep (Step 3E.0, primary email path), contacts (email routing, preferred path), benefit-gate (Step 3E.1, mandatory CONVERSION mode)
+**Version:** 1.6
+**Gate integrations:** product-knowledge (Step 3A, mandatory), marketolog (Step 3B, mandatory), legalizer-compliance (Step 3C, mandatory), das-presenter (Step 3D, single deck handoff), personizer-deep (Step 3E.0, primary email path), contacts (email routing, preferred path), benefit-gate (Step 3E.1, mandatory CONVERSION mode), emailer (Step 3E.2, mandatory draft save with `draft_only: true`)
 **Return signals expected:**
 - product-knowledge: product data / `Product not identified` / Gate unavailable
 - marketolog: `✅ PASSES / ⚠️ WEAK / ❌ FAILS`
@@ -580,10 +604,12 @@ Confirm to user with exactly this line:
 - personizer-deep: `[PERSONIZER DEEP SCAN]` block + final email message / blacklisted / unavailable
 - contacts: `FOUND / NOT_FOUND / STALE / INCOMPLETE`
 - benefit-gate (conversion): `✅ CONVERSION PASS / ⚠️ CONVERSION WEAK / 🔴 CONVERSION FAIL`
-**Ecosystem position:** Sales-hunter finds opportunity. Personizer-deep owns the conversation from first touch to close. Das-presenter generates the universal market deck. Contacts provides canonical entity data. Benefit-gate is the universal final filter.
+- emailer: `{ success: true, mode: "draft", draft_id, draft_link }` / `{ success: false, error }` / endpoint unreachable
+**Ecosystem position:** Sales-hunter finds opportunity. Personizer-deep owns the conversation from first touch to close. Das-presenter generates the universal market deck. Contacts provides canonical entity data. Benefit-gate is the universal final filter. Emailer is the single chokepoint for every Gmail write — drafts, replies, sends — with mandatory archiving on send.
 **Owner:** Aram Badalyan
 **Brand scope:** Das Experten + adaptable to any B2B product context
 **Changelog:**
+- 1.6 — Replaced direct Gmail MCP draft-save at the end of Step 3E with explicit `[[GATE: emailer]]` handoff (Step 3E.2) using `action: send` + `draft_only: true`. Emailer is now the only sanctioned write-path to Gmail; direct MCP calls are forbidden except as documented fallback when the endpoint is unreachable. Updated Output Order step 5 and Hard Rules to reference Step 3E.2.
 - 1.5 — Replaced legacy `[[GATE: product → Product Knowledge Gate]]` with canonical `[[GATE: product-knowledge]]` + full return signal branching; converted Step 3B Marketolog Gate from textual to explicit `[[GATE: marketolog]]` invocation with VALIDATE Check type and PASSES/WEAK/FAILS branching; converted Step 3C Legal Gate from textual to explicit `[[GATE: legalizer-compliance]]` with CLEARED/PROCEED WITH CAUTION/BLOCKED branching including halt-on-BLOCKED behaviour; added Step 3E.0 personizer-deep handoff as primary email generation path (Step 3E manual drafting now fallback); added explicit das-presenter handoff invocation in Step 3D with DAS_PRESENTER_RESULT wait; added contacts gate as preferred email routing path with hardcoded directory as fallback; added versioned footer with full ecosystem position
 - 1.4 — Hard requirements (Q3 one CTA, Q4 specifics, voice match) added to conversion check
 - 1.3 — Step 3E.1 Conversion Check (benefit-gate Mode B) added as mandatory pre-Gmail-save filter
