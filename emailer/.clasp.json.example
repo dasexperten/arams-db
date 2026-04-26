@@ -8,6 +8,13 @@
     "ThreadResolver.gs",
     "DriveManager.gs",
     "Reporter.gs",
-    "Logger.gs"
+    "Logger.gs",
+    "lib/InboxAttachmentManager.gs",
+    "actions/ActionSend.gs",
+    "actions/ActionReply.gs",
+    "actions/ActionReplyAll.gs",
+    "actions/ActionFind.gs",
+    "actions/ActionGetThread.gs",
+    "actions/ActionDownloadAttachment.gs"
   ]
 }

@@ -1,25 +1,35 @@
-# Emailer — Manual Setup Steps
+# Emailer V3 — Manual Setup Steps
 
-After Claude Code finishes scaffolding, run through this list once. Variant C:
-the emailer is a thin sender, so the setup is short — no skill loading, no
-Anthropic API key inside Apps Script.
+After Claude Code finishes the V3 refactor, run through this list once.
 
 ## TL;DR for Aram (top-of-file checklist)
 
 1. `cd arams-db/emailer/`
 2. `clasp create --type webapp --title "Emailer"`
-3. `clasp push`
-4. Create a Google Sheet (e.g. `Emailer Log`), copy its ID.
-5. Deploy as web app (Apps Script editor → Deploy → New deployment →
-   Web app → Execute as: me, Who has access: Anyone with the link).
-   Copy the deployment URL.
-6. Apps Script editor → Project Settings → Script properties → add:
-   - `LOG_SHEET_ID`    = sheet ID from step 4
-   - `ARCHIVE_FOLDER`  = e.g. `Emailer Archive` (default if unset)
-7. Smoke-test with the three sample `curl` commands at the bottom of this file.
+3. `clasp push` (uploads `src/Main.gs`, `src/actions/*.gs`, `src/lib/*.gs`, etc.)
+4. **Enable Gmail Advanced Service** — in Apps Script editor, Services panel
+   (left sidebar) → Add a service → Gmail API v1 → Add. **Required** for
+   `createDraft` (used by `draft_only:true`).
+5. Create Google Sheet for logging (e.g. `Emailer Log`), copy ID from URL.
+6. Locate two existing Drive folders, copy their IDs from the URL bar:
+   - **Reporter folder** (per-recipient archives)
+   - **Inbox Attachments folder** (per-sender inbound files)
+   - Aram's known ID: **`1SYEckKOUSm9JPAIDq4fnn3tP81BOewva`** is the
+     Inbox Attachments folder. Set it as-is.
+7. Apps Script editor → Project Settings → Script properties → add **all four**:
 
-That's it. Total time: ~20 minutes for a first-time clasp setup, ~5 minutes
-on subsequent updates (`clasp push` only).
+   | Key                            | Value                                                |
+   |--------------------------------|------------------------------------------------------|
+   | `LOG_SHEET_ID`                 | Sheet ID from step 5 — **REQUIRED**                  |
+   | `REPORTER_FOLDER_ID`           | Reporter folder ID from step 6 — **REQUIRED**        |
+   | `INBOX_ATTACHMENTS_FOLDER_ID`  | `1SYEckKOUSm9JPAIDq4fnn3tP81BOewva` — **REQUIRED**   |
+   | `DEFAULT_DRIVE_FOLDER`         | Legacy V1 fallback folder name — optional/back-compat |
+
+8. Deploy as web app (Apps Script editor → Deploy → New deployment → Web app
+   → Execute as: me, Who has access: Anyone with the link). Copy the URL.
+9. Smoke-test using the six `curl` commands at the bottom of this file.
+
+Total time: 25–30 min for a first-time clasp setup, 5 min for redeploys.
 
 ---
 
@@ -29,8 +39,6 @@ on subsequent updates (`clasp push` only).
 cd arams-db/emailer/
 ```
 
-All subsequent commands assume this is your CWD.
-
 ## 2. Install / authorise clasp
 
 ```bash
@@ -38,8 +46,7 @@ npm install -g @google/clasp
 clasp login
 ```
 
-`clasp login` opens a browser window — sign in with the Google account that
-already owns Aram's Gmail / Drive integrations.
+Sign in with the Google account that owns Aram's Gmail / Drive integrations.
 
 ## 3. Create the Apps Script project
 
@@ -47,161 +54,206 @@ already owns Aram's Gmail / Drive integrations.
 clasp create --type webapp --title "Emailer" --rootDir ./src
 ```
 
-This writes `.clasp.json` at the emailer root. Compare with
-`.clasp.json.example` if anything looks odd. Do **not** commit `.clasp.json` —
-it contains the `scriptId`.
-
 ## 4. Push the code
 
 ```bash
 clasp push
 ```
 
-This uploads:
+clasp uploads everything under `./src/` including the `actions/` and `lib/`
+subfolders (Apps Script keeps the relative paths in display).
 
-- `src/Main.gs`
-- `src/GmailSender.gs`
-- `src/ThreadResolver.gs`
-- `src/DriveManager.gs`
-- `src/Reporter.gs`
-- `src/Logger.gs`
-- `appsscript.json` (manifest)
+## 5. Enable Gmail Advanced Service (mandatory for drafts)
 
-## 5. Create the logging Google Sheet
+Without this step, `draft_only:true` will fail at runtime with
+`ReferenceError: Gmail is not defined`.
 
-1. Create a new Google Sheet named `Emailer Log` (or anything you prefer).
-2. Copy the ID from the URL: `https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit`.
-3. Headers will auto-populate on the first send. No manual setup required.
+1. Open the project in the Apps Script editor (`clasp open`).
+2. Left sidebar → **Services** → **+ Add a service**.
+3. Pick **Gmail API**, version `v1`, identifier stays `Gmail`.
+4. Click Add.
 
-## 6. Deploy as web app
+Confirmation: `appsscript.json` already declares the service in
+`dependencies.enabledAdvancedServices`, but the editor still requires the
+explicit enablement above.
 
-In the Apps Script editor (`clasp open` opens it):
+## 6. Create the logging Google Sheet
+
+Create a new Sheet (e.g. `Emailer Log`). Copy the ID from the URL:
+`https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit`. The V3 header row
+auto-populates on first send. Existing V2 sheets are tolerated (the logger
+appends only the columns that exist).
+
+## 7. Locate the two Drive folders and copy their IDs
+
+### Reporter folder (per-recipient archives)
+
+Open the folder Aram uses for outgoing-mail archives in Drive UI, then look
+at the URL: `https://drive.google.com/drive/folders/<REPORTER_FOLDER_ID>`.
+Copy the ID.
+
+### Inbox Attachments folder (per-sender inbound files)
+
+The known ID is `1SYEckKOUSm9JPAIDq4fnn3tP81BOewva`. Use it as-is — do not
+substitute. Per-sender subfolders (e.g. `supplier@de.example/`) are
+auto-created on the first download from that sender.
+
+## 8. Configure script properties
+
+Apps Script editor → Project Settings → Script properties → Add property
+(repeat for each row):
+
+| Key                            | Value                                                |
+|--------------------------------|------------------------------------------------------|
+| `LOG_SHEET_ID`                 | Sheet ID from step 6                                 |
+| `REPORTER_FOLDER_ID`           | Reporter folder ID from step 7                       |
+| `INBOX_ATTACHMENTS_FOLDER_ID`  | `1SYEckKOUSm9JPAIDq4fnn3tP81BOewva`                  |
+| `DEFAULT_DRIVE_FOLDER`         | (legacy V1, optional)                                |
+
+## 9. Deploy as web app
+
+In the Apps Script editor:
 
 - Deploy → New deployment.
 - Type: **Web app**.
-- Description: `Emailer v1`.
+- Description: `Emailer v3`.
 - Execute as: **Me**.
-- Who has access: **Anyone with the link** (required for programmatic callers
-  like GitHub Actions, n8n, dasoperator).
-- Click Deploy. Authorise the Gmail / Drive / Docs / Sheets scopes when prompted.
-- Copy the **deployment URL** — that is the endpoint external callers hit.
+- Who has access: **Anyone with the link**.
+- Click Deploy. Authorise all scopes when prompted (Gmail send / read /
+  modify / compose, Drive, Documents, Spreadsheets).
+- Copy the deployment URL.
 
-## 7. Configure script properties
+## 10. Smoke-test all six actions
 
-Apps Script editor → Project Settings → Script properties → Add property:
+Replace `<DEPLOYMENT_URL>` with your URL. Replace test inboxes / IDs as
+appropriate.
 
-| Key              | Value                                       |
-|------------------|---------------------------------------------|
-| `LOG_SHEET_ID`   | the Sheet ID from step 5                    |
-| `ARCHIVE_FOLDER` | folder name in Drive (default if unset: `Emailer Archive`) |
-
-## 8. Smoke-test the three scenarios
-
-Replace `<URL>` with the deployment URL from step 6.
-
-### Scenario A — new email with pre-made attachment
+### a) `send` — new email
 
 ```bash
-curl -sS -X POST "<URL>" \
+curl -sS -X POST "<DEPLOYMENT_URL>" \
   -H 'Content-Type: application/json' \
   -d '{
-    "task": "Send Q2 distributor deck to Vietnam buyer",
+    "action": "send",
     "recipient": "your-test-inbox@gmail.com",
-    "subject": "Das Experten — Q2 distributor deck",
-    "body_html": "<p>Dear partner,</p><p>Please find the deck attached.</p>",
-    "body_text": "Dear partner,\n\nPlease find the deck attached.",
-    "attachment_link": "https://drive.google.com/file/d/EXISTING_ID/view",
-    "context": "Vietnam pharmacy chain, follow-up to last week call."
+    "subject": "Emailer V3 smoke test",
+    "body_html": "<p>Hello from Emailer V3.</p>",
+    "body_plain": "Hello from Emailer V3.",
+    "context": "Smoke test send."
   }'
 ```
 
-Expected response: `success: true`, plus `message_id`, `thread_id`,
-`archive_doc_link`. Open the archive Doc link to confirm contents.
+Expect `success: true`, `archive_status: "ok"`, `archive_doc_link` populated.
 
-### Scenario B — new email, content drafted upstream
+### b) `send` with `draft_only:true`
 
 ```bash
-curl -sS -X POST "<URL>" \
+curl -sS -X POST "<DEPLOYMENT_URL>" \
   -H 'Content-Type: application/json' \
   -d '{
-    "task": "Reactivate Polish wholesaler",
+    "action": "send",
+    "draft_only": true,
     "recipient": "your-test-inbox@gmail.com",
-    "subject": "Возвращаем диалог по SCHWARZ",
-    "body_html": "<p>This text would be drafted by the upstream personizer workflow.</p>",
-    "context": "Cold reactivate after 3 months of silence."
+    "subject": "Emailer V3 — draft test",
+    "body_html": "<p>This should land in Drafts, not Inbox.</p>"
   }'
 ```
 
-### Scenario C — reply inside existing Gmail thread
+Expect `mode: "draft"`, `draft_id` populated, `archive_status: "skipped"`.
+Open Gmail → Drafts to confirm.
 
-First, run Scenario A and copy the `thread_id` from the response. Then:
+### c) `reply` — first run scenario (a) above, copy the `thread_id`, then:
 
 ```bash
-curl -sS -X POST "<URL>" \
+curl -sS -X POST "<DEPLOYMENT_URL>" \
   -H 'Content-Type: application/json' \
   -d '{
-    "task": "Reply to Vietnam buyer about MOQ",
-    "thread_id": "PASTE_THREAD_ID_HERE",
-    "body_html": "<p>Confirming MOQ 1 pallet, lead time 4 weeks, FOB Riga.</p>",
-    "body_text": "Confirming MOQ 1 pallet, lead time 4 weeks, FOB Riga.",
-    "context": "Buyer pushed back on MOQ in last reply."
+    "action": "reply",
+    "thread_id": "PASTE_THREAD_ID_FROM_SCENARIO_A",
+    "body_html": "<p>This reply should land inside the same thread.</p>"
   }'
 ```
 
-Confirm in Gmail that the reply lands **inside the same thread** (not as a
-new conversation). If it ever lands as a separate thread, something is wrong
-with `replyToThread` — file an issue and do not ship.
+Confirm in Gmail that the reply appears in the same thread (not as a new
+conversation).
 
-## 9. How an orchestrator workflow calls the emailer
+### d) `reply_all` — works only when the original thread has CC recipients
 
-Pattern matches existing `auto-reply.yml` / `auto-reply-wb.yml`. Skeleton in
-Python (e.g. for a future `cmd_send_email` in `cli.py`):
-
-```python
-import os, json, urllib.request, anthropic
-
-EMAILER_URL = os.environ['EMAILER_URL']
-
-def send_via_emailer(task, recipient, subject, body_html, attachment_link=None,
-                    thread_id=None, context=''):
-    payload = {
-        'task': task,
-        'subject': subject,
-        'body_html': body_html,
-        'context': context,
-    }
-    if thread_id:
-        payload['thread_id'] = thread_id
-    else:
-        payload['recipient'] = recipient
-    if attachment_link:
-        payload['attachment_link'] = attachment_link
-
-    req = urllib.request.Request(
-        EMAILER_URL,
-        data=json.dumps(payload).encode('utf-8'),
-        headers={'Content-Type': 'application/json'},
-    )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read())
-
-def draft_with_skill(skill_name, brief, context):
-    skill_text = open(f'my-skills/{skill_name}/SKILL.md', encoding='utf-8').read()
-    client = anthropic.Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
-    msg = client.messages.create(
-        model='claude-sonnet-4-6',
-        max_tokens=2000,
-        system=skill_text,
-        messages=[{'role': 'user', 'content': f'Brief: {brief}\nContext: {context}'}],
-    )
-    return msg.content[0].text
+```bash
+curl -sS -X POST "<DEPLOYMENT_URL>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "action": "reply_all",
+    "thread_id": "PASTE_THREAD_ID_WITH_CCs",
+    "body_html": "<p>Looping everyone in.</p>"
+  }'
 ```
 
-Add the deployment URL to GitHub Secrets as `EMAILER_URL`, write a workflow
-that runs on cron / dispatch, and use both helpers above. The skills load
-straight from the repo (no Apps Script involved).
+### e) `find`
 
-## 10. Versioning
+```bash
+curl -sS -X POST "<DEPLOYMENT_URL>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "action": "find",
+    "query": "from:your-test-inbox@gmail.com",
+    "max_results": 5
+  }'
+```
+
+Expect a JSON list of threads with `thread_id`, `subject`, `last_message_snippet`, etc.
+
+### f) `get_thread`
+
+```bash
+curl -sS -X POST "<DEPLOYMENT_URL>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "action": "get_thread",
+    "thread_id": "PASTE_THREAD_ID_FROM_FIND_RESPONSE"
+  }'
+```
+
+### g) `download_attachment`
+
+First, send yourself an email with an attachment (any file). Run `find` /
+`get_thread` to grab the `message_id` and `attachment_names[0]`, then:
+
+```bash
+curl -sS -X POST "<DEPLOYMENT_URL>" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "action": "download_attachment",
+    "message_id": "PASTE_MESSAGE_ID",
+    "attachment_name": "PASTE_FILENAME"
+  }'
+```
+
+Expect `success: true`, `file_link` populated, and the file appearing in
+`Inbox Attachments / <sender@email>/` in Drive.
+
+## 11. Failure-mode probes
+
+- **Unknown action**:
+  ```bash
+  curl -sS -X POST "<DEPLOYMENT_URL>" -H 'Content-Type: application/json' \
+    -d '{"action":"nope"}'
+  ```
+  → `{ "success": false, "error": "Unknown action: nope" }`
+
+- **Missing required field**:
+  ```bash
+  curl -sS -X POST "<DEPLOYMENT_URL>" -H 'Content-Type: application/json' \
+    -d '{"action":"send","subject":"x","body_html":"<p>x</p>"}'
+  ```
+  → `{ "success": false, "error": "Missing required field: recipient" }`
+
+- **Reporter fail-safe**: temporarily set `REPORTER_FOLDER_ID` to a bogus
+  string and run a `send`. Email goes through, response shows
+  `archive_status: "failed"` with `archive_error` populated. Restore the
+  correct ID afterwards.
+
+## 12. Versioning
 
 After every code change:
 
@@ -210,5 +262,4 @@ clasp push
 clasp deploy --description "vN: <what changed>"
 ```
 
-`clasp deploy` creates a new immutable version. The Web app URL stays the
-same if you redeploy under the existing deployment ID.
+The Web app URL stays stable if you redeploy under the same deployment ID.

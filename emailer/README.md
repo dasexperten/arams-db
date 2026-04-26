@@ -1,182 +1,382 @@
-# Emailer (subfolder of `arams-db`)
+# Emailer V3 — Action-based Gmail operator
 
-Apps Script web app that sends Gmail messages on behalf of Aram's Das Experten
-ecosystem. **Variant C: thin sender.** The caller (a separate GitHub Actions
-workflow, n8n, dasoperator, or a manual `curl`) prepares the email content
-fully — subject, body, optional attachment link — and POSTs it. The emailer:
-
-1. Sends the email (new message or reply inside an existing Gmail thread).
-2. Builds a Google Doc archive of the send and saves it to Drive.
-3. Writes a row to the logging Google Sheet.
-
-The emailer does **not** load skills, call Anthropic, or generate content. That
-responsibility lives upstream in whichever workflow calls the emailer — the
-same pattern used by `auto-reply.yml` and `auto-reply-wb.yml` in this repo.
+Action-based Gmail operator for Das Experten. One endpoint, multiple actions.
+Mandatory archiving of all outgoing mail. Drafts, search, full-thread reads,
+and inbound-attachment offloading are all first-class operations exposed
+through the same `doPost` JSON API.
 
 This is **not a standalone repository** — it is a subfolder of
-[`dasexperten/arams-db`](https://github.com/dasexperten/arams-db).
+[`dasexperten/arams-db`](https://github.com/dasexperten/codex-tutorial)
+(redirects to the renamed `dasexperten/arams-db`).
 
 ## Architecture inside `arams-db`
 
 ```
 arams-db/
-├── my-skills/                     (skills repo: read by orchestrator workflows)
-│   ├── personizer/SKILL.md
-│   ├── blog-writer/SKILL.md
-│   └── ...
-│
-├── cli.py                         (existing orchestrator entry point)
-├── .github/workflows/
-│   ├── auto-reply.yml             (existing — Ozon review autoreply)
-│   ├── auto-reply-wb.yml          (existing — WB review autoreply)
-│   └── (future) sales-hunter.yml  (new orchestrator: finds clients, drafts via skill, calls emailer)
-│
-└── emailer/                       (THIS subfolder — Apps Script web app)
+├── my-skills/                          (read by orchestrator workflows, not by emailer)
+├── cli.py                              (existing orchestrator entry point)
+├── .github/workflows/                  (existing auto-reply.yml etc., plus future
+│                                        sales-hunter / outreach workflows)
+└── emailer/                            (THIS subfolder — Apps Script web app)
     ├── src/
-    │   ├── Main.gs                (doPost entry point, routing)
-    │   ├── GmailSender.gs         (sendNew + replyToThread)
-    │   ├── ThreadResolver.gs      (Gmail thread context for replies)
-    │   ├── DriveManager.gs        (folder + share-link helper)
-    │   ├── Reporter.gs            (post-send archive Doc)
-    │   └── Logger.gs              (Sheet logging)
-    ├── appsscript.json            (manifest + OAuth scopes)
+    │   ├── Main.gs                     (doPost dispatcher — pure routing)
+    │   ├── GmailSender.gs              (sendNew, replyToThread, replyAllToThread, createDraft)
+    │   ├── ThreadResolver.gs           (thread context + access validation)
+    │   ├── DriveManager.gs             (legacy folder-by-name helper, kept for back-compat)
+    │   ├── Reporter.gs                 (mandatory archive Doc per outgoing send)
+    │   ├── Logger.gs                   (V3 schema, legacy-tolerant)
+    │   ├── actions/
+    │   │   ├── ActionSend.gs
+    │   │   ├── ActionReply.gs
+    │   │   ├── ActionReplyAll.gs
+    │   │   ├── ActionFind.gs
+    │   │   ├── ActionGetThread.gs
+    │   │   └── ActionDownloadAttachment.gs
+    │   └── lib/
+    │       └── InboxAttachmentManager.gs (per-sender subfolder + blob save)
+    ├── appsscript.json                 (manifest + OAuth scopes + Gmail Advanced Service)
     ├── .clasp.json.example
-    ├── README.md                  (this file)
-    └── SETUP_NOTES.md             (manual deploy steps)
+    ├── README.md                       (this file)
+    └── SETUP_NOTES.md                  (manual deploy steps)
 ```
 
 ```
-[ orchestrator workflow ]
-  ├─ reads my-skills/<skill>/SKILL.md from local repo
-  ├─ calls Claude API to draft email
-  └─ POSTs ready content to emailer URL
-                │
-                ▼
-[ Apps Script: doPost ]
-  ├─ ThreadResolver  (if reply)
-  ├─ GmailSender     (send via GmailApp)
-  ├─ Reporter        (archive Doc to Drive)
-  └─ Logger          (row to Sheet)
+                       ┌─────────────────────────────────────┐
+[ caller / workflow ] ─┤  POST { "action": "...", ...body }  │
+                       └──────────────┬──────────────────────┘
+                                      ▼
+                              ┌──────────────┐
+                              │   Main.gs    │  (dispatcher)
+                              └──────┬───────┘
+                                     ▼
+              ┌──────────────────────┴──────────────────────┐
+              │                                             │
+   actions/Action*.gs                              src/lib/...
+   (one handler per action)                        (shared helpers)
+              │
+              ├─→ GmailSender (send / reply / draft)
+              ├─→ Reporter    (archive Doc — Drive)        ┌────────────────┐
+              ├─→ Logger      (row to log Sheet)           │  Drive folders │
+              └─→ ThreadResolver / InboxAttachmentManager  │  (by ID only)  │
+                                                            ├────────────────┤
+                                                            │ Reporter/      │
+                                                            │  └ recipient/  │
+                                                            │ Inbox Attach./ │
+                                                            │  └ sender/     │
+                                                            └────────────────┘
 ```
 
-## Call format
+## Action reference
 
-`POST <web app URL>`, content type `application/json`.
+| Action                | Required fields                         | Optional fields                                                     | Reporter runs? |
+|-----------------------|-----------------------------------------|---------------------------------------------------------------------|----------------|
+| `send`                | `recipient`, `subject`, `body_html`/`body_plain` | `attachment_link`, `context`, `draft_only`                  | yes (skipped if `draft_only:true`) |
+| `reply`               | `thread_id`, `body_html`/`body_plain`   | `attachment_link`, `context`, `draft_only`, `in_reply_to_message_id` | yes (skipped if `draft_only:true`) |
+| `reply_all`           | `thread_id`, `body_html`/`body_plain`   | `attachment_link`, `context`, `draft_only`, `in_reply_to_message_id` | yes (skipped if `draft_only:true`) |
+| `find`                | `query`                                 | `max_results` (default 10, hard cap 50)                             | no             |
+| `get_thread`          | `thread_id`                             | —                                                                   | no             |
+| `download_attachment` | `message_id`, `attachment_name` (or `attachment_index`) | `target_subfolder_override`                              | no             |
 
-### Schema
+## Universal flags
 
-```json
-{
-  "task": "string (required, label for archive/log)",
-  "recipient": "string (email, required if no thread_id)",
-  "subject": "string (required for new email; ignored on reply)",
-  "body_html": "string (optional, preferred — raw HTML)",
-  "body_text": "string (optional, plain-text version / fallback)",
-  "attachment_link": "string (optional, Drive URL — appended to body if not inline)",
-  "thread_id": "string (optional, Gmail thread ID — triggers reply mode)",
-  "in_reply_to_message_id": "string (optional, informational)",
-  "context": "string (optional, recorded in archive Doc)"
-}
-```
+### `draft_only: true`
 
-At least one of `body_html` / `body_text` is required. If only `body_html` is
-sent, a plain-text version is derived automatically.
-
-### Response
+Available on `send` / `reply` / `reply_all`. Instead of dispatching, the
+emailer creates a Gmail Draft via the Gmail Advanced Service and returns:
 
 ```json
 {
   "success": true,
-  "mode": "new | reply",
-  "message_id": "Gmail message ID",
-  "thread_id": "Gmail thread ID",
-  "archive_doc_link": "https://docs.google.com/document/d/.../edit?usp=sharing",
-  "log_id": "row number in log sheet, or null",
-  "error": null
+  "mode": "draft",
+  "draft_id": "r-1234567890",
+  "draft_link": "https://mail.google.com/mail/u/0/#drafts/r-1234567890",
+  "thread_id": "186b7a8c1234abcd",
+  "message_id": null,
+  "archive_status": "skipped",
+  "archive_doc_link": null
 }
 ```
 
-### Scenario A — new email with pre-made attachment link
+Reporter does **not** run for drafts (nothing was sent yet). The Sheet row
+records `mode=draft`, `draft_only=true`, `archive_status=skipped`.
+
+## Archive structure on Drive
+
+```
+Reporter/                                    (REPORTER_FOLDER_ID — set in Script Properties)
+├── buyer@vn-distrib.example/
+│   ├── Q2 distributor deck — 2026-04-26 14:30.gdoc
+│   └── Re: MOQ confirmation — 2026-04-27 09:12.gdoc
+├── lead@pl-wholesale.example/
+│   └── ...
+└── ...
+
+Inbox Attachments/                           (INBOX_ATTACHMENTS_FOLDER_ID — set in Script Properties)
+├── supplier@de.example/
+│   ├── contract_v3.pdf
+│   └── packing_list.xlsx
+└── ...
+```
+
+Per-recipient subfolders (Reporter) and per-sender subfolders (Inbox
+Attachments) are created on demand. Email addresses are sanitized:
+lowercased, folder-illegal characters (`/ \ : * ? " < > |`) replaced with `_`.
+
+Drive folder access is **always by ID**, never by name lookup. Folder IDs
+are stored in `PropertiesService` (see `SETUP_NOTES.md`).
+
+## Failure modes
+
+- **Reporter fails** (e.g. wrong folder ID, Drive quota) → email send is
+  unaffected. Response keeps `success: true` for the email itself, with
+  `archive_status: "failed"` and `archive_error: <message>` populated.
+- **Draft mode** (`draft_only: true`) → Reporter is intentionally skipped
+  (`archive_status: "skipped"`).
+- **Unknown action** → `{ success: false, action: "<name>", error: "Unknown action: <name>" }`.
+- **Missing required field** → `{ success: false, error: "Missing required field: <name>" }`.
+- **Inaccessible thread / message** → `{ success: false, error: "Inaccessible thread_id: <id> (<gmail-error>)" }`.
+- **Gmail Advanced Service not enabled** → `createDraft` throws on the very
+  first draft attempt; enable it in Apps Script editor (see SETUP_NOTES.md §7).
+
+## Payload examples
+
+### `send` — new email with pre-made attachment
 
 ```json
 {
-  "task": "Send Q2 distributor deck to Vietnam buyer",
+  "action": "send",
   "recipient": "buyer@vn-distrib.example",
   "subject": "Das Experten — Q2 distributor deck",
   "body_html": "<p>Dear partner,</p><p>Please find our Q2 deck attached.</p>",
-  "body_text": "Dear partner,\n\nPlease find our Q2 deck attached.",
+  "body_plain": "Dear partner,\n\nPlease find our Q2 deck attached.",
   "attachment_link": "https://drive.google.com/file/d/EXISTING_ID/view",
   "context": "Vietnam pharmacy chain, follow-up to last week call."
 }
 ```
 
-### Scenario B — new email, content drafted upstream by a skill
-
-The orchestrator workflow loads `my-skills/personizer/SKILL.md`, calls Claude
-API with it as system prompt, then POSTs the rendered body here:
+### `send` — same as above but only stage as draft
 
 ```json
 {
-  "task": "Reactivate Polish wholesaler",
-  "recipient": "lead@pl-wholesale.example",
-  "subject": "Возвращаем диалог по SCHWARZ",
-  "body_html": "<p>...drafted-by-personizer text...</p>",
-  "context": "Cold reactivate after 3 months of silence; price tier mid."
+  "action": "send",
+  "draft_only": true,
+  "recipient": "buyer@vn-distrib.example",
+  "subject": "Das Experten — Q2 distributor deck",
+  "body_html": "<p>Dear partner...</p>"
 }
 ```
 
-### Scenario C — reply inside an existing Gmail thread
+### `reply` — reply inside an existing thread
 
 ```json
 {
-  "task": "Reply to Vietnam buyer about MOQ",
+  "action": "reply",
   "thread_id": "186b7a8c1234abcd",
   "body_html": "<p>Confirming MOQ 1 pallet, lead time 4 weeks, FOB Riga.</p>",
-  "body_text": "Confirming MOQ 1 pallet, lead time 4 weeks, FOB Riga.",
   "context": "Buyer pushed back on MOQ in last reply."
 }
 ```
 
-`ThreadResolver` validates thread access, `GmailSender.replyToThread` posts
-inside the same Gmail thread (Gmail handles `In-Reply-To` / `References`
-headers automatically — no orphan messages).
+### `reply_all` — reply preserving the full CC list
 
-## After every successful send
+```json
+{
+  "action": "reply_all",
+  "thread_id": "186b7a8c1234abcd",
+  "body_html": "<p>Looping everyone in: confirming the slot for Tuesday.</p>"
+}
+```
 
-Emailer creates one Google Doc per send in the archive folder
-(`PropertiesService.ARCHIVE_FOLDER`, default `Emailer Archive`). The Doc
-includes:
+### `find` — Gmail search
 
-- Envelope: mode, recipient, subject, timestamps (MSK + UTC), message ID,
-  thread ID, in-reply-to ID
-- Thread context (only on replies): original subject, last sender, message
-  count, participants, last message snippet
-- Caller-supplied context
-- Body (rendered plain text)
-- Body (raw HTML source, monospace)
-- Attachment link
+```json
+{
+  "action": "find",
+  "query": "from:buyer@vn-distrib.example is:unread has:attachment",
+  "max_results": 5
+}
+```
 
-The Doc is shared "anyone with link can view" so the URL in the response can
-be opened directly.
+### `get_thread` — full context
+
+```json
+{
+  "action": "get_thread",
+  "thread_id": "186b7a8c1234abcd"
+}
+```
+
+### `download_attachment` — save attachment to Drive
+
+```json
+{
+  "action": "download_attachment",
+  "message_id": "186b7a8c1234efff",
+  "attachment_name": "contract_v3.pdf"
+}
+```
+
+## Response examples
+
+### `send` (sent)
+
+```json
+{
+  "success": true,
+  "action": "send",
+  "mode": "new",
+  "draft_only": false,
+  "message_id": "186b7a8c1234abcd",
+  "thread_id": "186b7a8c0000abcd",
+  "draft_id": null,
+  "draft_link": null,
+  "archive_status": "ok",
+  "archive_doc_link": "https://docs.google.com/document/d/.../edit?usp=sharing",
+  "archive_error": null,
+  "result_summary": "Sent",
+  "log_id": "42",
+  "error": null
+}
+```
+
+### `send` (draft mode)
+
+```json
+{
+  "success": true,
+  "action": "send",
+  "mode": "draft",
+  "draft_only": true,
+  "message_id": null,
+  "thread_id": null,
+  "draft_id": "r-9876543210",
+  "draft_link": "https://mail.google.com/mail/u/0/#drafts/r-9876543210",
+  "archive_status": "skipped",
+  "archive_doc_link": null,
+  "archive_error": null,
+  "result_summary": "Draft created",
+  "log_id": "43",
+  "error": null
+}
+```
+
+### `reply` (sent + Reporter failed)
+
+```json
+{
+  "success": true,
+  "action": "reply",
+  "mode": "reply",
+  "draft_only": false,
+  "message_id": "186b7a8c5555ffff",
+  "thread_id": "186b7a8c0000abcd",
+  "archive_status": "failed",
+  "archive_doc_link": null,
+  "archive_error": "REPORTER_FOLDER_ID points to an inaccessible folder: ABCDEF (...)",
+  "result_summary": "Sent",
+  "log_id": "44",
+  "error": null
+}
+```
+
+### `find`
+
+```json
+{
+  "success": true,
+  "action": "find",
+  "query": "from:buyer@vn-distrib.example is:unread",
+  "total_found": 3,
+  "threads": [
+    {
+      "thread_id": "186b7a8c0000abcd",
+      "subject": "Re: MOQ confirmation",
+      "last_message_from": "Buyer Name <buyer@vn-distrib.example>",
+      "last_message_snippet": "Thanks, confirmed for next week...",
+      "message_count": 5,
+      "has_attachments": true,
+      "last_message_date": "2026-04-25T10:13:00.000Z",
+      "participants": ["aram@dasexperten.example", "buyer@vn-distrib.example"]
+    },
+    { "thread_id": "...", "subject": "...", "...": "..." },
+    { "thread_id": "...", "subject": "...", "...": "..." }
+  ],
+  "result_summary": "Found 3 threads",
+  "log_id": "45",
+  "error": null
+}
+```
+
+### `get_thread`
+
+```json
+{
+  "success": true,
+  "action": "get_thread",
+  "thread_id": "186b7a8c0000abcd",
+  "subject": "Q2 distributor deck",
+  "participants": ["aram@dasexperten.example", "buyer@vn-distrib.example"],
+  "message_count": 2,
+  "messages": [
+    {
+      "message_id": "186b7a8c1111aaaa",
+      "from": "Aram <aram@dasexperten.example>",
+      "to": ["buyer@vn-distrib.example"],
+      "cc": [],
+      "date": "2026-04-26T14:30:00.000Z",
+      "body_plain": "Dear partner, please find our Q2 deck attached...",
+      "has_attachments": false,
+      "attachment_names": []
+    },
+    {
+      "message_id": "186b7a8c1111bbbb",
+      "from": "Buyer <buyer@vn-distrib.example>",
+      "to": ["aram@dasexperten.example"],
+      "cc": [],
+      "date": "2026-04-27T09:12:00.000Z",
+      "body_plain": "Thanks, confirmed for next week. One question about MOQ...",
+      "has_attachments": false,
+      "attachment_names": []
+    }
+  ],
+  "result_summary": "Returned 2 messages",
+  "log_id": "46",
+  "error": null
+}
+```
+
+### `download_attachment`
+
+```json
+{
+  "success": true,
+  "action": "download_attachment",
+  "file_id": "1AbCdEf...",
+  "file_name": "contract_v3.pdf",
+  "file_link": "https://drive.google.com/file/d/1AbCdEf.../view?usp=drivesdk",
+  "saved_to_folder": "Inbox Attachments / supplier@de.example",
+  "sender": "supplier@de.example",
+  "size_bytes": 184213,
+  "mime_type": "application/pdf",
+  "result_summary": "Attachment saved (184213 bytes)",
+  "log_id": "47",
+  "error": null
+}
+```
 
 ## Setup
 
-See [`SETUP_NOTES.md`](./SETUP_NOTES.md) for the full procedure. High level:
-
-1. `cd arams-db/emailer && clasp create --type webapp --title "Emailer"`
-2. `clasp push`
-3. Create a Google Sheet for logging, copy its ID.
-4. Deploy as web app (execute as me, anyone with link).
-5. Set `PropertiesService` keys: `LOG_SHEET_ID`, `ARCHIVE_FOLDER`.
-6. Smoke-test with the three sample payloads.
+See [`SETUP_NOTES.md`](./SETUP_NOTES.md) for the full procedure (clasp install,
+Apps Script project creation, Gmail Advanced Service enablement, three folder
+IDs to set as Script Properties, sample curls for all six actions).
 
 ## Limits and caveats
 
-- Gmail daily quota: 1,500 messages/day for Workspace, 100/day for consumer
-  accounts. Watch for `Service invoked too many times` errors.
+- Gmail daily quota: 1,500 messages/day for Workspace, 100/day for consumer.
 - `GmailApp.sendEmail` does not return IDs directly; `sendNew` re-queries the
-  Sent mailbox to look up the freshly-sent message.
-- All credentials (Sheet ID, archive folder name) live in `PropertiesService`
-  — no secrets in code, no secrets in this repo.
-- Emailer does not call Claude / Anthropic. Content generation is the caller's
-  responsibility.
+  Sent mailbox to capture them.
+- Apps Script execution timeout is 6 minutes — large `get_thread` responses
+  (very long conversations) may approach it; truncate upstream if needed.
+- Drive folder ACL on archive Docs and saved attachments is "anyone with link
+  can view" — share links freely with the orchestrator workflow but be aware
+  the URL itself is the only access control.

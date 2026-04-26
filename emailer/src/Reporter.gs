@@ -1,118 +1,164 @@
 /**
- * Reporter.gs — builds the post-send archive Google Doc and saves it to Drive.
+ * Reporter.gs — V2.1 hardened.
  *
- * Every successful send produces one Doc in the archive folder
- * (PropertiesService.ARCHIVE_FOLDER, default "Emailer Archive"). The Doc
- * contains the envelope (recipient, subject, mode, timestamps, IDs), the
- * caller-supplied context, the rendered body (plain), and the raw HTML body
- * for reproducibility.
+ * Builds an archive Google Doc for every successful outgoing email and saves it
+ * inside REPORTER_FOLDER_ID/<sanitized_recipient_email>/. Per-recipient
+ * subfolders are created on demand.
  *
- * The Doc is shared "anyone with link can view" so the link in the response
- * is opened directly by the caller / orchestrator without extra ACL setup.
+ * Drafts do NOT trigger Reporter (nothing was sent yet).
+ * Reporter failure does NOT block email success — handlers wrap calls in try/catch
+ * and return archive_doc_link: null + archive_error: <msg> while keeping success: true.
+ *
+ * REPORTER_FOLDER_ID must be set in Script Properties — the Reporter folder ID
+ * from Google Drive. No fallback by name.
  */
 
 /**
- * buildArchiveDoc — creates the archive Doc and returns its share URL.
+ * buildArchive — creates the archive Doc and saves it under the per-recipient subfolder.
  *
- * @param {object} payload         - the original incoming payload
- * @param {{message_id: ?string, thread_id: ?string}} sendResult
- * @param {?{subject: string, last_message_from: string, last_message_snippet: string,
- *           message_count: number, participants: string[]}} threadContext
- * @returns {string} share URL of the archive Doc
+ * @param {object} emailData
+ *   {
+ *     from:            string,
+ *     to:              string,             // primary recipient (or comma-joined for reply_all)
+ *     subject:         string,
+ *     date:            string (ISO),
+ *     body_html:       string,
+ *     body_plain:      string,
+ *     context:         string,
+ *     attachment_link: string,
+ *     thread_id:       string,
+ *     mode:            "new" | "reply" | "reply_all"
+ *   }
+ * @returns {{archive_doc_link: string, archive_doc_id: string}}
+ * @throws {Error} if REPORTER_FOLDER_ID is not set or folder cannot be accessed
  */
-function buildArchiveDoc(payload, sendResult, threadContext) {
-  payload = payload || {};
-  sendResult = sendResult || {};
+function buildArchive(emailData) {
+  emailData = emailData || {};
+  var reporterFolderId = PropertiesService.getScriptProperties().getProperty('REPORTER_FOLDER_ID');
+  if (!reporterFolderId) {
+    throw new Error('REPORTER_FOLDER_ID is not set in Script Properties. ' +
+      'Set it to the Drive folder ID where archives should be saved.');
+  }
 
-  var sentAt = new Date();
+  // Verify access early so we fail fast with a clear message.
+  try {
+    DriveApp.getFolderById(reporterFolderId);
+  } catch (err) {
+    throw new Error('REPORTER_FOLDER_ID points to an inaccessible folder: ' + reporterFolderId +
+      ' (' + err + ')');
+  }
+
+  var primaryRecipient = (emailData.to || '').split(',')[0].trim() || 'unknown';
   var tz = Session.getScriptTimeZone() || 'Europe/Moscow';
-  var stamp = Utilities.formatDate(sentAt, tz, 'yyyy-MM-dd HH:mm');
-  var task = String(payload.task || 'Untitled send');
-  var docTitle = 'Sent: ' + task + ' · ' + stamp;
+  var sentDate = emailData.date ? new Date(emailData.date) : new Date();
+  var stamp = Utilities.formatDate(sentDate, tz, 'yyyy-MM-dd HH:mm');
+  var subject = emailData.subject || '(no subject)';
+  var docTitle = subject + ' — ' + stamp;
 
   var doc = DocumentApp.create(docTitle);
   var body = doc.getBody();
   body.clear();
 
-  // Cover heading.
-  var cover = body.appendParagraph(docTitle);
-  cover.setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  cover.editAsText().setBold(true);
-
+  // H1 — subject as cover heading.
+  var h1 = body.appendParagraph(subject);
+  h1.setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  h1.editAsText().setBold(true);
   body.appendParagraph('');
 
-  // Envelope section.
+  // Envelope.
   appendH2_(body, 'Envelope');
-  var mode = payload.thread_id ? 'reply' : 'new';
-  var subject = payload.subject || (threadContext && threadContext.subject) || '(no subject)';
-  var recipient = payload.recipient || (threadContext && threadContext.last_message_from) || '(thread)';
-  appendKv_(body, 'Mode',          mode);
-  appendKv_(body, 'Recipient',     recipient);
-  appendKv_(body, 'Subject',       subject);
-  appendKv_(body, 'Sent at (MSK)', stamp);
-  appendKv_(body, 'Sent at (UTC)', Utilities.formatDate(sentAt, 'UTC', 'yyyy-MM-dd HH:mm'));
-  appendKv_(body, 'Message ID',    sendResult.message_id || '(not captured)');
-  appendKv_(body, 'Thread ID',     sendResult.thread_id || '(not captured)');
-  if (payload.in_reply_to_message_id) {
-    appendKv_(body, 'In-Reply-To', payload.in_reply_to_message_id);
+  appendKv_(body, 'From',      emailData.from || '');
+  appendKv_(body, 'To',        emailData.to || '');
+  appendKv_(body, 'Date',      stamp);
+  appendKv_(body, 'Mode',      emailData.mode || '');
+  if ((emailData.mode === 'reply' || emailData.mode === 'reply_all') && emailData.thread_id) {
+    appendKv_(body, 'Thread ID', emailData.thread_id);
   }
 
-  // Thread context (only on replies).
-  if (threadContext) {
-    appendH2_(body, 'Thread context');
-    appendKv_(body, 'Original subject',   threadContext.subject || '');
-    appendKv_(body, 'Last message from',  threadContext.last_message_from || '');
-    appendKv_(body, 'Messages in thread', String(threadContext.message_count || 0));
-    if (threadContext.participants && threadContext.participants.length) {
-      appendKv_(body, 'Participants', threadContext.participants.join(', '));
-    }
-    if (threadContext.last_message_snippet) {
-      body.appendParagraph('Last message snippet:').editAsText().setBold(true);
-      body.appendParagraph(threadContext.last_message_snippet)
-        .editAsText().setItalic(true).setForegroundColor('#555555');
-    }
-  }
-
-  // Caller context.
-  if (payload.context) {
+  // Context (skip section if empty).
+  if (emailData.context && String(emailData.context).trim()) {
     appendH2_(body, 'Context');
-    body.appendParagraph(String(payload.context));
+    body.appendParagraph(String(emailData.context));
   }
 
-  // Body (rendered plain).
-  appendH2_(body, 'Body (rendered plain text)');
-  var plain = payload.body_text || stripHtmlForArchive_(payload.body_html || '');
+  // Body (plain).
+  appendH2_(body, 'Body');
+  var plain = emailData.body_plain || stripHtml_(emailData.body_html || '');
   if (plain) {
-    plain.split(/\n{2,}/).forEach(function (p) {
-      body.appendParagraph(p);
+    plain.split('\n').forEach(function (line) {
+      body.appendParagraph(line);
     });
   } else {
     body.appendParagraph('(empty)').editAsText().setItalic(true);
   }
 
-  // Body (raw HTML).
-  if (payload.body_html) {
-    appendH2_(body, 'Body (raw HTML source)');
-    var raw = body.appendParagraph(payload.body_html);
-    raw.editAsText().setFontFamily('Courier New').setFontSize(9).setForegroundColor('#444444');
-  }
-
-  // Attachment.
-  if (payload.attachment_link) {
+  // Attachment (skip section if empty).
+  if (emailData.attachment_link && String(emailData.attachment_link).trim()) {
     appendH2_(body, 'Attachment');
-    body.appendParagraph(payload.attachment_link);
+    body.appendParagraph(String(emailData.attachment_link));
   }
 
   // Footer.
   body.appendParagraph('');
-  var footer = body.appendParagraph('Generated by Emailer · Das Experten · ' + stamp);
+  var footer = body.appendParagraph('Generated by Emailer — ' + new Date().toISOString());
   footer.editAsText().setItalic(true).setForegroundColor('#888888');
 
   doc.saveAndClose();
+  var docId = doc.getId();
 
-  // Move to archive folder + share.
-  var folderName = PropertiesService.getScriptProperties().getProperty('ARCHIVE_FOLDER') || 'Emailer Archive';
-  return saveToDrive(doc.getId(), folderName);
+  // Move into per-recipient subfolder.
+  var subfolder = getRecipientSubfolder(primaryRecipient);
+  var file = DriveApp.getFileById(docId);
+  subfolder.addFile(file);
+  var parents = file.getParents();
+  while (parents.hasNext()) {
+    var p = parents.next();
+    if (p.getId() !== subfolder.getId()) {
+      p.removeFile(file);
+    }
+  }
+
+  // Sharing — anyone with link can view.
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  return {
+    archive_doc_link: file.getUrl(),
+    archive_doc_id: docId
+  };
+}
+
+/**
+ * getRecipientSubfolder — resolves the per-recipient subfolder inside REPORTER_FOLDER_ID,
+ * creating it if missing.
+ *
+ * @param {string} recipientEmail
+ * @returns {GoogleAppsScript.Drive.Folder}
+ */
+function getRecipientSubfolder(recipientEmail) {
+  var reporterFolderId = PropertiesService.getScriptProperties().getProperty('REPORTER_FOLDER_ID');
+  if (!reporterFolderId) {
+    throw new Error('REPORTER_FOLDER_ID is not set in Script Properties.');
+  }
+  var parent = DriveApp.getFolderById(reporterFolderId);
+  var name = sanitizeEmailForFolder(recipientEmail);
+  var iter = parent.getFoldersByName(name);
+  if (iter.hasNext()) return iter.next();
+  return parent.createFolder(name);
+}
+
+/**
+ * sanitizeEmailForFolder — lowercase + replace folder-illegal chars with '_'.
+ * Used identically by Reporter.gs and lib/InboxAttachmentManager.gs.
+ *
+ * @param {string} email
+ * @returns {string}
+ */
+function sanitizeEmailForFolder(email) {
+  if (!email) return 'unknown';
+  return String(email)
+    .toLowerCase()
+    .trim()
+    .replace(/[\/\\:\*\?"<>\|]/g, '_');
 }
 
 /** @private */
@@ -129,22 +175,4 @@ function appendKv_(body, key, value) {
   var keyEnd = (key + ': ').length;
   t.setBold(0, keyEnd - 1, true);
   t.appendText(String(value == null ? '' : value));
-}
-
-/** @private */
-function stripHtmlForArchive_(html) {
-  return String(html == null ? '' : html)
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<\/p\s*>/gi, '\n\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
 }

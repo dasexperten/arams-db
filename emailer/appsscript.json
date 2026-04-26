@@ -1,7 +1,13 @@
 {
   "timeZone": "Europe/Moscow",
   "dependencies": {
-    "enabledAdvancedServices": []
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Gmail",
+        "version": "v1",
+        "serviceId": "gmail"
+      }
+    ]
   },
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
@@ -13,6 +19,7 @@
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.compose",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/spreadsheets"
