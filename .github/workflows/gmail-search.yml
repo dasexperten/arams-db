@@ -1,0 +1,48 @@
+name: Gmail Search Conversation
+
+# Manual trigger. Takes a search query (Gmail syntax — free text, "from:", "subject:", etc.),
+# finds matching threads, fetches full content of each, and emails the
+# compiled transcript back to the user via the emailer.
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Gmail search query — e.g. 'Московская ярмарка моды' or 'from:user@example.com'"
+        required: true
+      max_threads:
+        description: "Max threads to fetch fully (default 20, hard cap 50)"
+        required: false
+        default: "20"
+      send_to:
+        description: "Where to send the compiled transcript"
+        required: false
+        default: "expertendas@gmail.com"
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    env:
+      EMAILER_URL: ${{ secrets.EMAILER_URL }}
+      QUERY: ${{ github.event.inputs.query }}
+      MAX_THREADS: ${{ github.event.inputs.max_threads }}
+      SEND_TO: ${{ github.event.inputs.send_to }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify EMAILER_URL secret present
+        run: |
+          if [ -z "$EMAILER_URL" ]; then
+            echo "::error::EMAILER_URL secret is not set."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run gmail_search.py
+        run: python scripts/gmail_search.py
