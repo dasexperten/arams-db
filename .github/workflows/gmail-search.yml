@@ -1,0 +1,55 @@
+name: Gmail Search Conversation
+
+# Manual trigger. Takes a Gmail search query (free text or operator syntax),
+# finds matching threads, fetches full content of each, and uploads the
+# collected correspondence as a workflow artifact (transcript.md + transcript.json).
+# Does NOT send any email — read-only search.
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Gmail search query — e.g. 'Московская ярмарка моды' or 'from:user@example.com'"
+        required: true
+      max_threads:
+        description: "Max threads to fetch fully (default 20, hard cap 50)"
+        required: false
+        default: "20"
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    env:
+      EMAILER_URL: ${{ secrets.EMAILER_URL }}
+      QUERY: ${{ github.event.inputs.query }}
+      MAX_THREADS: ${{ github.event.inputs.max_threads }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify EMAILER_URL secret present
+        run: |
+          if [ -z "$EMAILER_URL" ]; then
+            echo "::error::EMAILER_URL secret is not set."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run gmail_search.py
+        run: python scripts/gmail_search.py
+
+      - name: Upload transcript artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmail-search-result
+          path: |
+            transcript.md
+            transcript.json
+          if-no-files-found: warn
+          retention-days: 30
