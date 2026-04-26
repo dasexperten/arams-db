@@ -67,15 +67,23 @@ jobs:
       - name: POST to emailer
         run: |
           set -e
-          # Apps Script always answers POST /macros/s/.../exec with 302 → script.googleusercontent.com
-          # where the JSON body lives. Per curl default, -L on 302 switches POST to GET — which is
-          # what googleusercontent.com expects. We must NOT pass -X POST here, otherwise curl would
-          # keep re-POSTing through the redirect and googleusercontent.com would 302 again.
-          # -d @payload.json makes the first request a POST automatically.
-          http_code=$(curl -sL -o response.json -w "%{http_code}" \
+          # Two-step redirect handling — robust against curl's -L quirks on Apps Script.
+          # Step 1: POST to /macros/s/.../exec; Apps Script answers 302 with Location: googleusercontent.com/macros/echo?...
+          # Step 2: GET that Location URL — the JSON body lives there.
+          echo "Step 1: POST to emailer, capture redirect URL"
+          redirect_url=$(curl -s -o /dev/null -w "%{redirect_url}" \
+            -X POST "$EMAILER_URL" \
             -H "Content-Type: application/json" \
-            -d @payload.json \
-            "$EMAILER_URL")
+            -d @payload.json)
+
+          if [ -z "$redirect_url" ]; then
+            echo "::error::No redirect URL returned. Apps Script may be unreachable, or the deployment URL is wrong."
+            exit 1
+          fi
+
+          echo "Step 1 OK. Redirect Location received."
+          echo "Step 2: GET the redirect target"
+          http_code=$(curl -sL -o response.json -w "%{http_code}" "$redirect_url")
           echo "HTTP $http_code"
           echo "Response:"
           cat response.json
