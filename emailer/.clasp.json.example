@@ -1,0 +1,16 @@
+{
+  "scriptId": "REPLACE_WITH_YOUR_APPS_SCRIPT_ID",
+  "rootDir": "./src",
+  "projectId": "REPLACE_WITH_YOUR_GCP_PROJECT_ID_OPTIONAL",
+  "fileExtension": "gs",
+  "filePushOrder": [
+    "Main.gs",
+    "EmailComposer.gs",
+    "DocBuilder.gs",
+    "DriveManager.gs",
+    "GmailSender.gs",
+    "ThreadResolver.gs",
+    "SkillsBridge.gs",
+    "Logger.gs"
+  ]
+}
