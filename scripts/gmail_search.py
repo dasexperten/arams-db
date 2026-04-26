@@ -28,23 +28,62 @@ import urllib.error
 import urllib.request
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Stops urllib from following 3xx so we can capture the Location ourselves."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
 def call_emailer(payload):
-    req = urllib.request.Request(
-        EMAILER_URL,
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json; charset=utf-8"},
-        method="POST",
-    )
+    """Two-step Apps Script call: POST /macros/s/.../exec returns 302 to
+    script.googleusercontent.com, where the JSON body lives. Python's default
+    redirect handler proved unreliable here (empty response), so we drive it
+    explicitly: POST + capture Location header, then GET the redirect target."""
+
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json; charset=utf-8"}
+
+    # Step 1: POST without following redirects, capture Location.
+    post_req = urllib.request.Request(EMAILER_URL, data=body, headers=headers, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        resp = _NO_REDIRECT_OPENER.open(post_req, timeout=120)
+        # If no redirect happened, Apps Script returned data directly.
+        raw = resp.read()
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            return {"success": False, "error": "Direct response not JSON: {} | first 200 chars: {!r}".format(
+                exc, raw[:200])}
     except urllib.error.HTTPError as exc:
-        return {
-            "success": False,
-            "error": "HTTP {}: {}".format(exc.code, exc.read().decode("utf-8", "replace")),
-        }
+        if exc.code in (301, 302, 303, 307, 308):
+            location = exc.headers.get("Location")
+            if not location:
+                return {"success": False, "error": "Redirect {} with no Location header".format(exc.code)}
+        else:
+            return {
+                "success": False,
+                "error": "POST HTTP {}: {}".format(exc.code, exc.read().decode("utf-8", "replace")),
+            }
     except urllib.error.URLError as exc:
-        return {"success": False, "error": "URL error: {}".format(exc.reason)}
+        return {"success": False, "error": "POST URL error: {}".format(exc.reason)}
+
+    # Step 2: GET the redirect target.
+    try:
+        with urllib.request.urlopen(location, timeout=120) as r:
+            raw = r.read()
+    except urllib.error.HTTPError as exc:
+        return {"success": False, "error": "GET HTTP {}: {}".format(exc.code, exc.read().decode("utf-8", "replace"))}
+    except urllib.error.URLError as exc:
+        return {"success": False, "error": "GET URL error: {}".format(exc.reason)}
+
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        return {"success": False, "error": "Redirect response not JSON: {} | first 200 chars: {!r}".format(
+            exc, raw[:200])}
 
 
 EMAILER_URL = os.environ["EMAILER_URL"]
