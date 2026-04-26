@@ -12,6 +12,7 @@
  *   find                → ActionFind.handle(payload)
  *   get_thread          → ActionGetThread.handle(payload)
  *   download_attachment → ActionDownloadAttachment.handle(payload)
+ *   archive             → ActionArchive.handle(payload) — write a Doc to REPORTER_FOLDER_ID without sending mail
  *
  * Universal flag: draft_only:true on send/reply/reply_all creates a Gmail
  * draft instead of sending. Reporter is NOT called for drafts.
@@ -84,6 +85,8 @@ function dispatchAction_(payload) {
       return ActionGetThread.handle(payload);
     case 'download_attachment':
       return ActionDownloadAttachment.handle(payload);
+    case 'archive':
+      return ActionArchive.handle(payload);
     default:
       return { success: false, error: 'Unknown action: ' + action };
   }

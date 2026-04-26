@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
 gmail_search.py — call the emailer Apps Script web app to find Gmail threads
-matching a search query, fetch the full content of each, and email the
-compiled transcript back to the user.
+matching a search query, fetch the full content of each, and write the
+collected correspondence to disk as markdown + JSON.
+
+Files produced (in the workflow workspace):
+  transcript.md    — human-readable Markdown, one section per thread
+  transcript.json  — machine-readable, full thread/message tree
+
+Both are uploaded as the workflow artifact `gmail-search-result` so Aram
+can download them from the run summary, paste into Claude / hand off to
+analysis agents, and decide separately whether to reply or forward.
 
 Inputs (env):
   EMAILER_URL    — Apps Script web app URL (GitHub Secret)
   QUERY          — Gmail search syntax string (e.g. "Московская ярмарка моды"
                    or "from:user@example.com")
   MAX_THREADS    — number of matching threads to fetch fully (default 20, cap 50)
-  SEND_TO        — recipient email for the transcript (default expertendas@gmail.com)
 
-Output:
-  Plain-text transcript sent to SEND_TO via emailer's "send" action. The
-  emailer's Reporter archives the transcript Doc as a side effect.
+This script never sends or drafts email. find + get_thread only.
 """
 
 import json
@@ -45,7 +50,6 @@ def call_emailer(payload):
 EMAILER_URL = os.environ["EMAILER_URL"]
 QUERY = os.environ["QUERY"]
 MAX_THREADS = int(os.environ.get("MAX_THREADS", "20") or "20")
-SEND_TO = os.environ.get("SEND_TO", "expertendas@gmail.com") or "expertendas@gmail.com"
 
 if MAX_THREADS < 1:
     MAX_THREADS = 1
@@ -54,7 +58,6 @@ if MAX_THREADS > 50:
 
 print("Search query: {!r}".format(QUERY))
 print("Max threads:  {}".format(MAX_THREADS))
-print("Send to:      {}".format(SEND_TO))
 print()
 
 # ----- Step 1: find -----
@@ -69,103 +72,151 @@ if not find_resp.get("success"):
     print("::error::find failed: {}".format(find_resp.get("error", "unknown")))
     sys.exit(1)
 
-threads = find_resp.get("threads", []) or []
-total = find_resp.get("total_found", len(threads))
+thread_summaries = find_resp.get("threads", []) or []
+total = find_resp.get("total_found", len(thread_summaries))
 print("Found {} thread(s).".format(total))
 
-if total == 0:
-    print("::warning::No threads matched the query — nothing to send.")
-    sys.exit(0)
-
-# ----- Step 2: fetch each thread -----
+# ----- Step 2: fetch each thread fully -----
 print()
 print("Step 2: fetch full content of each thread")
-parts = []
-parts.append("=== Поиск: {} ===".format(QUERY))
-parts.append("")
-parts.append("Найдено: {} тред(ов)".format(total))
-if total > MAX_THREADS:
-    parts.append("(показаны первые {} в порядке выдачи Gmail)".format(MAX_THREADS))
-parts.append("")
 
+full_threads = []
 failed_threads = []
 
-for i, summary in enumerate(threads, start=1):
+for i, summary in enumerate(thread_summaries, start=1):
     tid = summary.get("thread_id", "")
     if not tid:
         continue
-    print("  ({}/{}) thread_id={}".format(i, len(threads), tid))
+    print("  ({}/{}) thread_id={}".format(i, len(thread_summaries), tid))
 
     thread_resp = call_emailer({"action": "get_thread", "thread_id": tid})
     if not thread_resp.get("success"):
         err = thread_resp.get("error", "unknown")
         print("    ::warning::failed: {}".format(err))
-        failed_threads.append((tid, err))
+        failed_threads.append({"thread_id": tid, "error": err})
         continue
 
-    subject = thread_resp.get("subject") or "(без темы)"
-    participants = ", ".join(thread_resp.get("participants") or [])
-    msg_count = thread_resp.get("message_count", 0)
+    full_threads.append({
+        "thread_id": tid,
+        "subject": thread_resp.get("subject") or "(no subject)",
+        "participants": thread_resp.get("participants") or [],
+        "message_count": thread_resp.get("message_count", 0),
+        "gmail_url": "https://mail.google.com/mail/u/0/#inbox/{}".format(tid),
+        "messages": thread_resp.get("messages") or [],
+    })
 
-    parts.append("=" * 78)
-    parts.append("Тред {}/{}: {}".format(i, len(threads), subject))
-    parts.append("=" * 78)
-    parts.append("Участники:  {}".format(participants))
-    parts.append("Сообщений:  {}".format(msg_count))
-    parts.append("Thread ID:  {}".format(tid))
-    parts.append("Открыть:    https://mail.google.com/mail/u/0/#inbox/{}".format(tid))
-    parts.append("")
+# ----- Step 3a: write transcript.json (machine-readable) -----
+result = {
+    "query": QUERY,
+    "total_found": total,
+    "fetched_count": len(full_threads),
+    "failed_count": len(failed_threads),
+    "failed_threads": failed_threads,
+    "threads": full_threads,
+}
+with open("transcript.json", "w", encoding="utf-8") as f:
+    json.dump(result, f, ensure_ascii=False, indent=2)
+print()
+print("Wrote transcript.json ({:,} bytes)".format(os.path.getsize("transcript.json")))
 
-    for msg in thread_resp.get("messages", []) or []:
-        date = msg.get("date", "") or ""
-        from_ = msg.get("from", "") or ""
-        body = (msg.get("body_plain", "") or "").strip()
-        attachments = msg.get("attachment_names") or []
-
-        parts.append("-" * 78)
-        parts.append("{}  ·  {}".format(date, from_))
-        if attachments:
-            parts.append("Вложения: {}".format(", ".join(attachments)))
-        parts.append("-" * 78)
-        parts.append(body if body else "(пусто)")
-        parts.append("")
-
-    parts.append("")
-
+# ----- Step 3b: write transcript.md (human-readable) -----
+md = []
+md.append("# Gmail search: `{}`".format(QUERY))
+md.append("")
+md.append("- **Found:** {}".format(total))
+md.append("- **Fetched fully:** {}".format(len(full_threads)))
 if failed_threads:
-    parts.append("=" * 78)
-    parts.append("Не удалось загрузить {} тред(ов):".format(len(failed_threads)))
-    for tid, err in failed_threads:
-        parts.append("  - {}: {}".format(tid, err))
-    parts.append("")
+    md.append("- **Failed:** {}".format(len(failed_threads)))
+md.append("")
 
-transcript = "\n".join(parts)
+if total == 0:
+    md.append("_No threads matched the query._")
+else:
+    for i, t in enumerate(full_threads, start=1):
+        md.append("---")
+        md.append("")
+        md.append("## {}. {}".format(i, t["subject"]))
+        md.append("")
+        md.append("- **Thread:** [{}]({})".format(t["thread_id"], t["gmail_url"]))
+        md.append("- **Participants:** {}".format(", ".join(t["participants"])))
+        md.append("- **Messages:** {}".format(t["message_count"]))
+        md.append("")
+        for msg in t["messages"]:
+            date = msg.get("date", "") or ""
+            from_ = msg.get("from", "") or ""
+            attachments = msg.get("attachment_names") or []
+            body = (msg.get("body_plain", "") or "").strip()
 
-# Tail summary in the Actions log too
+            md.append("### {} — {}".format(date, from_))
+            if attachments:
+                md.append("_Attachments: {}_".format(", ".join(attachments)))
+            md.append("")
+            if body:
+                # quote-block the body for visual separation
+                md.append("```")
+                md.append(body)
+                md.append("```")
+            else:
+                md.append("_(empty)_")
+            md.append("")
+
+    if failed_threads:
+        md.append("---")
+        md.append("")
+        md.append("## Failed threads")
+        md.append("")
+        for ft in failed_threads:
+            md.append("- `{}` — {}".format(ft["thread_id"], ft["error"]))
+
+with open("transcript.md", "w", encoding="utf-8") as f:
+    f.write("\n".join(md) + "\n")
+print("Wrote transcript.md  ({:,} bytes)".format(os.path.getsize("transcript.md")))
+
+# ----- Step 4: archive the transcript to Drive via emailer (no email sent) -----
 print()
-print("Transcript size: {:,} chars / {} thread(s) compiled".format(len(transcript), len(threads) - len(failed_threads)))
-
-# ----- Step 3: send transcript via emailer -----
-print()
-print("Step 3: send transcript to {}".format(SEND_TO))
-subject_line = "Переписка по запросу: {}".format(QUERY)
-send_resp = call_emailer({
-    "action": "send",
-    "recipient": SEND_TO,
-    "subject": subject_line,
-    "body_plain": transcript,
-    "context": "gmail-search workflow · query={}".format(QUERY),
+print("Step 4: archive transcript to Drive (REPORTER_FOLDER_ID/gmail-search/)")
+md_text = "\n".join(md) if total > 0 else "_No threads matched query._"
+archive_resp = call_emailer({
+    "action": "archive",
+    "title": "Gmail search · {}".format(QUERY),
+    "body_plain": md_text,
+    "archive_label": "gmail-search",
+    "context": "gmail-search workflow · query={} · {} thread(s)".format(QUERY, len(full_threads)),
 })
 
-if send_resp.get("success"):
-    print("::notice::Transcript sent to {}".format(SEND_TO))
-    archive_link = send_resp.get("archive_doc_link")
-    if archive_link:
-        print("::notice::Archive Doc: {}".format(archive_link))
-    archive_err = send_resp.get("archive_error")
-    if archive_err:
-        print("::warning::Archive error (email still sent): {}".format(archive_err))
-    sys.exit(0)
+archive_link = None
+if archive_resp.get("success"):
+    archive_link = archive_resp.get("archive_doc_link")
+    print("::notice::Archive Doc: {}".format(archive_link))
 else:
-    print("::error::send failed: {}".format(send_resp.get("error", "unknown")))
-    sys.exit(1)
+    print("::warning::Archive failed (transcript files still uploaded as artifact): {}".format(
+        archive_resp.get("error", "unknown")
+    ))
+
+# ----- Step 5: log a compact preview to the Actions log -----
+print()
+print("=" * 60)
+print("Summary")
+print("=" * 60)
+print("Query:         {}".format(QUERY))
+print("Total found:   {}".format(total))
+print("Fetched:       {}".format(len(full_threads)))
+if failed_threads:
+    print("Failed:        {}".format(len(failed_threads)))
+if archive_link:
+    print("Archive Doc:   {}".format(archive_link))
+print()
+if full_threads:
+    print("Threads (subject — last sender):")
+    for t in full_threads:
+        last_from = t["messages"][-1].get("from", "") if t["messages"] else ""
+        print("  {}  — {}".format(t["subject"][:60], last_from[:50]))
+
+if total == 0:
+    print()
+    print("::warning::No threads matched. Refine the query and re-run.")
+    sys.exit(0)
+
+print()
+print("::notice::Download transcript.md / transcript.json from the run artifact 'gmail-search-result'.")
+sys.exit(0)
