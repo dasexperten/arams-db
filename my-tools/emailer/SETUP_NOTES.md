@@ -6,7 +6,7 @@ Action-based Gmail operator. One endpoint, six actions, mandatory archiving.
 
 ## TL;DR for Aram (do this in order)
 
-1. `cd arams-db/emailer/`
+1. `cd arams-db/my-tools/emailer/`
 2. `clasp create --type webapp --title "Emailer" --rootDir ./src`
 3. `clasp push`
 4. Apps Script editor → Resources → Advanced Google Services → **Gmail API v1** → Enable.
@@ -33,7 +33,7 @@ Total time: ~25 minutes first time, ~5 minutes on subsequent `clasp push` update
 ## 1. Working directory
 
 ```bash
-cd arams-db/emailer/
+cd arams-db/my-tools/emailer/
 ```
 
 All subsequent commands assume this is your CWD.

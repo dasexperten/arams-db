@@ -31,13 +31,15 @@ jobs:
           python-version: "3.11"
 
       - name: Update contacts.json
+        env:
+          PYTHONPATH: my-tools
         run: python -m telegramer register --name "$TG_NAME" --chat-id "$TG_CHAT_ID"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add telegramer/contacts.json
+          git add my-tools/telegramer/contacts.json
           if git diff --cached --quiet; then
             echo "No change — contact already registered with same chat_id."
             exit 0

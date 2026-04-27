@@ -10,7 +10,8 @@ This is a subfolder of [`dasexperten/arams-db`](https://github.com/dasexperten/a
 
 ```
 arams-db/
-└── emailer/                          ← Google Apps Script web app
+└── my-tools/
+    └── emailer/                      ← Google Apps Script web app
     ├── src/
     │   ├── Main.gs                   action dispatcher (doPost → dispatchAction_)
     │   ├── GmailSender.gs            send / reply / reply_all / createDraft

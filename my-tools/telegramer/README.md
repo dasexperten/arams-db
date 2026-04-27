@@ -44,12 +44,15 @@ tg.send_file(name="Aram", path="report.xlsx", caption="Weekly")
 
 ```bash
 export TELEGRAM_BOT_TOKEN=...
+export PYTHONPATH=my-tools             # so `python -m telegramer` resolves the package
 python -m telegramer send --to Aram --text "Hello"
 python -m telegramer send-file --to Aram --path report.pdf --caption "Q2"
 python -m telegramer register --name Ivan --chat-id 123456789
 python -m telegramer list
 python -m telegramer updates       # find new chat_ids after a /start
 ```
+
+Workflows in `.github/workflows/telegram-*.yml` already set `PYTHONPATH: my-tools` for you.
 
 ## Use from a Claude tool-use agent
 
@@ -72,7 +75,7 @@ Same pattern as the emailer — drop both into the agent's tool list and Claude 
 ## Files
 
 ```
-telegramer/
+my-tools/telegramer/
   __init__.py        — package exports
   api.py             — Telegramer class
   registry.py        — ContactRegistry + JSON persistence

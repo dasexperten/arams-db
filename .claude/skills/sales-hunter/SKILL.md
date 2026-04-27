@@ -535,7 +535,7 @@ Use the `primary-email` returned for sender. Use `sender-email-by-region` if a r
 
 ### Step 3E.2 — Emailer Handoff — Draft Save ⛔ MANDATORY
 
-After Step 3E.1 returns ✅ CONVERSION PASS or ⚠️ CONVERSION WEAK (with rewrite applied), hand the final draft to the **emailer** Apps Script web app (`/emailer` in this repo — action-based Gmail operator with mandatory archiving). Do NOT call Gmail MCP directly — every outgoing draft goes through the emailer so cold outreach lives in the same auditable pipeline as replies and live sends.
+After Step 3E.1 returns ✅ CONVERSION PASS or ⚠️ CONVERSION WEAK (with rewrite applied), hand the final draft to the **emailer** Apps Script web app (`/my-tools/emailer` in this repo — action-based Gmail operator with mandatory archiving). Do NOT call Gmail MCP directly — every outgoing draft goes through the emailer so cold outreach lives in the same auditable pipeline as replies and live sends.
 
 ```
 [[GATE: emailer]]
