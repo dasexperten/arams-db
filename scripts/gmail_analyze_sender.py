@@ -104,10 +104,12 @@ def extract_email(addr: str) -> str:
 
 
 def extract_name(addr: str) -> str:
-    """Display name from 'Display Name <email>' format.
+    """Folder label for the lead.
 
-    Falls back to local-part of email if no display name. Returns 'unknown'
-    only when the input is genuinely empty.
+    Priority:
+      1. Display name from 'Display Name <email>' if present.
+      2. Full email address (e.g. 'ishita@example.com') if no display name.
+      3. Whatever the input was, otherwise 'unknown'.
     """
     addr = (addr or "").strip()
     if not addr:
@@ -117,9 +119,7 @@ def extract_name(addr: str) -> str:
         name = (m.group("name") or "").strip()
         if name:
             return name
-        return m.group("email").split("@", 1)[0]
-    if "@" in addr:
-        return addr.split("@", 1)[0]
+        return m.group("email").strip()
     return addr
 
 

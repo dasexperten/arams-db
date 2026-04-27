@@ -279,6 +279,7 @@ def _extract_email(s):
 
 
 def _extract_name(addr):
+    """Folder label: display name if present, else full email, else unknown."""
     addr = (addr or "").strip()
     if not addr:
         return "unknown"
@@ -287,9 +288,7 @@ def _extract_name(addr):
         name = (m.group("name") or "").strip()
         if name:
             return name
-        return m.group("email").split("@", 1)[0]
-    if "@" in addr:
-        return addr.split("@", 1)[0]
+        return m.group("email").strip()
     return addr
 
 
