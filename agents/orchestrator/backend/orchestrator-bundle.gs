@@ -406,8 +406,6 @@ function handleFatal_(err, update) {
     '',
     'Сообщение: ' + htmlEscape_(msg),
     '',
-    'Update: ' + htmlEscape_(truncate_(JSON.stringify(update || {}), 500)),
-    '',
     'Состояние воркфлоу (если был активен) сохранено. Можете продолжить через Telegram.'
   ].join('\n');
 
@@ -504,7 +502,16 @@ var ARCHIVED_SUBFOLDER_ = 'archived';
  */
 function getOrchestratorRoot_() {
   var folderId = getProp_('ORCHESTRATOR_STATE_FOLDER_ID', true);
-  return DriveApp.getFolderById(folderId);
+  var lastErr;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      return DriveApp.getFolderById(folderId);
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) Utilities.sleep(2000 * (attempt + 1));
+    }
+  }
+  throw lastErr;
 }
 
 function getOrCreateSubfolder_(parent, name) {
@@ -1400,7 +1407,11 @@ function triageStep2_GetContext_(state) {
     var t = state.data.raw_threads[i];
     try {
       var res = callEmailer_({ action: 'get_thread', thread_id: t.thread_id });
-      t.messages = res.messages || [];
+      t.messages = (res.messages || []).map(function (m) {
+        if (m.body_plain) m.body_plain = m.body_plain.substring(0, 500);
+        delete m.body_html;
+        return m;
+      });
     } catch (e) {
       t.messages = [];
       state.error_log.push({ step_index: 2, error_type: 'get_thread_failed',
