@@ -272,19 +272,35 @@ trail_md.append("```")
 
 import re as _re
 
+
 def _extract_email(s):
     m = _re.search(r"<([^>]+)>", s or "")
     return (m.group(1) if m else (s or "")).strip().lower()
 
 
-lead_email = _extract_email(last_from) or "unknown-sender"
+def _extract_name(addr):
+    """Folder label: display name if present, else full email, else 'unknown'."""
+    addr = (addr or "").strip()
+    if not addr:
+        return "unknown"
+    m = _re.match(r'^(?:"?(?P<name>[^"<]*?)"?\s*)?<(?P<email>[^>]+)>\s*$', addr)
+    if m:
+        name = (m.group("name") or "").strip()
+        if name:
+            return name
+        return m.group("email").strip()
+    return addr
+
+
+lead_email = _extract_email(last_from)
+lead_name = _extract_name(last_from)
 
 archive_resp = call_emailer({
     "action": "archive",
     "title": "Quick reply — {}".format((subject or QUERY)[:60]),
     "body_plain": "\n".join(trail_md),
-    "archive_label": lead_email,
-    "context": "gmail-quick-reply workflow · query={} · mode={}".format(QUERY, MODE),
+    "archive_label": lead_name,
+    "context": "gmail-quick-reply workflow · query={} · mode={} · email={}".format(QUERY, MODE, lead_email),
 })
 if archive_resp.get("success"):
     print("::notice::Drive trail: {}".format(archive_resp.get("archive_doc_link")))
