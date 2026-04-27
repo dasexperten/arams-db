@@ -1,0 +1,26 @@
+name: Deploy Orchestrator to Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agents/orchestrator/backend/orchestrator-bundle.gs'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install google-auth google-api-python-client
+
+      - name: Deploy to Apps Script
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python3 .github/scripts/deploy_orchestrator.py
