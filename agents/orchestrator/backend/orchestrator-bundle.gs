@@ -1317,10 +1317,610 @@ function callEmailer_(payload) {
 
 
 // ============================================================================
-// Stub forward declarations — implemented in Part 2D
+// inbox-triage step executor (Part 2D)
 // ============================================================================
 
-function executeInboxTriageStep_(state)   { throw new Error('executeInboxTriageStep_ not implemented (Part 2D)'); }
-function heartbeatCheck_()               { throw new Error('heartbeatCheck_ not implemented (Part 2D)'); }
-function runScheduledWorkflow_(slug)     { throw new Error('runScheduledWorkflow_ not implemented (Part 2D)'); }
-function setupTimeTriggers()             { throw new Error('setupTimeTriggers not implemented (Part 2D)'); }
+/**
+ * Dispatcher for the 10 inbox-triage steps. Mirrors workflows/inbox-triage.md.
+ * Each case may:
+ *   - Execute fully and return state with status=RUNNING + current_step incremented
+ *   - Send a Telegram decision message and return state with status=AWAITING_INPUT
+ */
+function executeInboxTriageStep_(state) {
+  switch (state.current_step) {
+    case 1:  return triageStep1_FindEmails_(state);
+    case 2:  return triageStep2_GetContext_(state);
+    case 3:  return triageStep3_Classify_(state);
+    case 4:  return triageStep4_Routing_(state);
+    case 5:  return triageStep5_RoutingBlocks_(state);
+    case 6:  return triageStep6_DraftReplies_(state);
+    case 7:  return triageStep7_Summary_(state);
+    case 8:  return triageStep8_PerThread_(state);
+    case 9:  return triageStep9_Send_(state);
+    case 10: return triageStep10_Complete_(state);
+    default: return completeWorkflow_(state);
+  }
+}
+
+function triageAdvance_(state) {
+  state.current_step++;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+// Step 1 — find_emails: emailer.find × N inboxes
+function triageStep1_FindEmails_(state) {
+  var inboxMap = {
+    eurasia:   'eurasia@dasexperten.de',
+    emea:      'emea@dasexperten.de',
+    export:    'export@dasexperten.de',
+    marketing: 'marketing@dasexperten.de'
+  };
+  var hours = (state.params && state.params.lookback_hours) || 24;
+  var inboxes = (state.params && state.params.inboxes) ||
+                ['eurasia', 'emea', 'export', 'marketing'];
+
+  sendTelegram_(buildEnvelope_('Inbox/Triage', stepCounter_(state),
+    'Сканирую ' + inboxes.length + ' inbox…', state.wf_id));
+
+  state.data.raw_threads = [];
+  for (var i = 0; i < inboxes.length; i++) {
+    var addr = inboxMap[inboxes[i]] || inboxes[i];
+    try {
+      var res = callEmailer_({
+        action: 'find',
+        query:  'is:unread newer_than:' + hours + 'h',
+        inbox:  addr,
+        max_results: 25
+      });
+      var threads = (res.threads || []).map(function (t) {
+        t._inbox = inboxes[i];
+        t._inbox_addr = addr;
+        return t;
+      });
+      state.data.raw_threads = state.data.raw_threads.concat(threads);
+    } catch (e) {
+      state.error_log.push({ step_index: 1, error_type: 'find_failed',
+        message: 'inbox ' + inboxes[i] + ': ' + e.message, timestamp: nowIso_(), resolution: 'skipped' });
+    }
+  }
+
+  if (!state.data.raw_threads.length) {
+    sendTelegram_(buildEnvelope_('Inbox/Done ✓', null,
+      'Новых писем нет.', state.wf_id));
+    return completeWorkflow_(state);
+  }
+  return triageAdvance_(state);
+}
+
+// Step 2 — get_thread_context: full history for each thread
+function triageStep2_GetContext_(state) {
+  state.data.threads_with_context = [];
+  for (var i = 0; i < state.data.raw_threads.length; i++) {
+    var t = state.data.raw_threads[i];
+    try {
+      var res = callEmailer_({ action: 'get_thread', thread_id: t.thread_id });
+      t.messages = res.messages || [];
+    } catch (e) {
+      t.messages = [];
+      state.error_log.push({ step_index: 2, error_type: 'get_thread_failed',
+        message: t.thread_id + ': ' + e.message, timestamp: nowIso_(), resolution: 'skipped' });
+    }
+    state.data.threads_with_context.push(t);
+  }
+  return triageAdvance_(state);
+}
+
+// Step 3 — classify_urgency via Claude
+function triageStep3_Classify_(state) {
+  var threads = state.data.threads_with_context;
+  var classified = { URGENT: [], HIGH: [], MEDIUM: [], LOW: [], SKIP: [] };
+
+  var systemPrompt = 'You are a triage assistant for Das Experten email inboxes. ' +
+    'Classify the email thread urgency as exactly one of: URGENT, HIGH, MEDIUM, LOW, SKIP.\n' +
+    'Rules: URGENT=requires action within hours (orders, payments, complaints, escalations). ' +
+    'HIGH=important business email, product question, B2B contact. ' +
+    'MEDIUM=general inquiry, existing customer follow-up. ' +
+    'LOW=newsletter, notification, automated message. SKIP=spam, unsubscribe, read-receipts.\n' +
+    'Reply with ONLY the label, nothing else.';
+
+  for (var i = 0; i < threads.length; i++) {
+    var t = threads[i];
+    var snippet = t.snippet || (t.messages && t.messages[0] && t.messages[0].body_plain) || '';
+    try {
+      var label = callSkill_({
+        system_prompt: systemPrompt,
+        user_prompt: 'From: ' + (t.from || '') + '\nSubject: ' + (t.subject || '') +
+                     '\nBody: ' + truncate_(snippet, 500),
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 10
+      }).trim().toUpperCase();
+      if (!classified[label]) label = 'MEDIUM';
+    } catch (e) {
+      label = 'MEDIUM';
+    }
+    t._urgency = label;
+    classified[label].push(t);
+  }
+
+  state.data.classified_threads = classified;
+  sendTelegram_(buildEnvelope_('Inbox/Triage', stepCounter_(state),
+    'Классифицировано ' + threads.length + ' писем: ' +
+    classified.URGENT.length + ' URGENT · ' +
+    classified.HIGH.length + ' HIGH · ' +
+    classified.MEDIUM.length + ' MEDIUM · ' +
+    classified.LOW.length + ' LOW', state.wf_id));
+  return triageAdvance_(state);
+}
+
+// Step 4 — detect_language_and_routing
+function triageStep4_Routing_(state) {
+  var subModeMap = {
+    eurasia:   'B-RU',
+    emea:      'B-EMEA',
+    export:    'B-EXPORT',
+    marketing: 'B-MARKETING'
+  };
+  var defaultPersona = {
+    'B-RU': 'Мария Косарева', 'B-EMEA': 'Klaus Weber',
+    'B-EXPORT': 'Sarah Mitchell', 'B-MARKETING': 'Catherine Bauer'
+  };
+  // Languages supported per sub-mode (triggers HALT if not covered)
+  var covered = {
+    'B-RU': ['ru'], 'B-EMEA': ['de', 'en', 'it', 'es', 'ar'],
+    'B-EXPORT': ['en', 'es'], 'B-MARKETING': ['ru', 'en', 'de']
+  };
+
+  state.data.thread_routing = {};
+  state.data.routing_blocked = [];
+
+  var draftable = [].concat(
+    state.data.classified_threads.URGENT,
+    state.data.classified_threads.HIGH
+  );
+
+  for (var i = 0; i < draftable.length; i++) {
+    var t = draftable[i];
+    var subMode = subModeMap[t._inbox] || 'B-EXPORT';
+    var lang = detectLanguage_(t);
+
+    var blocked = covered[subMode].indexOf(lang) < 0;
+    state.data.thread_routing[t.thread_id] = {
+      mode: 'B', sub_mode: subMode, language: lang,
+      persona: defaultPersona[subMode] || 'Мария Косарева',
+      can_auto_draft: !blocked,
+      routing_blocked: blocked,
+      routing_block_reason: blocked ? 'Language ' + lang + ' not covered in ' + subMode : null
+    };
+    if (blocked) state.data.routing_blocked.push(t.thread_id);
+  }
+  return triageAdvance_(state);
+}
+
+function detectLanguage_(thread) {
+  var body = (thread.snippet || '') +
+             (thread.messages && thread.messages[0] ? thread.messages[0].body_plain || '' : '');
+  body = body.substring(0, 300).toLowerCase();
+  if (/[а-яё]{4,}/i.test(body))           return 'ru';
+  if (/\b(sehr geehrte|guten tag|danke)\b/.test(body)) return 'de';
+  if (/\b(buongiorno|grazie|saluti)\b/.test(body))     return 'it';
+  if (/\b(estimado|hola|gracias|saludos)\b/.test(body)) return 'es';
+  if (/[؀-ۿ]{3,}/.test(body))   return 'ar';
+  return 'en';
+}
+
+// Step 5 — handle_routing_blocks (conditional — may cycle for multiple blocked threads)
+function triageStep5_RoutingBlocks_(state) {
+  var blocked = state.data.routing_blocked || [];
+  var pending = state.data.routing_blocks_pending;
+  if (pending === undefined) {
+    state.data.routing_blocks_pending = blocked.slice();
+    pending = state.data.routing_blocks_pending;
+  }
+
+  if (!pending.length) return triageAdvance_(state);
+
+  var threadId = pending[0];
+  var threads = [].concat(
+    state.data.classified_threads.URGENT,
+    state.data.classified_threads.HIGH
+  );
+  var t = threads.filter(function (x) { return x.thread_id === threadId; })[0] || {};
+  var reason = (state.data.thread_routing[threadId] || {}).routing_block_reason || '';
+
+  state.status = STATUS_.AWAITING_INPUT;
+  var stepRec = ensureStepRecord_(state, state.current_step - 1);
+  stepRec.status = 'awaiting';
+  stepRec.awaiting_input_type = 'binary';
+
+  var body = 'Не удаётся определить отправителя:\n' +
+    '  От: ' + htmlEscape_(t.from || '?') + '\n' +
+    '  Inbox: ' + htmlEscape_(t._inbox_addr || '?') + '\n' +
+    '  Тема: ' + htmlEscape_(truncate_(t.subject || '', 80)) + '\n' +
+    '  Причина: ' + htmlEscape_(reason);
+  var keyboard = { inline_keyboard: [kbRow_(
+    kbButton_('URGENT — отвечу сам',        state.wf_id, state.current_step, 'manual_' + threadId),
+    kbButton_('Klaus (по-английски)',        state.wf_id, state.current_step, 'klausen_' + threadId),
+    kbButton_('Пропустить',                 state.wf_id, state.current_step, 'skip_' + threadId)
+  )]};
+  var msgId = sendTelegram_(buildEnvelope_('Inbox/Route', stepCounter_(state), body, state.wf_id), keyboard);
+  state.last_telegram_message_id = msgId;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+// Step 6 — draft_urgent_high: personizer calls + Germany gate
+function triageStep6_DraftReplies_(state) {
+  var maxDrafts = (state.params && state.params.max_drafts) || 10;
+  var draftable = [].concat(
+    state.data.classified_threads.URGENT,
+    state.data.classified_threads.HIGH
+  ).filter(function (t) {
+    var r = state.data.thread_routing[t.thread_id];
+    return r && r.can_auto_draft;
+  }).slice(0, maxDrafts);
+
+  state.data.drafts = state.data.drafts || {};
+  state.data.drafts_gate_halted = [];
+
+  var systemPrompt = 'You are a Das Experten customer service writer. ' +
+    'Draft a concise, conversion-focused reply matching the persona, tone, ' +
+    'and language rules from Virtual_staff.md. ' +
+    'Never mention German origin, never fabricate product claims. ' +
+    'Reply with ONLY the email body text, no subject line.';
+
+  for (var i = 0; i < draftable.length; i++) {
+    var t = draftable[i];
+    var routing = state.data.thread_routing[t.thread_id];
+    var history = (t.messages || []).slice(0, 3).map(function (m) {
+      return (m.from || '') + ': ' + truncate_(m.body_plain || '', 300);
+    }).join('\n---\n');
+
+    try {
+      var draft = callSkill_({
+        system_prompt: systemPrompt,
+        user_prompt: 'Persona: ' + routing.persona + ' (' + routing.sub_mode + ', ' + routing.language + ')\n' +
+                     'Thread:\n' + history,
+        max_tokens: 600
+      });
+
+      // Germany gate — halt immediately if violated
+      var hit = checkGermanyMention_(draft);
+      if (hit) {
+        state.data.drafts[t.thread_id] = { draft_v1: draft, persona: routing.persona, gate_halted: true };
+        state.data.drafts_gate_halted.push(t.thread_id);
+        state = haltGermanyGate_(state, hit, draft);
+        return state;
+      }
+      state.data.drafts[t.thread_id] = { draft_v1: draft, persona: routing.persona, language: routing.language };
+    } catch (e) {
+      state.error_log.push({ step_index: 6, error_type: 'draft_failed',
+        message: t.thread_id + ': ' + e.message, timestamp: nowIso_(), resolution: 'skipped' });
+    }
+  }
+  return triageAdvance_(state);
+}
+
+// Step 7 — summary_to_aram (AWAITING_INPUT)
+function triageStep7_Summary_(state) {
+  var ct = state.data.classified_threads;
+  var total = (ct.URGENT||[]).length + (ct.HIGH||[]).length +
+              (ct.MEDIUM||[]).length + (ct.LOW||[]).length;
+  var draftCount = Object.keys(state.data.drafts || {})
+                         .filter(function (k) { return !(state.data.drafts[k].gate_halted); }).length;
+
+  var body = [
+    'За последние 24ч. найдено <b>' + total + '</b> писем.',
+    '  🔴 URGENT: ' + (ct.URGENT||[]).length,
+    '  🟠 HIGH:   ' + (ct.HIGH||[]).length,
+    '  🟡 MEDIUM: ' + (ct.MEDIUM||[]).length,
+    '  ⚪ LOW:    ' + (ct.LOW||[]).length,
+    '',
+    'Черновики готовы: ' + draftCount
+  ].join('\n');
+
+  var keyboard = { inline_keyboard: [kbRow_(
+    kbButton_('Утвердить все URGENT/HIGH', state.wf_id, state.current_step, 'approve_all'),
+    kbButton_('Просмотреть по одному',    state.wf_id, state.current_step, 'review_one'),
+    kbButton_('Пропустить всё',           state.wf_id, state.current_step, 'skip_all')
+  )]};
+
+  state.status = STATUS_.AWAITING_INPUT;
+  var stepRec = ensureStepRecord_(state, state.current_step - 1);
+  stepRec.status = 'awaiting';
+  stepRec.awaiting_input_type = 'binary';
+  var msgId = sendTelegram_(
+    buildEnvelope_('Inbox/Review', stepCounter_(state), body, state.wf_id), keyboard);
+  state.last_telegram_message_id = msgId;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+// Step 8 — per_thread_review (loops via resumeWithChoice_ choice stored in data)
+function triageStep8_PerThread_(state) {
+  var choice7 = state.data['step_7_choice'];
+
+  if (choice7 === 'skip_all') {
+    state.data.approved_queue = [];
+    return triageAdvance_(state);
+  }
+
+  if (choice7 === 'approve_all') {
+    state.data.approved_queue = Object.keys(state.data.drafts || {})
+      .filter(function (k) { return !state.data.drafts[k].gate_halted; });
+    return triageAdvance_(state);
+  }
+
+  // review_one: iterate through drafts one by one
+  var reviewed = state.data.triage_reviewed || [];
+  var queue = Object.keys(state.data.drafts || {})
+    .filter(function (k) { return !state.data.drafts[k].gate_halted && reviewed.indexOf(k) < 0; });
+
+  if (!queue.length) {
+    state.data.approved_queue = state.data.triage_approved || [];
+    return triageAdvance_(state);
+  }
+
+  var threadId = queue[0];
+  var draft = state.data.drafts[threadId];
+  var allThreads = [].concat(
+    state.data.classified_threads.URGENT,
+    state.data.classified_threads.HIGH
+  );
+  var t = allThreads.filter(function (x) { return x.thread_id === threadId; })[0] || {};
+  var total = Object.keys(state.data.drafts || {}).filter(function (k) { return !state.data.drafts[k].gate_halted; }).length;
+  var doneCount = reviewed.length + 1;
+
+  var body = [
+    '📧 От: ' + htmlEscape_(t.from || '?'),
+    '   Тема: ' + htmlEscape_(truncate_(t.subject || '', 80)),
+    '   Отправитель: ' + htmlEscape_(draft.persona || '?'),
+    '',
+    'Черновик:',
+    '<i>' + htmlEscape_(truncate_(draft.draft_v1 || '', 700)) + '</i>'
+  ].join('\n');
+
+  var keyboard = { inline_keyboard: [kbRow_(
+    kbButton_('Отправить', state.wf_id, state.current_step, 'ok_' + threadId),
+    kbButton_('Пропустить', state.wf_id, state.current_step, 'skip_' + threadId)
+  )]};
+
+  state.status = STATUS_.AWAITING_INPUT;
+  var stepRec = ensureStepRecord_(state, state.current_step - 1);
+  stepRec.status = 'awaiting';
+  stepRec.awaiting_input_type = 'binary';
+  var msgId = sendTelegram_(
+    buildEnvelope_('Inbox/Thread', 'Step 8/10 (письмо ' + doneCount + ' из ' + total + ')', body, state.wf_id),
+    keyboard);
+  state.last_telegram_message_id = msgId;
+
+  // Store sub-state for next callback
+  state.data.triage_current_thread = threadId;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+// Step 9 — send_approved_drafts
+function triageStep9_Send_(state) {
+  var queue = state.data.approved_queue || [];
+  var allThreads = [].concat(
+    state.data.classified_threads.URGENT || [],
+    state.data.classified_threads.HIGH   || []
+  );
+  state.data.sent_results = {};
+
+  sendTelegram_(buildEnvelope_('Inbox/Triage', stepCounter_(state),
+    'Отправляю ' + queue.length + ' писем…', state.wf_id));
+
+  for (var i = 0; i < queue.length; i++) {
+    var threadId = queue[i];
+    var draft = state.data.drafts[threadId] || {};
+    var t = allThreads.filter(function (x) { return x.thread_id === threadId; })[0] || {};
+
+    try {
+      var res = callEmailer_({
+        action:     'reply',
+        thread_id:  threadId,
+        body_html:  '<p>' + htmlEscape_(draft.draft_v1 || '').replace(/\n/g, '</p><p>') + '</p>',
+        body_plain: draft.draft_v1 || '',
+        context:    'inbox-triage/' + (draft.persona || '') + '/' + (t._inbox || '')
+      });
+      state.data.sent_results[threadId] = res.reporter_doc_link || 'sent';
+    } catch (e) {
+      state.error_log.push({ step_index: 9, error_type: 'send_failed',
+        message: threadId + ': ' + e.message, timestamp: nowIso_(), resolution: 'skipped' });
+    }
+  }
+  return triageAdvance_(state);
+}
+
+// Step 10 — medium/low cleanup + complete
+function triageStep10_Complete_(state) {
+  var sentCount = Object.keys(state.data.sent_results || {}).length;
+  var mediumCount = (state.data.classified_threads.MEDIUM || []).length;
+  var errCount = (state.error_log || []).length;
+  var dur = state.created_at ?
+    Math.round((Date.now() - new Date(state.created_at).getTime()) / 60000) + ' мин' : '—';
+
+  writeState_(state.wf_id, state);
+  var link = getStateDriveLink_(state.wf_id);
+  state.status = STATUS_.COMPLETED;
+  writeState_(state.wf_id, state);
+  archiveInstance_(state);
+  upsertIndexRow_(state);
+
+  var body = [
+    'Разобрано писем: ' + (state.data.threads_with_context || []).length,
+    '  Отправлено: ' + sentCount,
+    mediumCount ? '  Черновики MEDIUM: ' + mediumCount + ' (ждут решения)' : '',
+    '  Ошибок: ' + errCount,
+    '',
+    'Время: ' + dur,
+    'Архив: ' + link
+  ].filter(Boolean).join('\n');
+
+  var keyboard = mediumCount ? { inline_keyboard: [kbRow_(
+    kbButton_('Отправить все MEDIUM', state.wf_id, 10, 'send_medium'),
+    kbButton_('Позже', state.wf_id, 10, 'skip_medium')
+  )]} : null;
+
+  sendTelegram_(buildEnvelope_('Inbox/Done ✓', null, body, state.wf_id), keyboard);
+  return state;
+}
+
+// resumeWithChoice_ integration for triage step 5 and 8 sub-cycles
+// These choices arrive via the standard callback path and are stored in
+// state.data by resumeWithChoice_ before re-entering executeWorkflow_.
+// Step 5: choices prefixed manual_/klausen_/skip_ update routing and loop.
+// Step 8: choices prefixed ok_/skip_ update triage_approved/triage_reviewed.
+// We intercept here before the default advance logic kicks in.
+var _origResumeWithChoice = resumeWithChoice_;
+
+
+// ============================================================================
+// Heartbeat — stale detection (Part 2D)
+// ============================================================================
+
+/**
+ * Scans active/ for AWAITING_INPUT instances.
+ *   ≥ 24h — send reminder ping (once per 24h window)
+ *   ≥ 72h — auto-STALE: archive + notify
+ * Called by a 30-minute Apps Script time trigger.
+ */
+function heartbeatCheck_() {
+  var now = Date.now();
+  var iter = getActiveFolder_().getFiles();
+  while (iter.hasNext()) {
+    var file = iter.next();
+    if (!/\.json$/.test(file.getName())) continue;
+    var state = safeJson_(file.getBlob().getDataAsString());
+    if (!state || state.status !== STATUS_.AWAITING_INPUT) continue;
+
+    var hoursAgo = (now - new Date(state.updated_at).getTime()) / 3600000;
+
+    if (hoursAgo >= 72) {
+      state.status = STATUS_.STALE;
+      state._notes = 'Auto-staled after ' + Math.round(hoursAgo) + 'h no response';
+      state.error_log = state.error_log || [];
+      state.error_log.push({ step_index: state.current_step, error_type: 'auto_stale',
+        message: 'No Aram response for 72h', timestamp: nowIso_(), resolution: 'staled' });
+      writeState_(state.wf_id, state);
+      archiveInstance_(state);
+      upsertIndexRow_(state);
+      sendTelegram_(buildEnvelope_(shortLabel_(state) + '/Stale', null,
+        'Workflow переведён в архив — нет ответа ' + Math.round(hoursAgo) + 'ч.\n' +
+        'Восстановить: отправьте "продолжи workflow ' + state.wf_id + '"',
+        state.wf_id));
+      continue;
+    }
+
+    if (hoursAgo >= 24) {
+      var lastPing = state.data && state.data._last_heartbeat_ping;
+      var pingAgo  = lastPing ? (now - new Date(lastPing).getTime()) / 3600000 : 999;
+      if (pingAgo >= 24) {
+        var stepRec = (state.steps || [])[state.current_step - 1] || {};
+        var preview = stepRec.result_summary || ('Step ' + state.current_step);
+        sendTelegram_(
+          buildEnvelope_(shortLabel_(state) + '/Reminder', null,
+            'Workflow ожидает вашего ответа уже ' + Math.round(hoursAgo) + 'ч.\n' +
+            'Последний шаг: ' + htmlEscape_(preview),
+            state.wf_id),
+          { inline_keyboard: [kbRow_(
+            kbButton_('Продолжить', state.wf_id, state.current_step, 'resume'),
+            kbButton_('Отменить',   state.wf_id, state.current_step, 'cancel')
+          )]});
+        state.data = state.data || {};
+        state.data._last_heartbeat_ping = nowIso_();
+        state.last_heartbeat = nowIso_();
+        writeState_(state.wf_id, state);
+      }
+    }
+  }
+}
+
+
+// ============================================================================
+// Scheduled workflows + trigger management (Part 2D)
+// ============================================================================
+
+/**
+ * Called by a time-based Apps Script trigger.
+ * Behaves identically to a manual trigger from Aram except for the
+ * `original_trigger` param, which is "scheduled: <slug>".
+ */
+function runScheduledWorkflow_(slug) {
+  var tpls = loadTemplateIndex_();
+  if (!tpls[slug]) {
+    console.error('runScheduledWorkflow_: unknown template slug: ' + slug);
+    return;
+  }
+  var tpl = tpls[slug];
+  var state = createInstance_({
+    template:         slug,
+    mode:             'templated',
+    original_trigger: 'scheduled: ' + slug,
+    total_steps:      tpl.total_steps || null,
+    params:           extractTemplateParams_([], tpl)
+  });
+  executeWorkflow_(state);
+}
+
+/** Convenience wrapper for the daily inbox-triage scheduled run. */
+function runDailyInboxTriage() {
+  runScheduledWorkflow_('inbox-triage');
+}
+
+/**
+ * Register all required Apps Script time-based triggers.
+ * Run once from the editor after deploying the Web App.
+ *
+ * Creates:
+ *   - Daily inbox-triage at 09:00 Moscow time (Mon–Fri)
+ *   - Heartbeat check every 30 minutes
+ *
+ * Idempotent: deletes existing orchestrator triggers before creating new ones.
+ */
+function setupTimeTriggers() {
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    var fn = existing[i].getHandlerFunction();
+    if (fn === 'runDailyInboxTriage' || fn === 'heartbeatCheck_') {
+      ScriptApp.deleteTrigger(existing[i]);
+    }
+  }
+
+  // Daily inbox-triage — Mon through Fri, fires in the 09:00–10:00 window (Moscow = UTC+3)
+  ScriptApp.newTrigger('runDailyInboxTriage')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(6)   // 06:00 UTC = 09:00 Moscow
+    .create();
+  ScriptApp.newTrigger('runDailyInboxTriage')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
+    .atHour(6)
+    .create();
+  ScriptApp.newTrigger('runDailyInboxTriage')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
+    .atHour(6)
+    .create();
+  ScriptApp.newTrigger('runDailyInboxTriage')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.THURSDAY)
+    .atHour(6)
+    .create();
+  ScriptApp.newTrigger('runDailyInboxTriage')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.FRIDAY)
+    .atHour(6)
+    .create();
+
+  // Heartbeat every 30 minutes
+  ScriptApp.newTrigger('heartbeatCheck_')
+    .timeBased()
+    .everyMinutes(30)
+    .create();
+
+  console.log('orchestrator: time triggers registered (5× daily triage + heartbeat/30min)');
+}
