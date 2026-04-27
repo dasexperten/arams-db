@@ -1,0 +1,47 @@
+name: Gmail Analyze Sender
+
+# Find the most recent thread from a given sender → read it → run the
+# my-tools/emailer routing logic via Claude API → print structured
+# analysis block (inbox / sub-mode / language / persona / HALT) directly
+# into the Actions log. Drive trail saved.
+#
+# Read + analyze + archive only. No drafts, no replies, no email sent.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sender_query:
+        description: "Sender — full name, email, or any Gmail operator (e.g. 'Ishita Shukla' or 'from:ishita@example.com')"
+        required: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    env:
+      EMAILER_URL: ${{ secrets.EMAILER_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      SENDER_QUERY: ${{ github.event.inputs.sender_query }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify required secrets
+        run: |
+          missing=""
+          [ -z "$EMAILER_URL" ] && missing="$missing EMAILER_URL"
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing secrets:$missing"
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Anthropic SDK
+        run: pip install "anthropic>=0.40"
+
+      - name: Run gmail_analyze_sender.py
+        run: python scripts/gmail_analyze_sender.py
