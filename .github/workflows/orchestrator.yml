@@ -1,0 +1,27 @@
+name: Orchestrator — Morning Mail
+
+on:
+  schedule:
+    # 05:00 UTC = 08:00 Moscow (UTC+3), weekdays
+    - cron: '0 5 * * 1-5'
+  workflow_dispatch:  # manual trigger button in GitHub Actions
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run orchestrator
+        env:
+          TELEGRAM_BOT_TOKEN:    ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ARAM_TELEGRAM_CHAT_ID: ${{ secrets.ARAM_TELEGRAM_CHAT_ID }}
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          EMAILER_EXEC_URL:      ${{ secrets.EMAILER_EXEC_URL }}
+        run: python agents/orchestrator/orchestrator.py

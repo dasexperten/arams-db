@@ -1,0 +1,33 @@
+name: Task — Find Exhibition Emails
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Find exhibition emails
+        env:
+          EMAILER_EXEC_URL:  ${{ secrets.EMAILER_EXEC_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python agents/orchestrator/tasks/find_exhibition_emails.py
+
+      - name: Save results to repo
+        run: |
+          git config user.name  "github-actions"
+          git config user.email "actions@github.com"
+          git add results/exhibitions.md || true
+          git diff --cached --quiet || git commit -m "results: exhibition emails $(date +%Y-%m-%d)"
+          git push || true

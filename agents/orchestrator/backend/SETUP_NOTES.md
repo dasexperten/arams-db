@@ -208,6 +208,122 @@ The webhook URL stays the same — no need to re-register it.
 | Germany gate fires unexpectedly | Review draft in state JSON — check the matched phrase |
 | Workflow stuck in AWAITING_INPUT | heartbeatCheck_ running? Check Triggers; or send message to bot to resume |
 | Apps Script quota exceeded (6 min) | Inbox with very large threads; reduce `max_results` or `lookback_hours` param |
+| GitHub 401 on auto-merge | GITHUB_PAT expired — update Script Property + GITHUB_PAT_ISSUED_DATE |
+| GitHub 403 on auto-merge | Token scope too narrow — recreate PAT with Contents+PR+Metadata write |
+| `GITHUB_REPO missing` | Add Script Property `GITHUB_REPO` = `dasexperten/arams-db` |
+| Auto-merge PR stays open | Repo setting "Allow auto-merge" must be enabled in GitHub → Settings → General |
+| `testGitHubConnection` returns 404 | GITHUB_REPO value is wrong — check owner/repo spelling |
+
+---
+
+## Level 3 GitHub setup (auto-merge pipeline)
+
+Follow these steps **after** completing the base Level 1 setup (Steps 1–12 above).
+
+---
+
+### Step 13: Create GitHub fine-grained Personal Access Token
+
+1. Go to **github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Settings:
+   - **Token name:** `Das Experten Orchestrator`
+   - **Expiration:** 90 days (set a calendar reminder at 80 days to rotate)
+   - **Repository access:** Only selected repositories → `dasexperten/arams-db`
+   - **Repository permissions:**
+     - **Contents:** Read and write
+     - **Pull requests:** Read and write
+     - **Metadata:** Read (auto-selected)
+4. Click **Generate token** — copy the token value immediately (shown only once).
+   Format: `github_pat_...`
+
+---
+
+### Step 14: Add GitHub Script Properties
+
+In Apps Script editor → **Project Settings → Script Properties**, add:
+
+| Property name | Value |
+|---|---|
+| `GITHUB_PAT` | Token from Step 13 (e.g. `github_pat_11ABC...`) |
+| `GITHUB_REPO` | `dasexperten/arams-db` |
+| `GITHUB_PAT_ISSUED_DATE` | Today's date in ISO format (e.g. `2026-04-27`) |
+
+---
+
+### Step 15: Enable auto-merge on the repository
+
+1. Go to **github.com/dasexperten/arams-db → Settings → General**
+2. Scroll to **Pull Requests** section
+3. Check **Allow auto-merge**
+4. Save
+
+This is required for the orchestrator to merge PRs programmatically via API.
+
+---
+
+### Step 16: Test GitHub connection
+
+1. In Apps Script editor, select function `testGitHubConnection` from the dropdown
+2. Click **Run** ▶
+3. Expected console output:
+   ```
+   GitHub connection OK. Repo: dasexperten/arams-db | Default branch: main
+   ```
+4. If you see 401 — token is wrong. If 403 — scope issue. If 404 — GITHUB_REPO is wrong.
+
+---
+
+### Step 17: Register Level 3 time triggers
+
+1. In Apps Script editor, select function `setupTimeTriggers` from the dropdown
+2. Click **Run** ▶ (this **replaces** existing triggers — safe to re-run)
+3. Expected console output:
+   ```
+   orchestrator: time triggers registered (5× daily triage + heartbeat/30min + auto-detect/daily + token-reminder/daily)
+   ```
+4. Verify in **Triggers** (clock icon) — should now see 8 triggers total:
+   - 5× `runDailyInboxTriage` (Mon–Fri)
+   - 1× `heartbeatCheck_` (every 30 min)
+   - 1× `weeklyAutoDetectionScan` (daily 23:00 UTC = 02:00 Moscow)
+   - 1× `tokenRotationReminder` (daily 06:00 UTC = 09:00 Moscow)
+
+---
+
+### Step 18: Re-deploy Web App
+
+After adding the Level 3 code to the bundle:
+
+1. **Deploy → Manage deployments → Edit** (pencil icon on current deployment)
+2. Change version to **New version**
+3. Click **Deploy**
+
+The webhook URL stays the same — no need to re-register it.
+
+---
+
+### Step 19: Smoke test Level 3
+
+To trigger a test auto-detection notification manually:
+
+1. In Apps Script editor, select `weeklyAutoDetectionScan` and click **Run**
+2. If you have at least 3 completed ad-hoc workflows in the Sheet, you should receive a Telegram message with 4 buttons.
+3. Tap **[✅ Approve & auto-merge]** — the orchestrator should:
+   - Create branch `auto-templates/<wf_id>-<slug>`
+   - Commit the template file
+   - Open and merge a PR
+   - Send you a Telegram with merge SHA + PR link
+4. Verify the PR and merge in GitHub.
+
+---
+
+### Step 20: Configure Drive pending-templates folder
+
+The orchestrator saves template drafts to `Orchestrator_State/pending-templates/`.
+This subfolder is created automatically on first use — no manual setup needed.
+
+If the folder gets cluttered: any `.md` file older than 90 days without Aram approval
+is automatically trashed by the scheduled cleanup (same trigger as heartbeat).
 
 ---
 

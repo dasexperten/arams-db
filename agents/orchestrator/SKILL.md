@@ -82,13 +82,26 @@ Full protocol: `reference/ad-hoc-protocol.md`.
 
 **When:** Same ad-hoc pattern appears 3+ times within 30 days at 80%+ structural similarity, with stable Aram decisions (no exception overrides).
 
-Behavior:
-- Orchestrator drafts a new template based on observed instances.
-- Sends draft to Aram via Telegram with "Approve / Edit / Discard" buttons.
-- On approval: draft moves from `reference/pending-templates/` to `workflows/` (via GitHub commit).
-- From next trigger: runs as templated mode.
+Behavior (**Level 3 — fully automatic GitHub merge**):
+- Orchestrator drafts a new template based on observed instances, saves to `reference/pending-templates/` in Drive.
+- Sends draft to Aram via Telegram with 4 buttons:
+  - **[📄 Показать драфт]** — preview first 1000 chars + Drive link
+  - **[✅ Approve & auto-merge]** — runs the full GitHub pipeline automatically
+  - **[✏️ Сначала отредактирую в Drive]** — Aram edits in Drive, then pipeline runs
+  - **[❌ Это не паттерн]** — decline, suppress pattern for 30 days
+- On **[✅ Approve & auto-merge]**: orchestrator automatically:
+  1. Creates feature branch `auto-templates/<wf_id>-<slug>`
+  2. Commits the template with structured audit metadata in commit message
+  3. Opens PR with qualifying instance IDs and similarity stats
+  4. Validates (path guard, size, YAML frontmatter, no secrets, mergeable state)
+  5. Squash-merges if all checks pass
+  6. Deletes feature branch, removes Drive draft
+  7. Sends Aram confirmation with merge SHA + PR link
+- From next trigger: template available in `workflows/`, runs as templated mode.
 
-Full criteria: `reference/auto-detection-rules.md`.
+GitHub integration details: `reference/github-integration.md`.
+Full promotion criteria: `reference/auto-detection-rules.md`.
+New Script Properties required: `GITHUB_PAT`, `GITHUB_REPO`, `GITHUB_PAT_ISSUED_DATE`.
 
 ---
 

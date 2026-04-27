@@ -37,6 +37,12 @@ signed contract, published post). Continue when the worst case is a slight ineff
 | Non-B2C draft fails Conversion Gate twice | Second rewrite also fails | Conversion Gate |
 | 3 consecutive step errors | Same step fails 3 times → retry limit | Error Recovery |
 | Apps Script execution near timeout | Remaining time < 30 seconds in non-idempotent step | Timeout Safety |
+| GitHub token expired/revoked | GitHub API returns 401 on any operation | GitHub Auth |
+| GitHub token insufficient scope | GitHub API returns 403 (permissions) | GitHub Auth |
+| GitHub rate limit not resolvable | 403 + RateLimit-Remaining=0 and reset >120s away | GitHub Rate Limit |
+| Template file already exists on main | GET contents returns 200 before commit | GitHub Conflict |
+| Commit conflict mid-pipeline | GitHub returns 409 on commit | GitHub Conflict |
+| GitHub PR creation fails after 3 retries | All backoff retries exhausted | GitHub API Error |
 
 ---
 
@@ -156,6 +162,52 @@ wf_id: INBOX_TRIAGE_2026_04_27_01
 ```
 
 4. On "Продолжить сейчас" → new doPost → fresh 6-minute budget → continues from step 8.
+
+---
+
+### Scenario 6: GitHub auto-merge pipeline failures
+
+**Case A — Token expired (401):**
+
+```
+🤖 ORCHESTRATOR — GitHub/Auth 🔴
+Step 1/1 — ТРЕБУЕТ ВНИМАНИЯ
+
+GITHUB_PAT истёк или был отозван.
+GitHub-операция: создание ветки auto-templates/<wf_id>-<slug>
+
+Действие: обновить GITHUB_PAT в Script Properties Apps Script.
+После обновления — обновить GITHUB_PAT_ISSUED_DATE.
+
+[🔴 Понял, обновлю]
+
+wf_id: AUTO_DETECT_<name>_<date>
+```
+
+No retry after 401 — re-promotion must be triggered manually after token rotation.
+
+**Case B — Template file already exists (conflict):**
+
+```
+🤖 ORCHESTRATOR — GitHub/Conflict 🔴
+Step 1/1 — ТРЕБУЕТ ВНИМАНИЯ
+
+Шаблон "<name>" уже существует в репозитории.
+Путь: agents/orchestrator/workflows/<name>.md
+
+Варианты:
+
+[Переименовать и попробовать снова]  [Отменить]
+
+wf_id: AUTO_DETECT_<name>_<date>
+```
+
+On "Переименовать": next Aram free-text message provides new name → orchestrator retries with new slug.
+
+**Case C — Validation failed (PR open, not merged):**
+
+PR stays open. Telegram notification uses Type 7 format (see `telegram-templates.md`).
+Not a HALT — workflow instance moves to COMPLETED with `validation_status: failed:<errors>` in Sheet.
 
 ---
 
