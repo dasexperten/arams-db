@@ -343,9 +343,9 @@ trail.append("```")
 
 archive_resp = call_emailer({
     "action": "archive",
-    "title": "Sender analysis · {}".format(SENDER_QUERY)[:80],
+    "title": "Sender analysis — {}".format(SENDER_QUERY)[:80],
     "body_plain": "\n".join(trail),
-    "archive_label": "sender-analysis",
+    "archive_label": sender_email or "unknown-sender",
     "context": "gmail-analyze-sender workflow · query={}".format(SENDER_QUERY),
 })
 if archive_resp.get("success"):

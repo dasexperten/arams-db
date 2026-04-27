@@ -270,11 +270,20 @@ trail_md.append("```")
 trail_md.append(reply_text)
 trail_md.append("```")
 
+import re as _re
+
+def _extract_email(s):
+    m = _re.search(r"<([^>]+)>", s or "")
+    return (m.group(1) if m else (s or "")).strip().lower()
+
+
+lead_email = _extract_email(last_from) or "unknown-sender"
+
 archive_resp = call_emailer({
     "action": "archive",
-    "title": "Quick reply · {}".format((subject or QUERY)[:60]),
+    "title": "Quick reply — {}".format((subject or QUERY)[:60]),
     "body_plain": "\n".join(trail_md),
-    "archive_label": "gmail-quick-reply",
+    "archive_label": lead_email,
     "context": "gmail-quick-reply workflow · query={} · mode={}".format(QUERY, MODE),
 })
 if archive_resp.get("success"):
