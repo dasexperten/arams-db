@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       to:
-        description: "Registered contact name (telegramer/contacts.json). Leave blank to use chat_id or default."
+        description: "Registered contact name (my-tools/telegramer/contacts.json). Leave blank to use chat_id or default."
         required: false
         default: ""
       chat_id:
@@ -47,6 +47,8 @@ jobs:
         run: pip install "httpx>=0.27"
 
       - name: Send message
+        env:
+          PYTHONPATH: my-tools
         run: |
           if [ -n "$TG_TO" ]; then
             python -m telegramer send --to "$TG_TO" --text "$TG_TEXT"

@@ -32,4 +32,6 @@ jobs:
         run: pip install "httpx>=0.27"
 
       - name: Pull updates
+        env:
+          PYTHONPATH: my-tools
         run: python -m telegramer updates
