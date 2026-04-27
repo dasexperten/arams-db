@@ -802,10 +802,525 @@ function buildIndexRow_(state) {
 
 
 // ============================================================================
-// Stub forward declarations — implemented in 2C/2D.
+// Workflow engine — mode selection, execution loop, gates, skill/tool callers
 // ============================================================================
 
-function startWorkflow_(triggerText)        { throw new Error('startWorkflow_ not implemented (Part 2C)'); }
-function resumeFreeText_(state, text)       { throw new Error('resumeFreeText_ not implemented (Part 2C)'); }
-function resumeWithChoice_(state, choice)   { throw new Error('resumeWithChoice_ not implemented (Part 2C)'); }
-function sendDisambiguation_(states, text)  { throw new Error('sendDisambiguation_ not implemented (Part 2C)'); }
+/**
+ * Entry point for every new trigger from Aram.
+ * Selects mode → creates instance → begins execution.
+ */
+function startWorkflow_(triggerText) {
+  var mode = selectMode_(triggerText);
+
+  if (mode.type === 'templated') {
+    var state = createInstance_({
+      template:         mode.template,
+      mode:             'templated',
+      original_trigger: triggerText,
+      total_steps:      mode.total_steps || null,
+      params:           mode.params || {}
+    });
+    executeWorkflow_(state);
+    return;
+  }
+
+  if (mode.type === 'confirm') {
+    var msgId = sendTelegram_(
+      buildEnvelope_('Mode/Confirm', null,
+        'Вы имеете в виду шаблон <b>' + htmlEscape_(mode.template) + '</b>?\n' +
+        'Уверенность совпадения: ' + Math.round(mode.score * 100) + '%',
+        null),
+      { inline_keyboard: [kbRow_(
+          kbButton_('Да, запустить', 'MODE_CONFIRM_' + Date.now(), 0, 'yes_' + mode.template),
+          kbButton_('Нет, описать задачу', 'MODE_CONFIRM_' + Date.now(), 0, 'adhoc')
+        )]
+      });
+    return;
+  }
+
+  if (mode.type === 'disambiguate') {
+    var rows = mode.matches.map(function (m) {
+      return kbRow_(kbButton_(m.template + ' (' + Math.round(m.score * 100) + '%)',
+                              'MODE_DIS_' + Date.now(), 0, 'tpl_' + m.template));
+    });
+    rows.push(kbRow_(kbButton_('Другой — опишите', 'MODE_DIS_' + Date.now(), 0, 'adhoc')));
+    sendTelegram_(
+      buildEnvelope_('Mode/Select', null,
+        'Несколько шаблонов подходят. Выберите:', null),
+      { inline_keyboard: rows });
+    return;
+  }
+
+  // Ad-hoc or auto-detection offered: create instance and go to planning.
+  var adState = createInstance_({
+    template:         'adhoc',
+    mode:             'ad-hoc',
+    original_trigger: triggerText,
+    total_steps:      null,
+    params:           { original_trigger: triggerText }
+  });
+  proposeAdHocPlan_(adState, triggerText);
+}
+
+/**
+ * Mode selection algorithm (see reference/mode-selection.md).
+ * Returns one of:
+ *   { type: 'templated', template, params, total_steps }
+ *   { type: 'confirm',   template, score }
+ *   { type: 'disambiguate', matches: [{template, score}] }
+ *   { type: 'adhoc' }
+ */
+function selectMode_(triggerText) {
+  var TEMPLATES_ = loadTemplateIndex_();
+  var tokens = tokenize_(triggerText);
+  var scored = [];
+
+  for (var slug in TEMPLATES_) {
+    var tpl = TEMPLATES_[slug];
+    var best = 0;
+    var phrases = tpl.trigger_phrases || [];
+    for (var i = 0; i < phrases.length; i++) {
+      var phraseTokens = tokenize_(phrases[i]);
+      var matches = 0;
+      for (var j = 0; j < phraseTokens.length; j++) {
+        if (tokens.indexOf(phraseTokens[j]) >= 0) matches++;
+      }
+      var coverage = phraseTokens.length ? matches / phraseTokens.length : 0;
+      var primaryBonus = (phraseTokens.length >= 3 && matches >= 3) ? 1.2 : 1.0;
+      var score = Math.min(coverage * primaryBonus, 1.0);
+      if (score > best) best = score;
+    }
+    if (best > 0) scored.push({ template: slug, score: best, meta: tpl });
+  }
+
+  scored.sort(function (a, b) { return b.score - a.score; });
+
+  var strong = scored.filter(function (s) { return s.score >= 0.85; });
+  if (strong.length === 1) {
+    var params = extractTemplateParams_(tokens, strong[0].meta);
+    return { type: 'templated', template: strong[0].template,
+             params: params, total_steps: strong[0].meta.total_steps };
+  }
+  if (strong.length > 1) {
+    return { type: 'disambiguate', matches: strong };
+  }
+
+  var medium = scored.filter(function (s) { return s.score >= 0.60; });
+  if (medium.length > 0) {
+    return { type: 'confirm', template: medium[0].template, score: medium[0].score };
+  }
+
+  return { type: 'adhoc' };
+}
+
+function tokenize_(text) {
+  return String(text || '').toLowerCase()
+    .replace(/[^\wа-яёа-яё\- ]/gi, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+/**
+ * Hardcoded template index — each entry mirrors the frontmatter of the
+ * corresponding workflows/<slug>.md file. Extend as new templates are added.
+ */
+function loadTemplateIndex_() {
+  return {
+    'inbox-triage': {
+      trigger_phrases: [
+        'утренняя почта', 'разбор inbox', 'triage', 'проверь почту',
+        'что в почте', 'morning inbox', 'triage inbox', 'check mail',
+        'inbox review', 'что пришло на почту'
+      ],
+      total_steps: 10,
+      params_schema: { inboxes: { type: 'array', default_val: ['eurasia','emea','export','marketing'] } }
+    }
+  };
+}
+
+function extractTemplateParams_(tokens, templateMeta) {
+  var params = {};
+  var schema = (templateMeta && templateMeta.params_schema) || {};
+  for (var key in schema) {
+    params[key] = schema[key].default_val;
+  }
+  // inbox param: single inbox name in tokens
+  var inboxNames = ['eurasia', 'emea', 'export', 'marketing'];
+  for (var i = 0; i < inboxNames.length; i++) {
+    if (tokens.indexOf(inboxNames[i]) >= 0) {
+      params.inboxes = [inboxNames[i]];
+      break;
+    }
+  }
+  return params;
+}
+
+
+// ============================================================================
+// Execution loop — template dispatcher + resume handlers
+// ============================================================================
+
+/**
+ * Main execution loop. Called on instance create, and after every resume.
+ * Runs synchronously until the workflow enters AWAITING_INPUT, COMPLETED,
+ * FAILED, or CANCELLED.
+ */
+function executeWorkflow_(state) {
+  try {
+    while (state.status === STATUS_.RUNNING) {
+      state = dispatchStep_(state);
+      if (!state) return;
+    }
+  } catch (err) {
+    reportWorkflowError_(state, state.current_step, err);
+  }
+}
+
+/**
+ * Route current step to the appropriate handler based on template.
+ * Returns updated state (may have status AWAITING_INPUT, RUNNING, COMPLETED).
+ */
+function dispatchStep_(state) {
+  if (state.template === 'inbox-triage') {
+    return executeInboxTriageStep_(state);
+  }
+  if (state.template === 'adhoc') {
+    return executeAdHocStep_(state);
+  }
+  throw new Error('Unknown template: ' + state.template);
+}
+
+/**
+ * Ad-hoc step executor — drives the plan approved by Aram.
+ * Called for each step in params.plan_steps[].
+ */
+function executeAdHocStep_(state) {
+  var steps = (state.params && state.params.plan_steps) || [];
+  var idx = state.current_step - 1;
+
+  if (!state.params.plan_approved) {
+    // Still in planning — execution shouldn't be called before approval.
+    state.status = STATUS_.AWAITING_INPUT;
+    writeState_(state.wf_id, state);
+    return state;
+  }
+
+  if (idx >= steps.length) {
+    return completeWorkflow_(state);
+  }
+
+  var step = steps[idx];
+  var stepRec = ensureStepRecord_(state, idx);
+  stepRec.status = 'running';
+  stepRec.started_at = nowIso_();
+  writeState_(state.wf_id, state);
+
+  var result;
+  if (step.type === 'skill_call') {
+    result = callSkill_({ system_prompt: step.system_prompt || '', user_prompt: step.user_prompt || '' });
+    state.data[step.output_key || ('step_' + state.current_step)] = result;
+  } else if (step.type === 'tool_call') {
+    result = callEmailer_(step.payload || {});
+    state.data[step.output_key || ('step_' + state.current_step)] = result;
+  } else if (step.type === 'user_decision') {
+    return awaitUserDecision_(state, step, stepRec);
+  }
+
+  stepRec.status = 'completed';
+  stepRec.ended_at = nowIso_();
+  stepRec.result_summary = truncate_(String(result || ''), 200);
+  state.current_step++;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+function ensureStepRecord_(state, idx) {
+  state.steps = state.steps || [];
+  while (state.steps.length <= idx) state.steps.push(null);
+  if (!state.steps[idx]) {
+    state.steps[idx] = { index: idx + 1, status: 'pending' };
+  }
+  return state.steps[idx];
+}
+
+/** Pause execution pending Aram's inline-button response. */
+function awaitUserDecision_(state, step, stepRec) {
+  stepRec.status = 'awaiting';
+  stepRec.awaiting_input_type = step.awaiting_input_type || 'binary';
+  state.status = STATUS_.AWAITING_INPUT;
+
+  var msgId = sendTelegram_(
+    buildEnvelope_(shortLabel_(state), stepCounter_(state),
+      htmlEscape_(step.message || 'Требуется ваше решение.'), state.wf_id),
+    step.keyboard || null);
+
+  stepRec.telegram_message_id = msgId;
+  state.last_telegram_message_id = msgId;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+/** Continue a workflow after Aram clicked an inline button. */
+function resumeWithChoice_(state, choice) {
+  if (choice === 'cancel') {
+    state.status = STATUS_.CANCELLED;
+    state._notes = 'Cancelled by Aram at step ' + state.current_step;
+    writeState_(state.wf_id, state);
+    archiveInstance_(state);
+    sendTelegram_(buildEnvelope_(shortLabel_(state) + '/Cancelled', null,
+      'Workflow отменён. Частичные результаты сохранены.', state.wf_id));
+    return;
+  }
+
+  if (choice === 'retry') {
+    state.status = STATUS_.RUNNING;
+    var stepRec = ensureStepRecord_(state, state.current_step - 1);
+    stepRec.status = 'pending';
+    writeState_(state.wf_id, state);
+    executeWorkflow_(state);
+    return;
+  }
+
+  // Normal choice — store in step record, advance, resume loop.
+  var stepRec = ensureStepRecord_(state, state.current_step - 1);
+  stepRec.result = choice;
+  stepRec.status = 'completed';
+  stepRec.ended_at = nowIso_();
+  state.status = STATUS_.RUNNING;
+  state.current_step++;
+  state.data['step_' + (state.current_step - 1) + '_choice'] = choice;
+  writeState_(state.wf_id, state);
+  executeWorkflow_(state);
+}
+
+/** Continue a workflow after Aram typed free text. */
+function resumeFreeText_(state, text) {
+  var stepRec = ensureStepRecord_(state, state.current_step - 1);
+  stepRec.result = text;
+  stepRec.status = 'completed';
+  stepRec.ended_at = nowIso_();
+  state.status = STATUS_.RUNNING;
+  state.current_step++;
+  state.data['step_' + (state.current_step - 1) + '_text'] = text;
+  writeState_(state.wf_id, state);
+  executeWorkflow_(state);
+}
+
+/** Disambiguation when 2+ workflows await free-text input. */
+function sendDisambiguation_(awaitingStates, text) {
+  var rows = awaitingStates.map(function (s) {
+    var preview = truncate_((s.params && s.params.original_trigger) || s.wf_id, 40);
+    return kbRow_(kbButton_(preview, s.wf_id, s.current_step, 'freetext_claim'));
+  });
+  rows.push(kbRow_(kbButton_('Новый workflow', 'DISAMBIG', 0, 'new')));
+  sendTelegram_(
+    buildEnvelope_('Disambiguate', null,
+      'Получен текстовый ответ. К какому workflow он относится?\n' +
+      'Ваш текст: <i>' + htmlEscape_(truncate_(text, 100)) + '</i>', null),
+    { inline_keyboard: rows });
+}
+
+/** Mark workflow completed, archive, notify Aram. */
+function completeWorkflow_(state) {
+  state.status = STATUS_.COMPLETED;
+  var stepsOk = (state.steps || []).filter(function (s) { return s && s.status === 'completed'; }).length;
+  var dur = state.created_at ?
+    Math.round((Date.now() - new Date(state.created_at).getTime()) / 60000) + ' мин' : '—';
+
+  writeState_(state.wf_id, state);
+  var link = getStateDriveLink_(state.wf_id);
+  archiveInstance_(state);
+  upsertIndexRow_(state);
+
+  var body = 'Workflow завершён. ✓\n\nШагов выполнено: ' + stepsOk +
+             '\nВремя: ' + dur +
+             '\nАрхив: ' + link;
+  sendTelegram_(buildEnvelope_(shortLabel_(state) + '/Done', null, body, state.wf_id));
+  return state;
+}
+
+/** Proposal message for ad-hoc Phase 1. */
+function proposeAdHocPlan_(state, triggerText) {
+  var body = [
+    '<b>Задача:</b> ' + htmlEscape_(truncate_(triggerText, 200)),
+    '',
+    'Опишите шаги задачи, или выберите действие:'
+  ].join('\n');
+
+  var keyboard = { inline_keyboard: [
+    kbRow_(
+      kbButton_('Запустить как есть', state.wf_id, 1, 'plan_approve'),
+      kbButton_('Отменить', state.wf_id, 1, 'cancel')
+    )
+  ]};
+
+  var stepRec = ensureStepRecord_(state, 0);
+  stepRec.name = 'plan_approval';
+  stepRec.status = 'awaiting';
+  stepRec.awaiting_input_type = 'free_text';
+  state.status = STATUS_.AWAITING_INPUT;
+  state._label_override = 'Ad-hoc/Plan';
+
+  var msgId = sendTelegram_(
+    buildEnvelope_('Ad-hoc/Plan', 'Step 1/1 (planning)', body, state.wf_id),
+    keyboard);
+  stepRec.telegram_message_id = msgId;
+  state.last_telegram_message_id = msgId;
+  writeState_(state.wf_id, state);
+}
+
+
+// ============================================================================
+// Consistency gates — Germany check + product gate (remaining gates in 2D)
+// ============================================================================
+
+/**
+ * Scan text for forbidden Germany-origin phrases (all languages, all variants).
+ * Returns the matched phrase string, or null if clean.
+ */
+function checkGermanyMention_(text) {
+  var t = String(text || '');
+  var patterns = [
+    /немецкое производство/i, /немецкая наука/i, /из германии/i,
+    /сделано в германии/i,    /немецкие технологии/i, /немецкое качество/i,
+    /немецкий бренд/i,
+    /german brand/i,   /from germany/i,     /made in germany/i,
+    /german science/i, /german technology/i, /german quality/i,
+    /german[\s\-]made/i, /german origin/i,
+    /deutsche herkunft/i, /deutsches unternehmen/i, /deutsche wissenschaft/i,
+    /aus deutschland/i,
+    /azienda tedesca/i, /tecnologia tedesca/i, /qualit[àa] tedesca/i,
+    /marca alemana/i, /ciencia alemana/i, /calidad alemana/i,
+    /hecho en alemania/i,
+    /ألماني/u,
+    /صناعة ألمانية/u
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    var m = t.match(patterns[i]);
+    if (m) return m[0];
+  }
+  return null;
+}
+
+/**
+ * Send a hard-HALT message for a failed Germany gate.
+ * Stores the halt in state.data.gate_halt and writes state as AWAITING_INPUT.
+ * Returns the updated state.
+ */
+function haltGermanyGate_(state, matchedPhrase, contextSnippet) {
+  var body = [
+    'В тексте обнаружено недопустимое упоминание немецкого происхождения:',
+    '  Фраза: <b>' + htmlEscape_(matchedPhrase) + '</b>',
+    '  Контекст: <i>…' + htmlEscape_(truncate_(contextSnippet, 100)) + '…</i>',
+    '',
+    'Это абсолютный запрет. Текст не отправляется.'
+  ].join('\n');
+
+  var keyboard = { inline_keyboard: [kbRow_(
+    kbButton_('Удалить фразу и продолжить', state.wf_id, state.current_step, 'gate_germany_remove'),
+    kbButton_('Переписать черновик',         state.wf_id, state.current_step, 'gate_germany_rewrite')
+  )]};
+
+  state.status = STATUS_.AWAITING_INPUT;
+  state.data.gate_halt = { gate: 'germany', phrase: matchedPhrase };
+  var msgId = sendTelegram_(
+    buildEnvelope_('Gate/Germany 🔴', stepCounter_(state) + ' — HARD HALT', body, state.wf_id),
+    keyboard);
+  state.last_telegram_message_id = msgId;
+  writeState_(state.wf_id, state);
+  return state;
+}
+
+
+// ============================================================================
+// External callers — Claude API (skills) and emailer (tool)
+// ============================================================================
+
+/**
+ * Call a skill via the Claude API (Anthropic HTTP API).
+ * System prompt is cached when longer than 2000 chars to save tokens.
+ *
+ * @param {object} opts
+ *   opts.system_prompt  {string}  — skill SKILL.md content or constructed prompt
+ *   opts.user_prompt    {string}  — the specific request for this skill call
+ *   opts.model          {string}  — defaults to claude-sonnet-4-6
+ *   opts.max_tokens     {number}  — defaults to 2000
+ * @returns {string} text output from Claude
+ */
+function callSkill_(opts) {
+  var apiKey = getProp_('ANTHROPIC_API_KEY', true);
+  var model = opts.model || 'claude-sonnet-4-6';
+  var maxTok = opts.max_tokens || 2000;
+
+  var systemBlock;
+  if (opts.system_prompt && opts.system_prompt.length > 2000) {
+    systemBlock = [{ type: 'text', text: opts.system_prompt,
+                     cache_control: { type: 'ephemeral' } }];
+  } else {
+    systemBlock = opts.system_prompt || '';
+  }
+
+  var body = JSON.stringify({
+    model:      model,
+    max_tokens: maxTok,
+    system:     systemBlock,
+    messages:   [{ role: 'user', content: opts.user_prompt }]
+  });
+
+  var resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    headers: {
+      'x-api-key':         apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta':    'prompt-caching-2024-07-31',
+      'content-type':      'application/json'
+    },
+    payload: body,
+    muteHttpExceptions: true
+  });
+
+  var data = safeJson_(resp.getContentText());
+  if (!data || !data.content || !data.content[0] || !data.content[0].text) {
+    throw new Error('callSkill_: bad Claude response: ' +
+                    truncate_(resp.getContentText(), 400));
+  }
+  return data.content[0].text;
+}
+
+/**
+ * Call the emailer tool via HTTP POST to EMAILER_EXEC_URL.
+ * Follows the same payload schema as my-tools/emailer.
+ *
+ * @param {object} payload — emailer action payload
+ * @returns {object} parsed emailer response
+ */
+function callEmailer_(payload) {
+  var url = getProp_('EMAILER_EXEC_URL', true);
+  var resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+    followRedirects: true
+  });
+
+  var data = safeJson_(resp.getContentText());
+  if (!data) {
+    throw new Error('callEmailer_: non-JSON response: ' +
+                    truncate_(resp.getContentText(), 300));
+  }
+  if (!data.success) {
+    throw new Error('callEmailer_: tool error: ' + String(data.error || JSON.stringify(data)));
+  }
+  return data;
+}
+
+
+// ============================================================================
+// Stub forward declarations — implemented in Part 2D
+// ============================================================================
+
+function executeInboxTriageStep_(state)   { throw new Error('executeInboxTriageStep_ not implemented (Part 2D)'); }
+function heartbeatCheck_()               { throw new Error('heartbeatCheck_ not implemented (Part 2D)'); }
+function runScheduledWorkflow_(slug)     { throw new Error('runScheduledWorkflow_ not implemented (Part 2D)'); }
+function setupTimeTriggers()             { throw new Error('setupTimeTriggers not implemented (Part 2D)'); }
