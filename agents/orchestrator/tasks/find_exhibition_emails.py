@@ -1,22 +1,73 @@
 """
 Task: Find all event-related emails from the last 2 months.
-Strategy: scan ALL emails in the period (paginate by weekly date windows),
-read body of each, let Claude judge by full context.
+Pipeline:
+  1. fetch all threads from period (weekly windows, dedupe)
+  2. cheap regex pre-filter — skip obvious junk (no API calls)
+  3. fetch body + Claude Haiku filter — keep only event-related
+  4. Claude Sonnet — analysis + draft per event
 
 Output: GitHub Actions step summary + results/exhibitions.md
 """
 
-import os, sys, json, urllib.request
+import os, sys, json, re, urllib.request
 from datetime import datetime, timedelta
 
 LOOKBACK_DAYS = 60
-WINDOW_DAYS   = 7    # search week-by-week to bypass emailer's 50-result cap
-PER_WINDOW    = 50   # emailer hard cap
+WINDOW_DAYS   = 7
+PER_WINDOW    = 50
 
 BASE_QUERY = "-in:sent -in:trash -in:spam -category:promotions -category:social -category:forums"
 
 MODEL_FILTER = "claude-haiku-4-5-20251001"
 MODEL_DETAIL = "claude-sonnet-4-6"
+
+# ── Regex pre-filter (no API calls) ──────────────────────────────────────────
+
+JUNK_SENDER_PATTERNS = [
+    r'\bnoreply\b', r'\bno-reply\b', r'\bdonotreply\b', r'\bdo-not-reply\b',
+    r'\bnotifications?@', r'\bnotify@', r'\bmailer-daemon\b', r'\bpostmaster@',
+    r'\bauto-?reply\b', r'\bautoresponder\b', r'\bdelivery-noreply\b',
+    r'\bbilling@', r'\binvoicing@', r'\baccounts@', r'\bpayments?@',
+    r'\bsupport@', r'\bhelp@', r'\bcustomercare@', r'\bcs@',
+    r'\bsystem@', r'\bservice@', r'\bnews@', r'\bnewsletter@',
+    r'\bunsubscribe@', r'\bbounce', r'\bdaemon@',
+    r'@.*\.amazonses\.com', r'@email\.', r'@mailgun', r'@sendgrid',
+    r'@mandrill', r'@sparkpost', r'@postmark',
+]
+
+JUNK_SUBJECT_PATTERNS = [
+    # English
+    r'\binvoice\b', r'\breceipt\b', r'\bpayment confirm', r'\border confirm',
+    r'\bshipping confirm', r'\bdelivery (notification|update)', r'\btracking',
+    r'\byour order', r'\byour package', r'\byour shipment', r'\byour parcel',
+    r'\byour invoice', r'\byour receipt',
+    r'\bpassword\b', r'\bverify\b', r'\bverification\b', r'\b2fa\b',
+    r'\blogin (alert|attempt)', r'\bsecurity alert', r'\bsign[- ]?in',
+    r'\baccount (suspended|locked|blocked)', r'\baccount activity',
+    r'\bunsubscribe', r'\bdigest\b', r'\bweekly summary', r'\bmonthly summary',
+    r'\bcron job', r'\bbackup',
+    # Russian
+    r'\bсчёт\b', r'\bсчет\b', r'\bквитанц', r'\bоплат[аы] получ',
+    r'\bподтверж.*заказ', r'\bваш заказ', r'\bваше отправление',
+    r'\bотправление\b', r'\bтрек.*номер', r'\bдоставк[аи]',
+    r'\bпароль\b', r'\bподтвержд.*код', r'\bкод подтверж',
+    r'\bвход в аккаунт', r'\bвхода в аккаунт',
+    r'\bотписк', r'\bдайджест', r'\bнедельн.*обзор',
+    # German
+    r'\brechnung\b', r'\bbestellbest', r'\bzahlungsbest',
+    r'\blieferbest', r'\bversandbest', r'\bsendungsverfolg',
+    r'\bpasswort\b', r'\bbestät.*code',
+]
+
+JUNK_SENDER_RE  = re.compile('|'.join(JUNK_SENDER_PATTERNS),  re.IGNORECASE)
+JUNK_SUBJECT_RE = re.compile('|'.join(JUNK_SUBJECT_PATTERNS), re.IGNORECASE)
+
+def is_obviously_junk(thread):
+    sender = (f(thread, 'last_message_from', 'from') or '').lower()
+    subject = (f(thread, 'subject') or '').lower()
+    if JUNK_SENDER_RE.search(sender):  return True
+    if JUNK_SUBJECT_RE.search(subject): return True
+    return False
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -85,7 +136,6 @@ NOT events:
 - Customer support requests, complaints
 - Marketing newsletters with no event invitation
 - Spam, automated notifications
-- Internal company announcements (unless inviting to a specific event)
 
 Read the FULL email content carefully — context matters more than keywords.
 
@@ -116,8 +166,7 @@ def f(t, *keys):
 def fetch_all_threads():
     """Paginate by weekly date windows to bypass emailer's 50-result cap."""
     today = datetime.utcnow().date()
-    seen = {}
-    all_threads = []
+    seen, all_threads = {}, []
     for w in range(0, LOOKBACK_DAYS, WINDOW_DAYS):
         end   = today - timedelta(days=w)
         start = today - timedelta(days=w + WINDOW_DAYS)
@@ -142,21 +191,38 @@ def fetch_all_threads():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print(f"Scanning all emails from last {LOOKBACK_DAYS} days "
-          f"in {WINDOW_DAYS}-day windows…")
+    print(f"Scanning last {LOOKBACK_DAYS} days in {WINDOW_DAYS}-day windows…")
 
     threads = fetch_all_threads()
-    print(f"\nTotal unique threads: {len(threads)}")
+    total = len(threads)
+    print(f"\nFetched: {total} unique threads.")
 
     if not threads:
         write_summary(f"## Мероприятия\n\nПисем за {LOOKBACK_DAYS} дней не найдено.")
         return
 
-    # Read body + classify every thread
+    # 1. Cheap regex pre-filter — skip obvious junk
+    candidates = []
+    skipped = 0
+    for t in threads:
+        if is_obviously_junk(t):
+            skipped += 1
+            continue
+        candidates.append(t)
+    print(f"Pre-filter: skipped {skipped} obvious junk, {len(candidates)} remain.")
+
+    if not candidates:
+        write_summary(
+            f"## Мероприятия\n\nИз **{total}** писем все отсеялись как мусор "
+            f"(уведомления, счета, подтверждения)."
+        )
+        return
+
+    # 2. Body + Claude filter
     events = []
-    for i, t in enumerate(threads):
+    for i, t in enumerate(candidates):
         subj   = f(t, 'subject')[:70]
-        sender = f(t, 'last_message_from', 'from')[:50]
+        sender = f(t, 'last_message_from', 'from')[:40]
         body   = get_body(t.get("thread_id", ""))
         ctx    = f"From: {sender}\nSubject: {f(t, 'subject')}\n\n{body}"
         try:
@@ -169,19 +235,21 @@ def main():
             t["_body"] = body
             events.append(t)
         mark = "✓" if is_event else "·"
-        print(f"  {i+1:3d}/{len(threads)} {mark} {verdict[:5]:<5} | {sender[:30]:<30} | {subj}")
+        print(f"  {i+1:3d}/{len(candidates)} {mark} {verdict[:5]:<5} | {sender[:30]:<30} | {subj}")
 
     print(f"\nFound {len(events)} event-related emails.")
 
     if not events:
         write_summary(
             f"## Мероприятия\n\n"
-            f"Просмотрено **{len(threads)}** писем за {LOOKBACK_DAYS} дней.\n"
+            f"Всего писем за {LOOKBACK_DAYS} дней: **{total}**\n"
+            f"Отсеяно как явный мусор: **{skipped}**\n"
+            f"Проверено Claude: **{len(candidates)}**\n\n"
             f"Ни одно не оказалось про мероприятие/выставку/конференцию."
         )
         return
 
-    # Detailed analysis + draft
+    # 3. Detailed analysis + draft
     results = []
     for i, t in enumerate(events):
         subj = f(t, 'subject')[:60]
@@ -203,11 +271,13 @@ def main():
             "draft":     draft,
         })
 
-    # Render markdown
+    # 4. Render markdown
     lines = [
         f"# Мероприятия — {datetime.now().strftime('%d.%m.%Y')}",
-        f"\nПросмотрено писем за {LOOKBACK_DAYS} дней: **{len(threads)}**",
-        f"Найдено приглашений на мероприятия: **{len(results)}**\n",
+        f"\nВсего писем за {LOOKBACK_DAYS} дней: **{total}**",
+        f"Отсеяно как мусор: **{skipped}**",
+        f"Проверено Claude: **{len(candidates)}**",
+        f"Найдено приглашений: **{len(results)}**\n",
         "---",
     ]
     for n, r in enumerate(results, 1):
