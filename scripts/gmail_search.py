@@ -181,24 +181,41 @@ def _extract_email(s):
     return (m.group(1) if m else (s or "")).strip().lower()
 
 
-# Lead-centric label: if every fetched thread is tied to a single external
-# address (the typical "from:foo@bar" search), file under that lead's folder
-# so all activity for one person lands in the same place. Otherwise fall back
-# to a generic searches/ folder.
+def _extract_name(addr):
+    addr = (addr or "").strip()
+    if not addr:
+        return ""
+    m = _re.match(r'^(?:"?(?P<name>[^"<]*?)"?\s*)?<(?P<email>[^>]+)>\s*$', addr)
+    if m:
+        name = (m.group("name") or "").strip()
+        if name:
+            return name
+        return m.group("email").split("@", 1)[0]
+    if "@" in addr:
+        return addr.split("@", 1)[0]
+    return addr
+
+
+# Lead-centric label by NAME: if every fetched thread is tied to a single
+# external participant, file under that person's name. Otherwise fall back to
+# the generic searches/ folder.
 def _resolve_archive_label(threads_, query_):
-    external_emails = set()
+    external = {}  # email → name
     for t in threads_:
         for p in t.get("participants") or []:
             email = _extract_email(p)
             if email and "dasexperten" not in email:
-                external_emails.add(email)
-    if len(external_emails) == 1:
-        return next(iter(external_emails))
-    # If user typed `from:something@x.com` directly, honour it even when only a
-    # subset of participants matched.
+                external.setdefault(email, _extract_name(p) or email.split("@", 1)[0])
+    if len(external) == 1:
+        return next(iter(external.values()))
+    # If user typed `from:something@x.com` and that resolved to one of the
+    # participants, prefer the name we collected for it.
     m = _re.search(r"from:\s*([^\s]+@[^\s]+)", query_, _re.IGNORECASE)
     if m:
-        return m.group(1).strip().lower()
+        target = m.group(1).strip().lower()
+        if target in external:
+            return external[target]
+        return target.split("@", 1)[0]
     return "searches"
 
 

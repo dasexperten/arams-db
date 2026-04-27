@@ -103,6 +103,26 @@ def extract_email(addr: str) -> str:
     return (m.group(1) if m else addr).strip().lower()
 
 
+def extract_name(addr: str) -> str:
+    """Display name from 'Display Name <email>' format.
+
+    Falls back to local-part of email if no display name. Returns 'unknown'
+    only when the input is genuinely empty.
+    """
+    addr = (addr or "").strip()
+    if not addr:
+        return "unknown"
+    m = re.match(r'^(?:"?(?P<name>[^"<]*?)"?\s*)?<(?P<email>[^>]+)>\s*$', addr)
+    if m:
+        name = (m.group("name") or "").strip()
+        if name:
+            return name
+        return m.group("email").split("@", 1)[0]
+    if "@" in addr:
+        return addr.split("@", 1)[0]
+    return addr
+
+
 # -------- load routing rules verbatim --------
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -237,7 +257,8 @@ def _last_inbound_message(msgs):
 
 inbound = _last_inbound_message(messages)
 sender_email = extract_email(inbound.get("from", ""))
-print("  inbound sender:     {}".format(sender_email))
+sender_name = extract_name(inbound.get("from", ""))
+print("  inbound sender:     {} <{}>".format(sender_name, sender_email))
 
 print()
 print("Step 3: CRM history check (to:{} in:sent)".format(sender_email or "?"))
@@ -345,8 +366,8 @@ archive_resp = call_emailer({
     "action": "archive",
     "title": "Sender analysis — {}".format(SENDER_QUERY)[:80],
     "body_plain": "\n".join(trail),
-    "archive_label": sender_email or "unknown-sender",
-    "context": "gmail-analyze-sender workflow · query={}".format(SENDER_QUERY),
+    "archive_label": sender_name,
+    "context": "gmail-analyze-sender workflow · query={} · email={}".format(SENDER_QUERY, sender_email),
 })
 if archive_resp.get("success"):
     print("::notice::Drive trail: {}".format(archive_resp.get("archive_doc_link")))
