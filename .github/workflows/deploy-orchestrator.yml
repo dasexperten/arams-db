@@ -2,9 +2,12 @@ name: Deploy Orchestrator to Apps Script
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
     paths:
       - 'agents/orchestrator/backend/orchestrator-bundle.gs'
+      - '.github/workflows/deploy-orchestrator.yml'
+      - '.github/scripts/deploy_orchestrator.py'
+  workflow_dispatch:
 
 jobs:
   deploy:
