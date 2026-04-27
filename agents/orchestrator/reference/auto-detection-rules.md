@@ -86,55 +86,72 @@ Orchestrator constructs a template draft:
 
 Draft file location: `agents/orchestrator/reference/pending-templates/<name>-draft.md`
 
-### Step 2: Notify Aram
+### Step 2: Notify Aram (Level 3 format)
 
 ```
 🤖 ORCHESTRATOR — Template/Proposal
 Step 1/1
 
-Обнаружен повторяющийся паттерн:
-  Название: "<proposed_name>"
-  Запусков: 3 за последние 28 дней
-  Схожесть шагов: 94%
-  Решения Арама: стабильные (0 переопределений)
+Я заметил повторяющийся паттерн:
+"<proposed_name>" — 3 раза за последние <days> дней
 
-Примеры триггеров:
-  "follow-up Torwey не ответили"
-  "follow-up ArvitPharm — повторный"
-  "Natusana follow-up 2-я попытка"
+Совпадение шагов: <similarity>%
+Instances: <wf_id_1>, <wf_id_2>, <wf_id_3>
+Решения Арама: стабильные (0 переопределений)
 
-Шаблон сохранит 3–4 минуты на каждый будущий запуск.
-Черновик: <Drive link to pending-templates/draft>
+Драфт нового шаблона готов:
 
-[Сохранить шаблон]  [Просмотреть сначала]  [Пропустить]
+[📄 Показать драфт]
+[✅ Approve & auto-merge to GitHub]
+[✏️ Сначала отредактирую в Drive]
+[❌ Это не паттерн, decline]
 
 wf_id: AUTO_DETECT_<name>_<date>
 ```
 
 ### Step 3: On Aram's response
 
-**"Сохранить шаблон":**
-1. Move draft from `pending-templates/` to `workflows/<name>.md`.
-2. Commit to `claude/build-orchestrator-agent-0CRkZ` branch (or current working branch).
-3. Update Sheet index: add row for auto-detection event with `status: template_promoted`.
-4. Confirm to Aram:
+**Promotion lifecycle (Level 3):**
 
 ```
-🤖 ORCHESTRATOR — Template/Saved
-Шаблон "<name>" добавлен в workflows/.
-Следующий запрос "<trigger_example>" запустится как templated workflow.
-wf_id: AUTO_DETECT_<name>_<date>
+Pattern detected
+  → draft saved to Drive pending-templates/<name>-draft.md
+  → Telegram notification with 4 buttons
+  → Aram taps [✅ Approve & auto-merge]
+  → orchestrator validates draft (path guard, size, YAML, no secrets)
+  → creates GitHub feature branch: auto-templates/<wf_id>-<slug>
+  → commits file to branch
+  → opens PR with structured audit message
+  → polls mergeable state, runs validation gates
+  → auto-merges if valid (squash merge)
+  → deletes Drive draft after successful merge
+  → confirms to Aram with merge SHA + PR link
 ```
 
-**"Просмотреть сначала":**
-1. Send draft content as Telegram message (truncated) + Drive link.
-2. Follow-up buttons: `[Утвердить]` `[Редактировать]` `[Пропустить]`.
-3. On "Редактировать": orchestrator asks what to change via free-text.
+If validation fails → PR stays open, Aram notified with PR link. Not a HALT.
+If GitHub API fails after 3 retries → HALT to Aram.
 
-**"Пропустить":**
-1. Log `auto_detection_declined: true` for those instances in Sheet.
-2. Those instances will NOT be used in future auto-detection checks.
-3. Pattern suppressed for 60 days before detection re-runs.
+Full GitHub API details: `reference/github-integration.md`.
+
+**Approval response routing:**
+
+| Aram action | Orchestrator response |
+|---|---|
+| `[✅ Approve & auto-merge]` | Run full Level 3 pipeline (validate → branch → commit → PR → merge) |
+| `[✏️ Сначала отредактирую в Drive]` | Send Drive link, set state to AWAITING_INPUT free_text; on next Aram message re-validate draft then run pipeline |
+| `[❌ Это не паттерн, decline]` | Delete Drive draft; log `declined` in Sheet; suppress pattern for 30 days |
+| No response within 7 days | Send reminder ping |
+| No response within 14 days total | Archive Drive draft with `status: expired`; log in Sheet |
+
+**"Показать драфт":**
+1. Fetch draft content from Drive.
+2. Send truncated preview (first 1000 chars) + Drive link in Telegram.
+3. Follow-up buttons: `[✅ Approve & auto-merge]` `[✏️ Редактировать]` `[❌ Decline]`.
+
+**"Decline":**
+1. Delete Drive draft from `pending-templates/`.
+2. Log in Sheet: `auto_detection_declined: true`, `reason: "declined by Aram"`.
+3. Add pattern hash to suppression list with `suppressed_until = now + 30 days`.
 
 ---
 

@@ -39,6 +39,18 @@ Required columns (see `state-management.md` for full schema):
 | `drive_link` | After move to archived/ |
 | `notes` | Auto-stale reason, legal transfer note, etc. |
 
+**Additional columns for Level 3 GitHub auto-promotion** (populated for auto-detection rows only):
+
+| Column | Populated when |
+|---|---|
+| `template_promotion` | When auto-detection criteria are met — values: `candidate` → `approved` → `merged` / `declined` / `failed_validation` / `expired` |
+| `github_pr_url` | After PR created by `githubCreatePR_()` |
+| `github_merge_sha` | After successful squash merge |
+| `validation_status` | After `githubValidateBeforeMerge_()` — values: `passed` / `failed:<error_list>` |
+| `aram_approval_timestamp` | When Aram taps `[✅ Approve & auto-merge]` in Telegram |
+
+These columns are blank for non-promotion rows and never cause Sheet formula errors (empty = not applicable).
+
 Additional tab `AutoDetect_Suppressed` for suppressed auto-detection patterns.
 Additional tab `GateOverrides` for detailed record of every gate bypass (wf_id, gate name, Aram's choice, timestamp).
 
@@ -156,6 +168,19 @@ Retained for **1 year** from `completed_at` date.
 After 1 year: deleted by a scheduled cleanup script (run monthly).
 Before deletion: Sheet index row is retained (no Drive file, but metadata preserved).
 Deletion notification sent to Aram once per batch (monthly cleanup summary).
+
+### Level 3 GitHub promotion — additional retention rules
+
+| Outcome | Sheet row | Drive draft | Notes |
+|---|---|---|---|
+| **Merged successfully** | Permanent | Auto-deleted by pipeline after merge | `github_merge_sha` is the permanent audit trail |
+| **Validation failed** | Permanent | Archived after 30 days (not deleted) | PR stays open for manual review |
+| **Declined by Aram** | 90 days, then archive | Deleted immediately on decline | Pattern added to suppression list |
+| **Expired (14d no response)** | Permanent | Archived with `status: expired` suffix | Reminder sent at 7d and 13d |
+| **Pending (Aram editing in Drive)** | Permanent while active | Stays in `pending-templates/` | Re-validation runs on next Aram message |
+
+Pending drafts older than **90 days** without Aram approval are auto-deleted (Drive cleanup).
+Telegram reminder sent at 30 days and 89 days.
 
 ### Sheet index
 

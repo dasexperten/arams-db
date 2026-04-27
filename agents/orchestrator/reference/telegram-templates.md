@@ -379,6 +379,128 @@ wf_id: INBOX_TRIAGE_2026_04_27_01
 
 ---
 
+## Type 6: Auto-Detection Promotion Proposal
+
+**When:** Auto-detection criteria met — orchestrator proposes promoting a recurring ad-hoc pattern to a named template.
+
+**Format:**
+
+```
+🤖 ORCHESTRATOR — Template/Proposal
+Step 1/1
+
+Я заметил повторяющийся паттерн:
+"<proposed_name>" — <N> раза за последние <D> дней
+
+Совпадение шагов: <similarity>%
+Instances: <wf_id_1>, <wf_id_2>, <wf_id_3>
+Решения Арама: стабильные (0 переопределений)
+
+Драфт нового шаблона готов.
+
+[📄 Показать драфт]  [✅ Approve & auto-merge]
+[✏️ Сначала отредактирую в Drive]  [❌ Это не паттерн]
+
+wf_id: AUTO_DETECT_<name>_<date>
+```
+
+**Button schema:**
+```json
+{
+  "inline_keyboard": [
+    [
+      {"text": "📄 Показать драфт",         "callback_data": "<wf_id>|1|show_draft"},
+      {"text": "✅ Approve & auto-merge",    "callback_data": "<wf_id>|1|approve_merge"}
+    ],
+    [
+      {"text": "✏️ Сначала отредактирую в Drive", "callback_data": "<wf_id>|1|edit_drive"},
+      {"text": "❌ Это не паттерн",          "callback_data": "<wf_id>|1|decline"}
+    ]
+  ]
+}
+```
+
+**Parsing:**
+- `show_draft` → fetch draft from Drive, send truncated preview (first 1000 chars) + Drive link; follow-up buttons: `[✅ Approve & auto-merge]` `[✏️ Редактировать]` `[❌ Decline]`
+- `approve_merge` → run `githubFullPipeline_()`, confirm with merge SHA + PR link on success
+- `edit_drive` → send Drive link, set `awaiting_input_type: "free_text"`, re-validate on next Aram message
+- `decline` → delete Drive draft, log `declined` in Sheet, suppress pattern 30 days
+
+---
+
+## Type 7: GitHub PR Validation Failed
+
+**When:** `githubValidateBeforeMerge_()` returns errors after PR creation. PR stays open for manual review.
+
+**Format:**
+
+```
+🤖 ORCHESTRATOR — GitHub/Validation ⚠️
+Step 1/1
+
+Шаблон "<name>" создан как PR, но не прошёл автоматическую проверку.
+PR остаётся открытым для ручного review.
+
+Ошибки валидации:
+  • <error_1>
+  • <error_2>
+
+PR: <github_pr_url>
+
+[🔗 Открыть PR]  [❌ Закрыть PR]
+
+wf_id: <wf_id>
+```
+
+**Parsing:**
+- `open_pr` → no action (link already provided — this button is cosmetic)
+- `close_pr` → call GitHub API to close PR (DELETE branch), log in Sheet as `validation_failed_closed`
+
+---
+
+## Type 8: Token Rotation Reminder
+
+**When:** `tokenRotationReminder()` detects `GITHUB_PAT_ISSUED_DATE` ≥ 80 days ago.
+
+**Format (80-day warning):**
+
+```
+🤖 ORCHESTRATOR — Security/Token ⚠️
+Step 0/0
+
+GITHUB_PAT будет действителен ещё ~<N> дней.
+Рекомендуется обновить токен заранее.
+
+Ссылка: https://github.com/settings/tokens
+
+[Уже обновил]  [Напомнить через 7 дней]
+
+wf_id: TOKEN_ROTATION_<date>
+```
+
+**Format (90-day critical):**
+
+```
+🤖 ORCHESTRATOR — Security/Token 🔴
+Step 0/0 — ТРЕБУЕТ ВНИМАНИЯ
+
+GITHUB_PAT предположительно истёк (выдан >90 дней назад).
+GitHub-операции (auto-merge) будут завершаться с ошибкой 401.
+
+Действие: обновить GITHUB_PAT в Script Properties.
+После обновления — обновить GITHUB_PAT_ISSUED_DATE.
+
+[Уже обновил]  [Отложить]
+
+wf_id: TOKEN_ROTATION_<date>
+```
+
+**Parsing:**
+- `already_updated` → confirm receipt, no further action (operator handles Script Properties manually)
+- `remind_7d` / `defer` → suppress for 7 days, set next reminder via Sheet entry
+
+---
+
 ## Button callback_data format
 
 All callbacks follow: `<wf_id>|<step_index>|<choice>`
