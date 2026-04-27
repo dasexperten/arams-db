@@ -278,13 +278,39 @@ function doPost(e) {
     return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
   }
 
+  // Store update and process asynchronously so Telegram gets 200 immediately.
+  // Without this, long workflows (300s+) cause Telegram to retry repeatedly.
+  try {
+    PropertiesService.getScriptProperties().setProperty('_pending_update', JSON.stringify(update));
+    ScriptApp.getProjectTriggers()
+      .filter(function(t) { return t.getHandlerFunction() === 'processPendingUpdate_'; })
+      .forEach(function(t) { ScriptApp.deleteTrigger(t); });
+    ScriptApp.newTrigger('processPendingUpdate_').timeBased().after(2000).create();
+  } catch (err) {
+    // Fallback: process synchronously if trigger creation fails
+    try { dispatchUpdate_(update); } catch (e2) { handleFatal_(e2, update); }
+  }
+
+  return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
+}
+
+function processPendingUpdate_() {
+  ScriptApp.getProjectTriggers()
+    .filter(function(t) { return t.getHandlerFunction() === 'processPendingUpdate_'; })
+    .forEach(function(t) { ScriptApp.deleteTrigger(t); });
+
+  var raw = PropertiesService.getScriptProperties().getProperty('_pending_update');
+  if (!raw) return;
+  PropertiesService.getScriptProperties().deleteProperty('_pending_update');
+
+  var update = safeJson_(raw);
+  if (!update) return;
+
   try {
     dispatchUpdate_(update);
   } catch (err) {
     handleFatal_(err, update);
   }
-
-  return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
