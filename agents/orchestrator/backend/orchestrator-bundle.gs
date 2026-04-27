@@ -475,15 +475,336 @@ function stepCounter_(state) {
 
 
 // ============================================================================
-// Stub forward declarations — implemented in subsequent bundle parts (2B–2D).
-// These exist so that part 2A is internally consistent (functions referenced
-// by handlers above resolve at parse time). Real implementations replace
-// these stubs in later commits.
+// State management — Drive JSON + Sheet index + LockService atomic writes
 // ============================================================================
 
-function loadState_(wfId)                   { throw new Error('loadState_ not implemented (Part 2B)'); }
-function writeState_(wfId, stateOrDelta)    { throw new Error('writeState_ not implemented (Part 2B)'); }
-function findAwaitingFreeTextInstance_()    { throw new Error('findAwaitingFreeTextInstance_ not implemented (Part 2B)'); }
+var SHEET_HEADERS_ = [
+  'wf_id',
+  'template',
+  'mode',
+  'status',
+  'created_at',
+  'completed_at',
+  'steps_total',
+  'steps_completed',
+  'gate_overrides',
+  'errors',
+  'original_trigger',
+  'drive_link',
+  'notes'
+];
+
+var SHEET_TAB_NAME_ = 'Workflows';
+var ACTIVE_SUBFOLDER_ = 'active';
+var ARCHIVED_SUBFOLDER_ = 'archived';
+
+/**
+ * Get (or lazily create) the active/ subfolder under ORCHESTRATOR_STATE_FOLDER_ID.
+ * Same for archived/. We do NOT create the parent — operator creates it during setup.
+ */
+function getOrchestratorRoot_() {
+  var folderId = getProp_('ORCHESTRATOR_STATE_FOLDER_ID', true);
+  return DriveApp.getFolderById(folderId);
+}
+
+function getOrCreateSubfolder_(parent, name) {
+  var iter = parent.getFoldersByName(name);
+  if (iter.hasNext()) return iter.next();
+  return parent.createFolder(name);
+}
+
+function getActiveFolder_() {
+  return getOrCreateSubfolder_(getOrchestratorRoot_(), ACTIVE_SUBFOLDER_);
+}
+
+function getArchivedFolder_() {
+  return getOrCreateSubfolder_(getOrchestratorRoot_(), ARCHIVED_SUBFOLDER_);
+}
+
+/**
+ * Resolve a Drive file by wf_id. Searches active/ first, then archived/.
+ *
+ * @param {string} wfId
+ * @param {boolean} createIfMissing — when true and not found, creates an empty
+ *                                     file in active/ (caller fills content)
+ * @returns {?GoogleAppsScript.Drive.File}
+ */
+function getStateFile_(wfId, createIfMissing) {
+  var fileName = wfId + '.json';
+  var active = getActiveFolder_();
+  var iter = active.getFilesByName(fileName);
+  if (iter.hasNext()) return iter.next();
+
+  var archived = getArchivedFolder_();
+  iter = archived.getFilesByName(fileName);
+  if (iter.hasNext()) return iter.next();
+
+  if (createIfMissing) {
+    return active.createFile(fileName, '{}', MimeType.PLAIN_TEXT);
+  }
+  return null;
+}
+
+/**
+ * Read the JSON state for a workflow instance.
+ * Returns null if the file doesn't exist or is corrupt — never throws,
+ * because the caller (callback handler) must handle stale wf_id gracefully.
+ */
+function loadState_(wfId) {
+  var file = getStateFile_(wfId, false);
+  if (!file) return null;
+  var raw = file.getBlob().getDataAsString();
+  var state = safeJson_(raw);
+  if (!state || state.wf_id !== wfId) {
+    console.warn('loadState_: corrupt or mismatched state for ' + wfId);
+    return null;
+  }
+  return state;
+}
+
+/**
+ * Atomic state write — acquires LockService before reading and writing,
+ * stamps updated_at, persists to Drive, and upserts the Sheet index row.
+ *
+ * Caller passes the FULL state object (not a delta). The caller is responsible
+ * for having loaded fresh state at the start of the request — this function
+ * does not merge.
+ */
+function writeState_(wfId, state) {
+  if (!state || state.wf_id !== wfId) {
+    throw new Error('writeState_: state.wf_id mismatch');
+  }
+  var lock = LockService.getScriptLock();
+  var acquired = false;
+  try {
+    acquired = lock.tryLock(STATE_LOCK_WAIT_MS_);
+    if (!acquired) {
+      console.warn('writeState_: lock wait timed out, retrying once: ' + wfId);
+      Utilities.sleep(STATE_LOCK_RETRY_MS_);
+      acquired = lock.tryLock(STATE_LOCK_WAIT_MS_);
+    }
+    if (!acquired) {
+      throw new Error('writeState_: cannot acquire lock after retry for ' + wfId);
+    }
+
+    state.updated_at = nowIso_();
+    var file = getStateFile_(wfId, true);
+    file.setContent(JSON.stringify(state, null, 2));
+
+    try {
+      upsertIndexRow_(state);
+    } catch (sheetErr) {
+      console.warn('writeState_: sheet update failed (non-fatal): ' + String(sheetErr.message || sheetErr));
+    }
+  } finally {
+    if (acquired) lock.releaseLock();
+  }
+}
+
+/**
+ * Generate a unique workflow instance ID:
+ *   <TEMPLATE_SLUG_UPPER>_<YYYY>_<MM>_<DD>_<SEQ>
+ *
+ * SEQ is the next available 2-digit counter for that template-day. We scan
+ * both active/ and archived/ to avoid collisions on same-day re-runs.
+ */
+function generateWfId_(templateSlug) {
+  var slug = String(templateSlug || 'ADHOC').toUpperCase().replace(/-/g, '_');
+  var d = new Date();
+  var datePart = d.getUTCFullYear() + '_' +
+                 pad2_(d.getUTCMonth() + 1) + '_' +
+                 pad2_(d.getUTCDate());
+  var prefix = slug + '_' + datePart + '_';
+  var seq = nextSeqForPrefix_(prefix);
+  return prefix + pad2_(seq);
+}
+
+function pad2_(n) {
+  n = Number(n);
+  return (n < 10 ? '0' : '') + n;
+}
+
+function nextSeqForPrefix_(prefix) {
+  var max = 0;
+  var folders = [getActiveFolder_(), getArchivedFolder_()];
+  for (var i = 0; i < folders.length; i++) {
+    var iter = folders[i].getFiles();
+    while (iter.hasNext()) {
+      var name = iter.next().getName();
+      if (name.indexOf(prefix) !== 0) continue;
+      var rest = name.substring(prefix.length).replace(/\.json$/, '');
+      var n = parseInt(rest, 10);
+      if (!isNaN(n) && n > max) max = n;
+    }
+  }
+  return max + 1;
+}
+
+/**
+ * Create a fresh state JSON for a new workflow instance.
+ * Persists immediately (under lock) so the wf_id is reserved against
+ * concurrent doPost calls.
+ */
+function createInstance_(opts) {
+  var wfId = generateWfId_(opts.template || 'adhoc');
+  var state = {
+    wf_id:                     wfId,
+    template:                  opts.template || 'adhoc',
+    mode:                      opts.mode || 'ad-hoc',
+    status:                    STATUS_.RUNNING,
+    current_step:              1,
+    total_steps:               opts.total_steps || null,
+    created_at:                nowIso_(),
+    updated_at:                nowIso_(),
+    last_heartbeat:            nowIso_(),
+    params:                    opts.params || {},
+    steps:                     opts.steps || [],
+    data:                      {},
+    gate_overrides:            [],
+    error_log:                 [],
+    last_telegram_message_id:  null,
+    aram_chat_id:              getProp_('ARAM_TELEGRAM_CHAT_ID', true)
+  };
+  state.params.original_trigger = opts.original_trigger || state.params.original_trigger || '';
+  writeState_(wfId, state);
+  return state;
+}
+
+/**
+ * Move an instance file from active/ to archived/. Idempotent — safe to call
+ * even if the file is already in archived/.
+ */
+function archiveInstance_(state) {
+  var fileName = state.wf_id + '.json';
+  var active = getActiveFolder_();
+  var iter = active.getFilesByName(fileName);
+  if (!iter.hasNext()) return;
+  var file = iter.next();
+  var archived = getArchivedFolder_();
+  file.moveTo(archived);
+}
+
+/**
+ * Find every active instance currently AWAITING free-text input from Aram.
+ * Used by handleMessage_ to attribute a free-text reply to the right wf.
+ *
+ * @returns {Array<object>} array of state objects (possibly empty)
+ */
+function findAwaitingFreeTextInstance_() {
+  var matches = [];
+  var iter = getActiveFolder_().getFiles();
+  while (iter.hasNext()) {
+    var file = iter.next();
+    if (!/\.json$/.test(file.getName())) continue;
+    var state = safeJson_(file.getBlob().getDataAsString());
+    if (!state) continue;
+    if (state.status !== STATUS_.AWAITING_INPUT) continue;
+    var step = (state.steps || [])[state.current_step - 1];
+    if (!step) continue;
+    if (step.awaiting_input_type === 'free_text') matches.push(state);
+  }
+  return matches;
+}
+
+/**
+ * Drive link to the JSON file (active or archived). Used in completion
+ * summaries and the Sheet index `drive_link` column.
+ */
+function getStateDriveLink_(wfId) {
+  var file = getStateFile_(wfId, false);
+  if (!file) return '';
+  return file.getUrl();
+}
+
+
+// ============================================================================
+// Sheet index — one row per workflow instance, keyed by wf_id
+// ============================================================================
+
+function getIndexSheet_() {
+  var id = getProp_('ORCHESTRATOR_INDEX_SHEET_ID', true);
+  var ss = SpreadsheetApp.openById(id);
+  var sheet = ss.getSheetByName(SHEET_TAB_NAME_) || ss.getSheets()[0];
+  if (sheet.getName() !== SHEET_TAB_NAME_) {
+    sheet = ss.insertSheet(SHEET_TAB_NAME_);
+  }
+  ensureIndexHeaders_(sheet);
+  return sheet;
+}
+
+function ensureIndexHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, SHEET_HEADERS_.length).setValues([SHEET_HEADERS_]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+  var current = sheet.getRange(1, 1, 1, SHEET_HEADERS_.length).getValues()[0];
+  for (var i = 0; i < SHEET_HEADERS_.length; i++) {
+    if (current[i] !== SHEET_HEADERS_[i]) {
+      // Don't overwrite a customized header layout — just warn.
+      console.warn('Sheet header drift at column ' + (i + 1) +
+                   ': expected ' + SHEET_HEADERS_[i] + ', found ' + current[i]);
+      return;
+    }
+  }
+}
+
+/**
+ * Insert a new row for this wf_id, or update the existing row in place.
+ * Sheet rows are looked up by wf_id in column A.
+ */
+function upsertIndexRow_(state) {
+  var sheet = getIndexSheet_();
+  var lastRow = sheet.getLastRow();
+
+  var values = buildIndexRow_(state);
+
+  // Look up existing row (skip header).
+  if (lastRow >= 2) {
+    var ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i][0] === state.wf_id) {
+        sheet.getRange(i + 2, 1, 1, values.length).setValues([values]);
+        return;
+      }
+    }
+  }
+
+  // Append new.
+  sheet.getRange(lastRow + 1, 1, 1, values.length).setValues([values]);
+}
+
+function buildIndexRow_(state) {
+  var stepsCompleted = (state.steps || []).filter(function (s) {
+    return s && s.status === 'completed';
+  }).length;
+  var completedAt = (state.status === STATUS_.COMPLETED ||
+                     state.status === STATUS_.CANCELLED ||
+                     state.status === STATUS_.FAILED ||
+                     state.status === STATUS_.STALE) ? state.updated_at : '';
+
+  return [
+    state.wf_id,
+    state.template,
+    state.mode,
+    state.status,
+    state.created_at,
+    completedAt,
+    state.total_steps || '',
+    stepsCompleted,
+    (state.gate_overrides || []).length,
+    (state.error_log || []).length,
+    truncate_(((state.params || {}).original_trigger) || '', 200),
+    getStateDriveLink_(state.wf_id),
+    state._notes || ''
+  ];
+}
+
+
+// ============================================================================
+// Stub forward declarations — implemented in 2C/2D.
+// ============================================================================
+
 function startWorkflow_(triggerText)        { throw new Error('startWorkflow_ not implemented (Part 2C)'); }
 function resumeFreeText_(state, text)       { throw new Error('resumeFreeText_ not implemented (Part 2C)'); }
 function resumeWithChoice_(state, choice)   { throw new Error('resumeWithChoice_ not implemented (Part 2C)'); }
