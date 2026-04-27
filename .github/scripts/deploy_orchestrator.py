@@ -20,10 +20,6 @@ def main():
         token_uri="https://oauth2.googleapis.com/token",
         client_id=os.environ["OAUTH_CLIENT_ID"],
         client_secret=os.environ["OAUTH_CLIENT_SECRET"],
-        scopes=[
-            "https://www.googleapis.com/auth/script.projects",
-            "https://www.googleapis.com/auth/script.deployments",
-        ],
     )
     service = build("script", "v1", credentials=credentials)
 
