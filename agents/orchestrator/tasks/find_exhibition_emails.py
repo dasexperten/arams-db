@@ -7,36 +7,25 @@ Two-stage: broad keyword search → Claude filter → analysis + draft.
 Output: GitHub Actions step summary + results/exhibitions.md
 """
 
-import os, sys, json, re, urllib.request
+import os, sys, json, urllib.request
 from datetime import datetime
-
-INBOXES = {
-    "eurasia":   "eurasia@dasexperten.de",
-    "emea":      "emea@dasexperten.de",
-    "export":    "export@dasexperten.de",
-    "marketing": "marketing@dasexperten.de",
-}
 
 # Wide keyword net — Russian / English / German / Italian / Spanish / French
 SEARCH_QUERY = (
     "newer_than:60d ("
-    # Russian
     "выставка OR выставки OR конференция OR конференции OR семинар OR "
     "форум OR форумы OR саммит OR конгресс OR мероприятие OR мероприятия OR "
     "встреча OR собрание OR приглашение OR регистрация OR \"save the date\" OR "
-    # English
     "exhibition OR expo OR \"trade show\" OR \"trade fair\" OR conference OR "
     "seminar OR summit OR forum OR congress OR convention OR symposium OR "
     "workshop OR meeting OR invitation OR webinar OR event OR "
-    # German
-    "messe OR tagung OR konferenz OR kongress OR einladung OR seminar OR "
-    # Italian / Spanish / French
+    "messe OR tagung OR konferenz OR kongress OR einladung OR "
     "fiera OR convegno OR feria OR salon OR colloque"
     ")"
 )
 
-MODEL_FILTER  = "claude-haiku-4-5-20251001"
-MODEL_DETAIL  = "claude-sonnet-4-6"
+MODEL_FILTER = "claude-haiku-4-5-20251001"
+MODEL_DETAIL = "claude-sonnet-4-6"
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -44,14 +33,11 @@ def post_json(url, data):
     body = json.dumps(data).encode()
     req  = urllib.request.Request(url, data=body,
                                   headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
+    with urllib.request.urlopen(req, timeout=120) as r:
         return json.loads(r.read())
 
-# ── Emailer ───────────────────────────────────────────────────────────────────
-
 def emailer(payload):
-    url  = os.environ["EMAILER_EXEC_URL"]
-    resp = post_json(url, payload)
+    resp = post_json(os.environ["EMAILER_EXEC_URL"], payload)
     if resp.get("error"):
         raise RuntimeError(resp["error"])
     return resp
@@ -59,31 +45,33 @@ def emailer(payload):
 def get_body(thread_id):
     try:
         res = emailer({"action": "get_thread", "thread_id": thread_id})
-        msg = (res.get("messages") or [{}])[0]
-        return (msg.get("body_plain") or msg.get("snippet") or "")[:1000]
+        msgs = res.get("messages") or []
+        if not msgs:
+            return ""
+        m = msgs[0]
+        return (m.get("body_plain") or m.get("plain_body") or m.get("snippet") or "")[:1000]
     except Exception:
         return ""
 
-# ── Claude ────────────────────────────────────────────────────────────────────
-
 def claude(system, user, model=MODEL_DETAIL, max_tokens=300):
-    url  = "https://api.anthropic.com/v1/messages"
     body = json.dumps({
-        "model": model,
-        "max_tokens": max_tokens,
+        "model": model, "max_tokens": max_tokens,
         "system": system,
         "messages": [{"role": "user", "content": user}],
     }).encode()
-    req = urllib.request.Request(url, data=body, headers={
-        "Content-Type":      "application/json",
-        "x-api-key":         os.environ["ANTHROPIC_API_KEY"],
-        "anthropic-version": "2023-06-01",
-    })
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=body,
+        headers={
+            "Content-Type":      "application/json",
+            "x-api-key":         os.environ["ANTHROPIC_API_KEY"],
+            "anthropic-version": "2023-06-01",
+        })
     with urllib.request.urlopen(req, timeout=60) as r:
-        data = json.loads(r.read())
-    if "error" in data:
-        raise RuntimeError(data["error"]["message"])
-    return data["content"][0]["text"].strip()
+        d = json.loads(r.read())
+    if "error" in d:
+        raise RuntimeError(d["error"]["message"])
+    return d["content"][0]["text"].strip()
 
 # ── Prompts ───────────────────────────────────────────────────────────────────
 
@@ -92,12 +80,12 @@ You decide if an email is about a business event Das Experten (an oral care bran
 might attend or consider attending.
 
 EVENT = exhibition, trade show, expo, fair, conference, seminar, forum, summit,
-         congress, convention, symposium, workshop, meeting invitation, webinar,
-         business gathering, networking event, presentation invitation.
+        congress, convention, symposium, workshop, meeting invitation, webinar,
+        business gathering, networking event, presentation invitation.
 
 Reply with ONE WORD ONLY:
-EVENT — yes, this is about a business event/meeting/conference/exhibition
-NOT   — no, it's about something else (orders, marketing newsletters, payments, support, spam)"""
+EVENT — yes
+NOT   — no (orders, marketing newsletters, payments, support, spam)"""
 
 ANALYSIS_SYSTEM = """\
 You are an assistant for Das Experten (German oral care brand).
@@ -113,35 +101,55 @@ Be polite and direct. If interested — express interest, ask the key question.
 If not relevant — politely decline.
 Match the sender's language. Body only, no subject line."""
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def thread_field(t, *keys):
+    """Read first non-empty value across alternative key names."""
+    for k in keys:
+        v = t.get(k)
+        if v:
+            return v
+    return ""
+
+def make_ctx(t, body=""):
+    return (
+        f"From: {thread_field(t, 'last_message_from', 'from')}\n"
+        f"Subject: {thread_field(t, 'subject')}\n"
+        f"Snippet: {thread_field(t, 'last_message_snippet', 'snippet')}\n"
+        + (f"\n{body}" if body else "")
+    )
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print("Searching for event-related emails (last 60 days)...")
+    print("Searching for event-related emails (last 60 days)…")
+    print(f"Query length: {len(SEARCH_QUERY)} chars")
 
-    all_threads = []
-    seen = set()
-    for name, addr in INBOXES.items():
-        try:
-            res = emailer({"action": "find", "query": SEARCH_QUERY,
-                           "inbox": addr, "max_results": 100})
-            for t in (res.get("threads") or []):
-                if t.get("thread_id") not in seen:
-                    t["_inbox"] = addr
-                    all_threads.append(t)
-                    seen.add(t["thread_id"])
-        except Exception as e:
-            print(f"  WARN: find {addr}: {e}", file=sys.stderr)
+    # 1. Single Gmail search (emailer ignores inbox param — searches all mail)
+    try:
+        res = emailer({"action": "find", "query": SEARCH_QUERY, "max_results": 50})
+    except Exception as e:
+        print(f"FATAL find error: {e}", file=sys.stderr)
+        write_summary(f"## Ошибка\n\nemailer.find упал: `{e}`")
+        sys.exit(1)
 
-    print(f"Keyword stage: {len(all_threads)} candidates.")
+    threads = res.get("threads") or []
+    print(f"Keyword stage: {len(threads)} candidates.")
+    if threads:
+        print("Sample first thread keys:", list(threads[0].keys()))
 
-    if not all_threads:
-        write_summary("## Мероприятия\n\nПисем по теме за последние 60 дней не найдено.")
+    if not threads:
+        write_summary(
+            "## Мероприятия\n\n"
+            f"По ключевым словам ничего не найдено.\n\n"
+            f"Запрос: `{SEARCH_QUERY[:200]}…`"
+        )
         return
 
+    # 2. Claude filter — only true event emails pass
     events = []
-    for i, t in enumerate(all_threads):
-        snippet = (t.get("snippet") or "")[:300]
-        ctx = f"From: {t.get('from','')}\nSubject: {t.get('subject','')}\n{snippet}"
+    for i, t in enumerate(threads):
+        ctx = make_ctx(t)
         try:
             verdict = claude(FILTER_SYSTEM, ctx, MODEL_FILTER, 5).strip().upper()
         except Exception as e:
@@ -149,58 +157,55 @@ def main():
             verdict = "EVENT"
         if "EVENT" in verdict:
             events.append(t)
-        print(f"  filter {i+1}/{len(all_threads)}: {verdict[:5]} — {(t.get('subject','') or '')[:60]}")
+        subj = thread_field(t, 'subject')[:60]
+        print(f"  {i+1}/{len(threads)}: {verdict[:5]:<5} — {subj}")
 
-    print(f"Filter stage: {len(events)} actual events.")
+    print(f"After filter: {len(events)} real events.")
 
     if not events:
         write_summary(
-            f"## Мероприятия\n\nПо ключевым словам найдено {len(all_threads)} писем, "
-            f"но Claude отфильтровал — реальных приглашений на мероприятия нет."
+            f"## Мероприятия\n\nКандидатов: **{len(threads)}**\n\n"
+            "Claude не признал ни одно из них настоящим приглашением на мероприятие.\n"
+            "Возможно, выборка состоит из информационных писем без действий."
         )
         return
 
+    # 3. Analysis + draft per event
     results = []
     for i, t in enumerate(events):
-        print(f"  analyze {i+1}/{len(events)}: {(t.get('subject','') or '')[:60]}")
-        body  = get_body(t["thread_id"])
-        ctx   = (f"From: {t.get('from','')}\n"
-                 f"Subject: {t.get('subject','')}\n"
-                 f"Inbox: {t['_inbox']}\n\n{body}")
-        try:    analysis = claude(ANALYSIS_SYSTEM, ctx, MODEL_DETAIL, 200)
-        except Exception as e: analysis = f"(ошибка анализа: {e})"
+        subj = thread_field(t, 'subject')[:60]
+        print(f"  analyze {i+1}/{len(events)}: {subj}")
+        body = get_body(t.get("thread_id", ""))
+        ctx  = make_ctx(t, body)
+        try:    analysis = claude(ANALYSIS_SYSTEM, ctx, MODEL_DETAIL, 250)
+        except Exception as e: analysis = f"(ошибка: {e})"
         try:    draft = claude(DRAFT_SYSTEM, ctx, MODEL_DETAIL, 200)
-        except Exception as e: draft = f"(ошибка черновика: {e})"
+        except Exception as e: draft = f"(ошибка: {e})"
         results.append({
-            "thread_id": t["thread_id"],
-            "inbox":     t["_inbox"],
-            "subject":   t.get("subject", "(без темы)"),
-            "from":      t.get("from", "?"),
+            "thread_id": t.get("thread_id", ""),
+            "subject":   thread_field(t, "subject") or "(без темы)",
+            "from":      thread_field(t, "last_message_from", "from") or "?",
             "analysis":  analysis,
             "draft":     draft,
         })
 
+    # 4. Render markdown
     lines = [
         f"# Мероприятия — {datetime.now().strftime('%d.%m.%Y')}",
-        f"\nКандидатов по ключевым словам: **{len(all_threads)}**",
+        f"\nКандидатов по ключевым словам: **{len(threads)}**",
         f"После фильтра Claude: **{len(results)} реальных приглашений**\n",
         "---",
     ]
     for n, r in enumerate(results, 1):
         lines += [
             f"\n## {n}. {r['subject']}",
-            f"**От:** {r['from']}  |  **Inbox:** {r['inbox']}",
+            f"**От:** {r['from']}",
             f"**Thread ID:** `{r['thread_id']}`\n",
-            "### Анализ",
-            r["analysis"],
-            "",
-            "### Черновик ответа",
-            r["draft"],
-            "",
+            "### Анализ", r["analysis"], "",
+            "### Черновик ответа", r["draft"], "",
             "---",
         ]
     md = "\n".join(lines)
-
     write_summary(md)
     os.makedirs("results", exist_ok=True)
     with open("results/exhibitions.md", "w", encoding="utf-8") as f:
