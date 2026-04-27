@@ -330,7 +330,7 @@ function handleMessage_(msg) {
   if (!text) return;
 
   var awaitingFreeText = findAwaitingFreeTextInstance_();
-  if (awaitingFreeText) {
+  if (awaitingFreeText.length > 0) {
     if (awaitingFreeText.length === 1) {
       resumeFreeText_(awaitingFreeText[0], text);
       return;
