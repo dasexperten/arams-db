@@ -173,14 +173,44 @@ with open("transcript.md", "w", encoding="utf-8") as f:
 print("Wrote transcript.md  ({:,} bytes)".format(os.path.getsize("transcript.md")))
 
 # ----- Step 4: archive the transcript to Drive via emailer (no email sent) -----
+import re as _re
+
+
+def _extract_email(s):
+    m = _re.search(r"<([^>]+)>", s or "")
+    return (m.group(1) if m else (s or "")).strip().lower()
+
+
+# Lead-centric label: if every fetched thread is tied to a single external
+# address (the typical "from:foo@bar" search), file under that lead's folder
+# so all activity for one person lands in the same place. Otherwise fall back
+# to a generic searches/ folder.
+def _resolve_archive_label(threads_, query_):
+    external_emails = set()
+    for t in threads_:
+        for p in t.get("participants") or []:
+            email = _extract_email(p)
+            if email and "dasexperten" not in email:
+                external_emails.add(email)
+    if len(external_emails) == 1:
+        return next(iter(external_emails))
+    # If user typed `from:something@x.com` directly, honour it even when only a
+    # subset of participants matched.
+    m = _re.search(r"from:\s*([^\s]+@[^\s]+)", query_, _re.IGNORECASE)
+    if m:
+        return m.group(1).strip().lower()
+    return "searches"
+
+
+archive_label = _resolve_archive_label(full_threads, QUERY)
 print()
-print("Step 4: archive transcript to Drive (REPORTER_FOLDER_ID/gmail-search/)")
+print("Step 4: archive transcript to Drive (REPORTER_FOLDER_ID/{}/)".format(archive_label))
 md_text = "\n".join(md) if total > 0 else "_No threads matched query._"
 archive_resp = call_emailer({
     "action": "archive",
-    "title": "Gmail search · {}".format(QUERY),
+    "title": "Gmail search — {}".format(QUERY),
     "body_plain": md_text,
-    "archive_label": "gmail-search",
+    "archive_label": archive_label,
     "context": "gmail-search workflow · query={} · {} thread(s)".format(QUERY, len(full_threads)),
 })
 
