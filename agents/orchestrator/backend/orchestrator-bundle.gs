@@ -19,7 +19,6 @@ var MAX_EMAILS_ = 5;
 var LOOKBACK_H_ = 24;
 
 // ── Part 1: Skill registry ────────────────────────────────────────────────────
-// Each skill = icon + name. Claude chooses which to use during analyzeEmail_().
 
 var SKILLS_ = {
   LEGALIZER:  { icon: '⚖️',  name: 'Легалайзер',   desc: 'contracts, invoices, legal, compliance, GDPR, disputes' },
@@ -31,7 +30,6 @@ var SKILLS_ = {
   DEFAULT:    { icon: '✉️',  name: 'Общий',         desc: 'everything else' }
 };
 
-// Build skill list string for Claude prompt (cached at load time)
 var SKILL_LIST_ = (function() {
   return Object.keys(SKILLS_).map(function(k) {
     return k + ' — ' + SKILLS_[k].desc;
@@ -39,9 +37,6 @@ var SKILL_LIST_ = (function() {
 })();
 
 // ── Part 1: analyzeEmail_() — one Sonnet call → JSON ─────────────────────────
-// Returns one of two shapes:
-//   {skill, needs_clarification: false, draft: "..."}
-//   {skill, needs_clarification: true,  question: "...", options: ["A","B","C"]}
 
 function analyzeEmail_(thread, body) {
   var system =
@@ -51,23 +46,20 @@ function analyzeEmail_(thread, body) {
     'Rules:\n' +
     '1. Choose the single most relevant skill.\n' +
     '2. Adopt that skill\'s persona when writing the draft.\n' +
-    '3. If you have enough context to write a complete, professional reply → needs_clarification: false, include full draft.\n' +
-    '4. If a critical business decision is needed from management → needs_clarification: true, write question + 2-4 short options.\n' +
-    '5. Reply language MUST match the original email language.\n' +
+    '3. If you have enough context → needs_clarification: false, include full draft.\n' +
+    '4. If a critical business decision is needed → needs_clarification: true, question + 2-4 short options.\n' +
+    '5. Reply language MUST match the original email.\n' +
     '6. Sign as "Das Experten Team".\n\n' +
-    'Format A (ready to send):\n' +
-    '{"skill":"PARTNER","needs_clarification":false,"draft":"Dear Viktoria,\\n\\n..."}\n\n' +
-    'Format B (clarification needed):\n' +
-    '{"skill":"LEGALIZER","needs_clarification":true,"question":"Offer a discount?","options":["Yes, 10%","No, full price","Request more info"]}';
+    'Format A: {"skill":"PARTNER","needs_clarification":false,"draft":"Dear Viktoria,\\n\\n..."}\n' +
+    'Format B: {"skill":"LEGALIZER","needs_clarification":true,"question":"Offer discount?","options":["Yes 10%","No","Need details"]}';
 
   var user =
-    'From: '    + f_(thread, 'last_message_from', 'from') +
+    'From: '     + f_(thread, 'last_message_from', 'from') +
     '\nSubject: ' + f_(thread, 'subject') +
-    '\n\n'       + (body || '').substring(0, 800);
+    '\n\n'        + (body || '').substring(0, 800);
 
   try {
     var raw = claude_(system, user, MODEL_MAIN_, 700);
-    // Strip accidental markdown fences
     raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
     var parsed = JSON.parse(raw);
     if (!parsed.skill || !SKILLS_[parsed.skill]) parsed.skill = 'DEFAULT';
@@ -75,6 +67,66 @@ function analyzeEmail_(thread, body) {
   } catch (_) {
     return { skill: 'DEFAULT', needs_clarification: false, draft: '(Черновик недоступен — напиши вручную)' };
   }
+}
+
+// ── Part 2: runSearch_() — find, analyze, auto-send or ask ───────────────────
+
+function runSearch_(hint) {
+  var label = hint ? '«' + hint + '»' : 'за 90 дней';
+  tg_('🔍 Ищу письма ' + esc_(label) + '…');
+
+  var res;
+  try {
+    res = emailer_({ action: 'find', query: 'newer_than:90d' + (hint ? ' ' + hint : ''), max_results: 3, filter_junk: true });
+  } catch (e) { tg_('❌ Поиск: ' + String(e.message)); return; }
+
+  var threads = res.threads || [];
+  if (!threads.length) { tg_('Ничего не найдено по запросу ' + esc_(label)); return; }
+  tg_('📬 Найдено: ' + threads.length + ' ' + (threads.length === 1 ? 'письмо' : 'письма') + '. Анализирую…');
+
+  for (var k = 0; k < threads.length; k++) {
+    var thread = threads[k];
+    var body   = getBody_(thread);
+    var result = analyzeEmail_(thread, body);
+
+    if (result.needs_clarification) {
+      // Part 3 will handle this — for now show buttons
+      presentWithDraftManual_(thread, result);
+    } else {
+      autoSendAndReport_(thread, result);
+    }
+    if (k < threads.length - 1) Utilities.sleep(500);
+  }
+}
+
+// ── Part 2: autoSendAndReport_() — send + Telegram summary ───────────────────
+
+function autoSendAndReport_(thread, result) {
+  var subject = f_(thread, 'subject').substring(0, 80)             || '(без темы)';
+  var from    = f_(thread, 'last_message_from', 'from').substring(0, 60) || '?';
+  var skill   = SKILLS_[result.skill] || SKILLS_.DEFAULT;
+
+  try {
+    emailer_({ action: 'reply', thread_id: thread.thread_id, body: result.draft });
+  } catch (e) {
+    tg_('❌ Не удалось отправить «' + esc_(subject) + '»: ' + String(e.message));
+    return;
+  }
+
+  // One-sentence summary of what was sent
+  var summary = '';
+  try {
+    summary = claude_(
+      'Summarize this email reply in 1 sentence in Russian. Be very brief.',
+      result.draft, MODEL_FAST_, 60
+    ).trim();
+  } catch (_) {}
+
+  tg_('✅ <b>Отправлено</b>\n' +
+      '👤 ' + esc_(from)    + '\n' +
+      '📧 ' + esc_(subject) + '\n' +
+      skill.icon + ' ' + esc_(skill.name) +
+      (summary ? '\n\n📝 ' + esc_(summary) : ''));
 }
 
 // ── One-time setup ────────────────────────────────────────────────────────────
@@ -154,16 +206,13 @@ function dispatch_(upd) {
 // ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
-  if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) {
-    runTriage_();
-    return;
-  }
+  if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) { runTriage_(); return; }
   var m = text.match(/^(?:найди|поиск|search|старо[ея]?)\s*(.*)/i);
   if (m) { runSearch_(m[1].trim()); return; }
   tg_('Команды:\n• <b>утренняя почта</b> — разобрать inbox\n• <b>найди [запрос]</b> — письма за 90 дней');
 }
 
-// ── Triage (unread 24h) — PLACEHOLDER, updated in Part 4 ─────────────────────
+// ── Triage (unread 24h, manual confirm) ──────────────────────────────────────
 
 function runTriage_() {
   tg_('📬 Сканирую inbox за последние ' + LOOKBACK_H_ + ' ч…');
@@ -193,16 +242,17 @@ function runTriage_() {
   if (!important.length) { tg_('Срочных писем нет.'); return; }
   tg_('✍️ Готовлю черновики…');
   for (var k = 0; k < important.length; k++) {
-    presentWithDraftManual_(important[k]);
+    var email  = important[k];
+    var body   = getBody_(email);
+    var result = analyzeEmail_(email, body);
+    presentWithDraftManual_(email, result);
     if (k < important.length - 1) Utilities.sleep(400);
   }
 }
 
-function presentWithDraftManual_(thread) {
-  var body  = getBody_(thread);
-  var result = analyzeEmail_(thread, body);
+function presentWithDraftManual_(thread, result) {
   storeDraft_(thread.thread_id, {
-    subject: f_(thread, 'subject').substring(0, 100) || '(без темы)',
+    subject: f_(thread, 'subject').substring(0, 100)              || '(без темы)',
     from:    f_(thread, 'last_message_from', 'from').substring(0, 80) || '?',
     urgency: thread._urgency || 'HIGH',
     skill:   result.skill,
@@ -211,24 +261,7 @@ function presentWithDraftManual_(thread) {
   presentEmail_(thread.thread_id);
 }
 
-// ── Search — PLACEHOLDER, expanded in Part 2 ─────────────────────────────────
-
-function runSearch_(hint) {
-  tg_('🔍 Ищу «' + esc_(hint || '90 дней') + '»…');
-  var res;
-  try {
-    res = emailer_({ action: 'find', query: 'newer_than:90d' + (hint ? ' ' + hint : ''), max_results: 3, filter_junk: true });
-  } catch (e) { tg_('❌ ' + String(e.message)); return; }
-  var threads = res.threads || [];
-  if (!threads.length) { tg_('Ничего не найдено.'); return; }
-  tg_('📬 Найдено: ' + threads.length + '. Анализирую…');
-  for (var k = 0; k < threads.length; k++) {
-    presentWithDraftManual_(threads[k]);
-    if (k < threads.length - 1) Utilities.sleep(500);
-  }
-}
-
-// ── Present email with [Send] [Draft] buttons ─────────────────────────────────
+// ── Present email with manual [Send] [Draft] buttons ─────────────────────────
 
 function presentEmail_(threadId) {
   var d = loadDraft_(threadId);
@@ -244,7 +277,7 @@ function presentEmail_(threadId) {
   ]]});
 }
 
-// ── Button handlers ───────────────────────────────────────────────────────────
+// ── Button handlers (s/d; q added in Part 3) ─────────────────────────────────
 
 function handleAction_(data) {
   var parts    = data.split('|');
@@ -265,7 +298,7 @@ function handleAction_(data) {
   if (action === 'd') {
     try {
       emailer_({ action: 'reply', thread_id: threadId, body: d.draft, draft_only: true });
-      tg_('📝 Сохранено в Gmail Drafts:\n<b>' + esc_(d.subject) + '</b>');
+      tg_('📝 В Gmail Drafts: <b>' + esc_(d.subject) + '</b>');
     } catch (_) {
       tg_('📝 <b>' + esc_(d.subject) + '</b>\n\n<pre>' + esc_(d.draft) + '</pre>');
     }
@@ -289,9 +322,9 @@ function deleteDraft_(id) {
 // ── Email helpers ─────────────────────────────────────────────────────────────
 
 function classify_(thread) {
-  var system = 'Classify email urgency. Reply ONE word: URGENT HIGH MEDIUM LOW SKIP.';
   try {
-    var label = claude_(system,
+    var label = claude_(
+      'Classify email urgency. Reply ONE word: URGENT HIGH MEDIUM LOW SKIP.',
       'From: ' + f_(thread, 'last_message_from', 'from') +
       '\nSubject: ' + f_(thread, 'subject') + '\n' +
       f_(thread, 'last_message_snippet', 'snippet').substring(0, 300),
