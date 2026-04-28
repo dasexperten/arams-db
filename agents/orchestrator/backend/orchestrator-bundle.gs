@@ -468,10 +468,14 @@ function tg_(text, keyboard) {
   if (!token || !chatId) { console.warn('tg_: missing token or chatId'); return; }
   var body = { chat_id: chatId, text: String(text || '').substring(0, 4090), parse_mode: 'HTML' };
   if (keyboard) body.reply_markup = JSON.stringify(keyboard);
-  UrlFetchApp.fetch(BOT_BASE_ + token + '/sendMessage', {
+  var resp = UrlFetchApp.fetch(BOT_BASE_ + token + '/sendMessage', {
     method: 'post', contentType: 'application/json',
     payload: JSON.stringify(body), muteHttpExceptions: true
   });
+  var respText = resp.getContentText();
+  if (respText.indexOf('"ok":true') === -1) {
+    console.error('tg_ API error: ' + respText.substring(0, 200));
+  }
 }
 
 function answerCbq_(id) {
