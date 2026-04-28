@@ -1,10 +1,9 @@
 /**
  * orchestrator-bundle.gs — Das Experten Orchestrator v2
  *
- * Flow:
- *   "утренняя почта" → scan inboxes → classify → draft replies →
- *   each email = one Telegram message with [Send] [Drafts] buttons.
- *   Ignored messages stay ignored — no queue, no revisiting.
+ * Commands:
+ *   "утренняя почта"       → triage unread last 24h
+ *   "найди <запрос>"       → search last 90 days, skill-routed reply
  *
  * Script Properties required:
  *   TELEGRAM_BOT_TOKEN       — from @BotFather
@@ -19,8 +18,46 @@
 var BOT_BASE_   = 'https://api.telegram.org/bot';
 var MODEL_FAST_ = 'claude-haiku-4-5-20251001';
 var MODEL_MAIN_ = 'claude-sonnet-4-6';
-var MAX_EMAILS_ = 5;   // max important emails per triage
-var LOOKBACK_H_ = 24;  // hours to look back
+var MAX_EMAILS_ = 5;
+var LOOKBACK_H_ = 24;
+
+// ── Skills ────────────────────────────────────────────────────────────────────
+
+var SKILLS_ = {
+  LEGAL: {
+    icon:   '⚖️',
+    name:   'Юрист',
+    re:     /invoice|contract|legal|compliance|gdpr|lawsuit|claim|dispute|termination|rechnun|vertrag|счёт|договор|претензия|расторж/i,
+    prompt: 'You are a corporate lawyer advising Das Experten GmbH on business correspondence. ' +
+            'Write a careful, professional reply. If there are any legal risks or obligations, flag them briefly at the end in brackets. ' +
+            'Match the language of the original email. Output ONLY the email body.'
+  },
+  PARTNER: {
+    icon:   '🤝',
+    name:   'B2B менеджер',
+    re:     /partner|distribut|wholesale|dealer|resell|agency|cooperat|exhibition|trade.?show|partner|дилер|оптов|сотрудниче|выставк|партнёр/i,
+    prompt: 'You are a B2B sales manager at Das Experten, a premium oral care brand. ' +
+            'Write a warm, professional reply that encourages the partnership. ' +
+            'Match the language of the original email. Output ONLY the email body.'
+  },
+  SUPPORT: {
+    icon:   '💬',
+    name:   'Поддержка',
+    re:     /order|return|refund|delivery|shipping|complaint|broken|damaged|заказ|возврат|доставк|жалоб|рекламац/i,
+    prompt: 'You are a customer support specialist at Das Experten oral care brand. ' +
+            'Write an empathetic, solution-focused reply. Offer a concrete next step. ' +
+            'Match the language of the original email. Output ONLY the email body.'
+  }
+};
+
+function detectSkill_(thread) {
+  var text = f_(thread, 'last_message_from', 'from') + ' ' + f_(thread, 'subject');
+  var keys = Object.keys(SKILLS_);
+  for (var i = 0; i < keys.length; i++) {
+    if (SKILLS_[keys[i]].re.test(text)) return keys[i];
+  }
+  return 'DEFAULT';
+}
 
 // ── One-time setup (run from Apps Script editor) ──────────────────────────────
 
@@ -105,10 +142,18 @@ function handleText_(text) {
     runTriage_();
     return;
   }
-  tg_('Привет. Напиши <b>утренняя почта</b> чтобы разобрать inbox.');
+  // "найди <запрос>" or "старое письмо" or "поиск <запрос>"
+  var searchMatch = text.match(/^(?:найди|поиск|search|старо[ея]?)\s*(.*)/i);
+  if (searchMatch) {
+    runSearch_(searchMatch[1].trim());
+    return;
+  }
+  tg_('Привет. Команды:\n' +
+      '• <b>утренняя почта</b> — разобрать inbox\n' +
+      '• <b>найди [запрос]</b> — найти письмо за 90 дней');
 }
 
-// ── Inbox triage ─────────────────────────────────────────────────────────────
+// ── Inbox triage (unread last 24h) ────────────────────────────────────────────
 
 function runTriage_() {
   tg_('📬 Сканирую inbox за последние ' + LOOKBACK_H_ + ' ч…');
@@ -130,10 +175,8 @@ function runTriage_() {
   if (res.filtered_count) {
     console.log('emailer pre-filtered ' + res.filtered_count + ' junk threads');
   }
-
   if (!threads.length) { tg_('✅ Новых писем нет.'); return; }
 
-  // Classify
   var counts = {}, important = [];
   for (var j = 0; j < threads.length; j++) {
     var t = threads[j];
@@ -145,7 +188,6 @@ function runTriage_() {
     }
   }
 
-  // Summary
   tg_('📊 <b>Inbox — ' + threads.length + ' писем</b>\n' +
     (counts.URGENT ? '🔴 Срочные: '    + counts.URGENT + '\n' : '') +
     (counts.HIGH   ? '🟠 Важные: '     + counts.HIGH   + '\n' : '') +
@@ -154,21 +196,53 @@ function runTriage_() {
 
   if (!important.length) { tg_('Срочных писем нет.'); return; }
 
-  // Draft and present each important email
   tg_('✍️ Готовлю черновики для ' + important.length + ' письма…');
   for (var k = 0; k < important.length; k++) {
-    var email = important[k];
-    var body  = getBody_(email);
-    var draft = makeDraft_(email, body);
-    storeDraft_(email.thread_id, {
-      subject: f_(email, 'subject').substring(0, 100) || '(без темы)',
-      from:    f_(email, 'last_message_from', 'from').substring(0, 80) || '?',
-      urgency: email._urgency,
-      draft:   draft.substring(0, 600)
-    });
-    presentEmail_(email.thread_id);
+    presentWithDraft_(important[k], important[k]._urgency);
     if (k < important.length - 1) Utilities.sleep(400);
   }
+}
+
+// ── Search (last 90 days, any read status) ────────────────────────────────────
+
+function runSearch_(hint) {
+  var label = hint ? '«' + hint + '»' : 'за 90 дней';
+  tg_('🔍 Ищу письма ' + esc_(label) + '…');
+
+  var query = 'newer_than:90d' + (hint ? ' ' + hint : '');
+  var res;
+  try {
+    res = emailer_({ action: 'find', query: query, max_results: 3, filter_junk: true });
+  } catch (e) {
+    tg_('❌ Ошибка поиска: ' + String(e.message));
+    return;
+  }
+
+  var threads = res.threads || [];
+  if (!threads.length) { tg_('Ничего не найдено по запросу ' + esc_(label)); return; }
+
+  tg_('📬 Найдено: ' + threads.length + ' ' + (threads.length === 1 ? 'письмо' : 'письма'));
+
+  for (var k = 0; k < threads.length; k++) {
+    presentWithDraft_(threads[k], 'HIGH');
+    if (k < threads.length - 1) Utilities.sleep(400);
+  }
+}
+
+// ── Shared: fetch body, detect skill, draft, store, present ──────────────────
+
+function presentWithDraft_(thread, urgency) {
+  var body  = getBody_(thread);
+  var skill = detectSkill_(thread);
+  var draft = makeDraftWithSkill_(thread, body, skill);
+  storeDraft_(thread.thread_id, {
+    subject: f_(thread, 'subject').substring(0, 100) || '(без темы)',
+    from:    f_(thread, 'last_message_from', 'from').substring(0, 80) || '?',
+    urgency: urgency,
+    skill:   skill,
+    draft:   draft.substring(0, 600)
+  });
+  presentEmail_(thread.thread_id);
 }
 
 // ── Present one email with buttons ────────────────────────────────────────────
@@ -176,12 +250,15 @@ function runTriage_() {
 function presentEmail_(threadId) {
   var d = loadDraft_(threadId);
   if (!d) return;
-  var icon = d.urgency === 'URGENT' ? '🔴' : '🟠';
-  var text = icon + ' <b>' + esc_(d.subject) + '</b>\n' +
+  var urgencyIcon = d.urgency === 'URGENT' ? '🔴' : '🟠';
+  var skillLabel  = d.skill && d.skill !== 'DEFAULT' && SKILLS_[d.skill]
+    ? ' · ' + SKILLS_[d.skill].icon + ' ' + SKILLS_[d.skill].name
+    : '';
+  var text = urgencyIcon + ' <b>' + esc_(d.subject) + '</b>' + esc_(skillLabel) + '\n' +
     'От: ' + esc_(d.from) + '\n\n' +
     '<b>Черновик:</b>\n' + esc_(d.draft);
   var kb = { inline_keyboard: [[
-    { text: '✅ Отправить', callback_data: 's|' + threadId },
+    { text: '✅ Отправить',   callback_data: 's|' + threadId },
     { text: '📝 В черновики', callback_data: 'd|' + threadId }
   ]]};
   tg_(text, kb);
@@ -258,19 +335,21 @@ function getBody_(thread) {
   } catch (_) { return f_(thread, 'last_message_snippet', 'snippet'); }
 }
 
-function makeDraft_(thread, body) {
-  var system = 'You are a customer service writer for Das Experten oral care brand. ' +
-    'Write a concise professional reply. Match the customer\'s language. ' +
-    'Never fabricate product claims. Output ONLY the email body, no subject line.';
+function makeDraftWithSkill_(thread, body, skill) {
+  var system = (skill && skill !== 'DEFAULT' && SKILLS_[skill])
+    ? SKILLS_[skill].prompt
+    : 'You are a customer service writer for Das Experten oral care brand. ' +
+      'Write a concise professional reply. Match the customer\'s language. ' +
+      'Never fabricate product claims. Output ONLY the email body, no subject line.';
   try {
     return claude_(system,
       'From: ' + f_(thread, 'last_message_from', 'from') +
       '\nSubject: ' + f_(thread, 'subject') +
-      '\n\n' + body, MODEL_MAIN_, 250);
+      '\n\n' + body, MODEL_MAIN_, 300);
   } catch (_) { return '(Черновик недоступен — напиши вручную)'; }
 }
 
-// ── Field helper (emailer returns last_message_from, not from) ────────────────
+// ── Field helper ──────────────────────────────────────────────────────────────
 
 function f_(obj, k1, k2, k3) {
   var v = obj[k1]; if (v) return String(v);
