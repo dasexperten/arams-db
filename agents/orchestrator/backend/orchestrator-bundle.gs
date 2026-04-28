@@ -65,9 +65,18 @@ function doPost(e) {
   var upd;
   try { upd = JSON.parse(raw); } catch (_) { return EMPTY; }
   var uid = String(upd.update_id || '');
-  var props = PropertiesService.getScriptProperties();
-  if (uid && props.getProperty('_uid') === uid) return EMPTY;
-  if (uid) props.setProperty('_uid', uid);
+
+  // Atomic check-set under lock prevents concurrent executions racing on _uid
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(3000); } catch (_) { return EMPTY; }
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (uid && props.getProperty('_uid') === uid) return EMPTY;
+    if (uid) props.setProperty('_uid', uid);
+  } finally {
+    lock.releaseLock();
+  }
+
   try { dispatch_(upd); }
   catch (err) {
     try {
