@@ -69,7 +69,12 @@ function doPost(e) {
   if (uid && props.getProperty('_uid') === uid) return EMPTY;
   if (uid) props.setProperty('_uid', uid);
   try { dispatch_(upd); }
-  catch (err) { try { tg_('⚠️ ' + String(err.message || err)); } catch (_) {} }
+  catch (err) {
+    try {
+      var msg = String(err.message || err).replace(/bot\d+:[A-Za-z0-9_-]+\//g, 'bot<token>/');
+      tg_('⚠️ ' + msg);
+    } catch (_) {}
+  }
   return EMPTY;
 }
 
@@ -297,7 +302,7 @@ function runTriage_() {
     var t = threads[j];
     var label = classify_(t);
     t._urgency = label;
-    counts[label] = (counts[label] || 0) + 1;
+    counts[label] = (counts[label] || 0) << 0, counts[label] = (counts[label] || 0) + 1;
     if ((label === 'URGENT' || label === 'HIGH') && important.length < MAX_EMAILS_) important.push(t);
   }
 
