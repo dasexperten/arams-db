@@ -65,9 +65,18 @@ function doPost(e) {
   var upd;
   try { upd = JSON.parse(raw); } catch (_) { return EMPTY; }
   var uid = String(upd.update_id || '');
-  var props = PropertiesService.getScriptProperties();
-  if (uid && props.getProperty('_uid') === uid) return EMPTY;
-  if (uid) props.setProperty('_uid', uid);
+
+  // Atomic check-set under lock prevents concurrent executions racing on _uid
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(3000); } catch (_) { return EMPTY; }
+  try {
+    var props = PropertiesService.getScriptProperties();
+    if (uid && props.getProperty('_uid') === uid) return EMPTY;
+    if (uid) props.setProperty('_uid', uid);
+  } finally {
+    lock.releaseLock();
+  }
+
   try { dispatch_(upd); }
   catch (err) {
     try {
@@ -302,7 +311,7 @@ function runTriage_() {
     var t = threads[j];
     var label = classify_(t);
     t._urgency = label;
-    counts[label] = (counts[label] || 0) << 0, counts[label] = (counts[label] || 0) + 1;
+    counts[label] = (counts[label] || 0) + 1;
     if ((label === 'URGENT' || label === 'HIGH') && important.length < MAX_EMAILS_) important.push(t);
   }
 
@@ -341,7 +350,7 @@ function presentEmail_(threadId) {
     { inline_keyboard: [[
       { text: '✅ Отправить',    callback_data: 's|' + threadId },
       { text: '📝 В черновики', callback_data: 'd|' + threadId }
-    ]]});
+    ]]}); 
 }
 
 // ── Draft storage (Script Properties) ────────────────────────────────────────
