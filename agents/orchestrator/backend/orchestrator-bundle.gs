@@ -18,7 +18,7 @@ var MODEL_MAIN_ = 'claude-sonnet-4-6';
 var MAX_EMAILS_ = 5;
 var LOOKBACK_H_ = 24;
 
-// ── Part 1: Skill registry ────────────────────────────────────────────────────
+// ── Skill registry ────────────────────────────────────────────────────────────
 
 var SKILLS_ = {
   LEGALIZER:  { icon: '⚖️',  name: 'Легалайзер',   desc: 'contracts, invoices, legal, compliance, GDPR, disputes' },
@@ -31,12 +31,10 @@ var SKILLS_ = {
 };
 
 var SKILL_LIST_ = (function() {
-  return Object.keys(SKILLS_).map(function(k) {
-    return k + ' — ' + SKILLS_[k].desc;
-  }).join('\n');
+  return Object.keys(SKILLS_).map(function(k) { return k + ' — ' + SKILLS_[k].desc; }).join('\n');
 })();
 
-// ── Part 1: analyzeEmail_() — one Sonnet call → JSON ─────────────────────────
+// ── analyzeEmail_() — one Sonnet call → JSON ──────────────────────────────────
 
 function analyzeEmail_(thread, body) {
   var system =
@@ -47,10 +45,10 @@ function analyzeEmail_(thread, body) {
     '1. Choose the single most relevant skill.\n' +
     '2. Adopt that skill\'s persona when writing the draft.\n' +
     '3. If you have enough context → needs_clarification: false, include full draft.\n' +
-    '4. If a critical business decision is needed → needs_clarification: true, question + 2-4 short options.\n' +
+    '4. If a critical business decision is needed → needs_clarification: true, question + 2-4 short options (each ≤ 30 chars).\n' +
     '5. Reply language MUST match the original email.\n' +
     '6. Sign as "Das Experten Team".\n\n' +
-    'Format A: {"skill":"PARTNER","needs_clarification":false,"draft":"Dear Viktoria,\\n\\n..."}\n' +
+    'Format A: {"skill":"PARTNER","needs_clarification":false,"draft":"Dear ...,\\n\\n..."}\n' +
     'Format B: {"skill":"LEGALIZER","needs_clarification":true,"question":"Offer discount?","options":["Yes 10%","No","Need details"]}';
 
   var user =
@@ -69,7 +67,7 @@ function analyzeEmail_(thread, body) {
   }
 }
 
-// ── Part 2: runSearch_() — find, analyze, auto-send or ask ───────────────────
+// ── Search: find → analyze → auto-send OR ask ────────────────────────────────
 
 function runSearch_(hint) {
   var label = hint ? '«' + hint + '»' : 'за 90 дней';
@@ -90,8 +88,7 @@ function runSearch_(hint) {
     var result = analyzeEmail_(thread, body);
 
     if (result.needs_clarification) {
-      // Part 3 will handle this — for now show buttons
-      presentWithDraftManual_(thread, result);
+      askClarification_(thread, body, result);
     } else {
       autoSendAndReport_(thread, result);
     }
@@ -99,7 +96,7 @@ function runSearch_(hint) {
   }
 }
 
-// ── Part 2: autoSendAndReport_() — send + Telegram summary ───────────────────
+// ── Auto-send + Telegram report ──────────────────────────────────────────────
 
 function autoSendAndReport_(thread, result) {
   var subject = f_(thread, 'subject').substring(0, 80)             || '(без темы)';
@@ -113,13 +110,10 @@ function autoSendAndReport_(thread, result) {
     return;
   }
 
-  // One-sentence summary of what was sent
   var summary = '';
   try {
-    summary = claude_(
-      'Summarize this email reply in 1 sentence in Russian. Be very brief.',
-      result.draft, MODEL_FAST_, 60
-    ).trim();
+    summary = claude_('Summarize this email reply in 1 short sentence in Russian.',
+      result.draft, MODEL_FAST_, 60).trim();
   } catch (_) {}
 
   tg_('✅ <b>Отправлено</b>\n' +
@@ -127,6 +121,84 @@ function autoSendAndReport_(thread, result) {
       '📧 ' + esc_(subject) + '\n' +
       skill.icon + ' ' + esc_(skill.name) +
       (summary ? '\n\n📝 ' + esc_(summary) : ''));
+}
+
+// ── Part 3: Clarification flow ────────────────────────────────────────────────
+
+function askClarification_(thread, body, result) {
+  var subject = f_(thread, 'subject').substring(0, 80)             || '(без темы)';
+  var from    = f_(thread, 'last_message_from', 'from').substring(0, 60) || '?';
+  var skill   = SKILLS_[result.skill] || SKILLS_.DEFAULT;
+  var options = (result.options || ['Да','Нет','Пропустить']).slice(0, 4);
+
+  storePending_(thread.thread_id, {
+    from:    from,
+    subject: subject,
+    body:    (body || '').substring(0, 500),
+    skill:   result.skill,
+    options: options
+  });
+
+  var buttons = options.map(function(opt, i) {
+    return { text: opt.substring(0, 30), callback_data: 'q|' + thread.thread_id + '|' + i };
+  });
+
+  tg_('❓ <b>' + esc_(subject) + '</b>\n' +
+      '👤 ' + esc_(from) + '\n' +
+      skill.icon + ' ' + esc_(skill.name) + '\n\n' +
+      esc_(result.question || 'Нужно уточнение'),
+      { inline_keyboard: [buttons] });
+}
+
+function handleClarification_(threadId, optionIdx) {
+  var pending = loadPending_(threadId);
+  if (!pending) { tg_('Контекст устарел.'); return; }
+
+  var chosen = (pending.options || [])[optionIdx] || '?';
+  var skill  = SKILLS_[pending.skill] || SKILLS_.DEFAULT;
+  tg_('⏳ Готовлю ответ с учётом: <b>' + esc_(chosen) + '</b>…');
+
+  var system = 'You are Das Experten ' + skill.name + '. ' +
+    'Write a professional email reply incorporating this management decision: "' + chosen + '". ' +
+    'Match the email language. Output ONLY the email body. Sign as "Das Experten Team".';
+  var user = 'From: ' + pending.from + '\nSubject: ' + pending.subject + '\n\n' + pending.body;
+
+  var draft;
+  try { draft = claude_(system, user, MODEL_MAIN_, 400); }
+  catch (e) { tg_('❌ Генерация: ' + String(e.message)); deletePending_(threadId); return; }
+
+  try {
+    emailer_({ action: 'reply', thread_id: threadId, body: draft });
+  } catch (e) {
+    tg_('❌ Отправка: ' + String(e.message));
+    deletePending_(threadId);
+    return;
+  }
+
+  var summary = '';
+  try {
+    summary = claude_('Summarize this email reply in 1 short sentence in Russian.',
+      draft, MODEL_FAST_, 60).trim();
+  } catch (_) {}
+
+  tg_('✅ <b>Отправлено</b>\n' +
+      '👤 ' + esc_(pending.from)    + '\n' +
+      '📧 ' + esc_(pending.subject) + '\n' +
+      skill.icon + ' ' + esc_(skill.name) + ' · решение: <i>' + esc_(chosen) + '</i>' +
+      (summary ? '\n\n📝 ' + esc_(summary) : ''));
+
+  deletePending_(threadId);
+}
+
+function storePending_(id, data) {
+  PropertiesService.getScriptProperties().setProperty('_q_' + id, JSON.stringify(data));
+}
+function loadPending_(id) {
+  var r = PropertiesService.getScriptProperties().getProperty('_q_' + id);
+  return r ? (function() { try { return JSON.parse(r); } catch(_) { return null; } })() : null;
+}
+function deletePending_(id) {
+  PropertiesService.getScriptProperties().deleteProperty('_q_' + id);
 }
 
 // ── One-time setup ────────────────────────────────────────────────────────────
@@ -277,12 +349,18 @@ function presentEmail_(threadId) {
   ]]});
 }
 
-// ── Button handlers (s/d; q added in Part 3) ─────────────────────────────────
+// ── Button handlers (s, d, q) ────────────────────────────────────────────────
 
 function handleAction_(data) {
   var parts    = data.split('|');
   var action   = parts[0];
   var threadId = parts[1] || '';
+
+  // Clarification answer (Part 3)
+  if (action === 'q') {
+    handleClarification_(threadId, parseInt(parts[2] || '0', 10));
+    return;
+  }
 
   var d = loadDraft_(threadId);
   if (!d) { tg_('Это письмо уже обработано.'); return; }
