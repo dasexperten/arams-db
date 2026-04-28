@@ -1,10 +1,10 @@
 /**
- * orchestrator-bundle.gs — Das Experten Orchestrator v2
+ * orchestrator-bundle.gs — Das Experten Orchestrator v3
  *
- * Flow:
- *   "утренняя почта" → scan inboxes → classify → draft replies →
- *   each email = one Telegram message with [Send] [Drafts] buttons.
- *   Ignored messages stay ignored — no queue, no revisiting.
+ * Flows:
+ *   1. "найди <запрос>" → search emails → analyzeEmail_ (skill routing) → auto-send → report
+ *   2. "утренняя почта" → scan inbox → classify → draft → Telegram buttons
+ *   3. Clarification inline keyboard → pick option → draft with context → auto-send → report
  *
  * Script Properties required:
  *   TELEGRAM_BOT_TOKEN       — from @BotFather
@@ -14,13 +14,25 @@
  *   ORCHESTRATOR_EXEC_URL    — this Web App URL (for registerWebhook)
  */
 
-// ── Config ───────────────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
 
 var BOT_BASE_   = 'https://api.telegram.org/bot';
 var MODEL_FAST_ = 'claude-haiku-4-5-20251001';
 var MODEL_MAIN_ = 'claude-sonnet-4-6';
-var MAX_EMAILS_ = 5;   // max important emails per triage
-var LOOKBACK_H_ = 24;  // hours to look back
+var MAX_EMAILS_ = 5;
+var LOOKBACK_H_ = 24;
+
+// ── Skills registry ───────────────────────────────────────────────────────────
+
+var SKILLS_ = {
+  LEGALIZER:  { icon: '⚖️',  name: 'Юрист',        desc: 'Претензии, договоры, правовые вопросы' },
+  MARKETOLOG: { icon: '📢',  name: 'Маркетолог',   desc: 'Акции, отзывы, продвижение' },
+  LOGIST:     { icon: '🚚',  name: 'Логист',       desc: 'Доставка, возвраты, трекинг' },
+  PRODUCT:    { icon: '🦷',  name: 'Продуктолог',  desc: 'Вопросы о товаре, состав, применение' },
+  PARTNER:    { icon: '🤝',  name: 'Партнёр',      desc: 'B2B, дистрибуция, опт' },
+  SUPPORT:    { icon: '💬',  name: 'Поддержка',    desc: 'Общие вопросы покупателей' },
+  DEFAULT:    { icon: '📧',  name: 'Общий',        desc: 'Не подходит ни под одну категорию' }
+};
 
 // ── One-time setup (run from Apps Script editor) ──────────────────────────────
 
@@ -45,41 +57,23 @@ function testConfig() {
   keys.forEach(function(k) { console.log(k + ': ' + (prop_(k) ? 'OK' : 'MISSING')); });
 }
 
-// ── doPost — returns 200 immediately, processes async ────────────────────────
+// ── doPost — synchronous, dedup via update_id ─────────────────────────────────
 
 function doPost(e) {
   var raw = (e && e.postData && e.postData.contents) || '{}';
   var EMPTY = ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
-  try {
-    var upd = JSON.parse(raw);
-    var uid = String(upd.update_id || '');
-    var props = PropertiesService.getScriptProperties();
-    if (uid) {
-      if (props.getProperty('_uid') === uid) return EMPTY;
-      props.setProperty('_uid', uid);
-    }
-    props.setProperty('_upd', raw);
-    ScriptApp.getProjectTriggers()
-      .filter(function(t) { return t.getHandlerFunction() === 'processUpdate_'; })
-      .forEach(function(t) { ScriptApp.deleteTrigger(t); });
-    ScriptApp.newTrigger('processUpdate_').timeBased().after(1000).create();
-  } catch (_) {
-    try { dispatch_(JSON.parse(raw)); } catch (__) {}
-  }
+  var upd;
+  try { upd = JSON.parse(raw); } catch (_) { return EMPTY; }
+  var uid = String(upd.update_id || '');
+  var props = PropertiesService.getScriptProperties();
+  if (uid && props.getProperty('_uid') === uid) return EMPTY;
+  if (uid) props.setProperty('_uid', uid);
+  try { dispatch_(upd); }
+  catch (err) { try { tg_('⚠️ ' + String(err.message || err)); } catch (_) {} }
   return EMPTY;
 }
 
-function processUpdate_() {
-  ScriptApp.getProjectTriggers()
-    .filter(function(t) { return t.getHandlerFunction() === 'processUpdate_'; })
-    .forEach(function(t) { ScriptApp.deleteTrigger(t); });
-  var raw = prop_('_upd') || '{}';
-  PropertiesService.getScriptProperties().deleteProperty('_upd');
-  var upd; try { upd = JSON.parse(raw); } catch (_) { return; }
-  try { dispatch_(upd); } catch (err) { tg_('⚠️ ' + String(err.message || err)); }
-}
-
-// ── Dispatcher ───────────────────────────────────────────────────────────────
+// ── Dispatcher ────────────────────────────────────────────────────────────────
 
 function dispatch_(upd) {
   var myChat = prop_('ARAM_TELEGRAM_CHAT_ID');
@@ -98,63 +92,223 @@ function dispatch_(upd) {
   }
 }
 
-// ── Text handler ─────────────────────────────────────────────────────────────
+// ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
-  if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) {
-    runTriage_();
-    return;
-  }
-  tg_('Привет. Напиши <b>утренняя почта</b> чтобы разобрать inbox.');
+  var searchMatch = text.match(/^найди\s+(.+)$/i);
+  if (searchMatch) { runSearch_(searchMatch[1].trim()); return; }
+  if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) { runTriage_(); return; }
+  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox');
 }
 
-// ── Inbox triage ─────────────────────────────────────────────────────────────
+// ── Search flow ───────────────────────────────────────────────────────────────
+
+function runSearch_(query) {
+  tg_('🔍 Ищу письма «' + esc_(query) + '»…');
+  var res;
+  try {
+    res = emailer_({ action: 'find', query: query, max_results: 10 });
+  } catch (e) {
+    tg_('❌ Ошибка поиска: ' + String(e.message));
+    return;
+  }
+  var threads = res.threads || [];
+  if (!threads.length) { tg_('Писем не найдено.'); return; }
+  tg_('📬 Найдено: ' + threads.length + ' письма. Анализирую…');
+  for (var i = 0; i < threads.length; i++) {
+    var thread = threads[i];
+    var body = getBody_(thread);
+    var analysis = analyzeEmail_(thread, body);
+    if (analysis.needs_clarification) {
+      askClarification_(thread, analysis);
+    } else {
+      autoSendAndReport_(thread, analysis.skill, analysis.draft);
+    }
+    if (i < threads.length - 1) Utilities.sleep(300);
+  }
+}
+
+// ── Skill routing — one Sonnet call returns JSON ──────────────────────────────
+
+function analyzeEmail_(thread, body) {
+  var skillList = Object.keys(SKILLS_).map(function(k) {
+    return k + ' — ' + SKILLS_[k].desc;
+  }).join('\n');
+
+  var system =
+    'Ты — оркестратор почты Das Experten (бренд средств гигиены полости рта).\n' +
+    'Прочитай письмо и верни ТОЛЬКО JSON (без markdown, без пояснений):\n\n' +
+    'Если ответ очевиден:\n' +
+    '{"skill":"КОД","needs_clarification":false,"draft":"текст ответа на языке отправителя"}\n\n' +
+    'Если без уточнения нельзя ответить правильно:\n' +
+    '{"skill":"КОД","needs_clarification":true,"question":"вопрос","options":["Вариант А","Вариант Б"]}\n\n' +
+    'Навыки:\n' + skillList + '\n\n' +
+    'Правила:\n' +
+    '- draft: только тело письма, без темы, профессиональный тон\n' +
+    '- needs_clarification=true ТОЛЬКО если информации реально недостаточно\n' +
+    '- options: 2-3 конкретных взаимоисключающих варианта';
+
+  var user = 'От: ' + f_(thread, 'last_message_from', 'from') +
+    '\nТема: ' + f_(thread, 'subject') + '\n\n' + body;
+
+  try {
+    var raw = claude_(system, user, MODEL_MAIN_, 600);
+    var cleanJson = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    return JSON.parse(cleanJson);
+  } catch (e) {
+    return { skill: 'DEFAULT', needs_clarification: false,
+      draft: '(Ошибка анализа — ответьте вручную: ' + String(e.message) + ')' };
+  }
+}
+
+// ── Auto-send and report ──────────────────────────────────────────────────────
+
+function autoSendAndReport_(thread, skillCode, draft) {
+  var skill   = SKILLS_[skillCode] || SKILLS_.DEFAULT;
+  var subject = f_(thread, 'subject').substring(0, 100) || '(без темы)';
+  var from    = f_(thread, 'last_message_from', 'from').substring(0, 80) || '?';
+  try {
+    emailer_({ action: 'reply', thread_id: thread.thread_id, body_plain: draft });
+  } catch (e) {
+    tg_('❌ Не удалось отправить «' + esc_(subject) + '»: ' + String(e.message));
+    return;
+  }
+  var summary = '';
+  try {
+    summary = claude_(
+      'One sentence summary in Russian of what was replied.',
+      'Subject: ' + subject + '\nReply: ' + draft.substring(0, 300),
+      MODEL_FAST_, 80
+    ).trim();
+  } catch (_) {}
+  tg_('✅ Отправлено\n' +
+    '👤 ' + esc_(from) + '\n' +
+    '📧 ' + esc_(subject) + '\n' +
+    skill.icon + ' ' + skill.name +
+    (summary ? '\n📝 ' + esc_(summary) : ''));
+}
+
+// ── Clarification flow ────────────────────────────────────────────────────────
+
+function askClarification_(thread, analysis) {
+  var threadId = thread.thread_id;
+  var subject  = f_(thread, 'subject').substring(0, 100) || '(без темы)';
+  var from     = f_(thread, 'last_message_from', 'from').substring(0, 80) || '?';
+  var skill    = SKILLS_[analysis.skill] || SKILLS_.DEFAULT;
+  var options  = analysis.options || ['Да', 'Нет'];
+
+  PropertiesService.getScriptProperties().setProperty(
+    '_q_' + threadId,
+    JSON.stringify({ subject: subject, from: from, skill: analysis.skill,
+      body: (getBody_(thread) || '').substring(0, 400), options: options })
+  );
+
+  var buttons = options.map(function(opt, idx) {
+    return [{ text: opt, callback_data: 'q|' + threadId + '|' + idx }];
+  });
+
+  tg_(skill.icon + ' <b>' + esc_(subject) + '</b>\nОт: ' + esc_(from) +
+    '\n\n❓ ' + esc_(analysis.question), { inline_keyboard: buttons });
+}
+
+function handleClarification_(threadId, optionIdx) {
+  var raw = PropertiesService.getScriptProperties().getProperty('_q_' + threadId);
+  if (!raw) { tg_('Контекст устарел, начни поиск заново.'); return; }
+  var state;
+  try { state = JSON.parse(raw); } catch (_) { tg_('Ошибка чтения контекста.'); return; }
+  PropertiesService.getScriptProperties().deleteProperty('_q_' + threadId);
+
+  var chosen   = (state.options || [])[optionIdx] || 'неизвестно';
+  var skillList = Object.keys(SKILLS_).map(function(k) {
+    return k + ' — ' + SKILLS_[k].desc;
+  }).join('\n');
+
+  var system =
+    'Ты — оркестратор почты Das Experten. Пользователь уточнил контекст.\n' +
+    'Напиши финальный ответ на письмо. Только тело письма, без темы.\n' +
+    'Навыки: ' + skillList;
+  var user = 'От: ' + esc_(state.from) + '\nТема: ' + esc_(state.subject) +
+    '\n\nКонтекст письма: ' + (state.body || '') +
+    '\n\nПользователь выбрал: ' + chosen;
+
+  var draft;
+  try { draft = claude_(system, user, MODEL_MAIN_, 400); }
+  catch (e) { tg_('❌ Ошибка генерации ответа: ' + String(e.message)); return; }
+
+  var fakeThread = { thread_id: threadId, subject: state.subject, last_message_from: state.from };
+  autoSendAndReport_(fakeThread, state.skill, draft);
+}
+
+// ── Button handlers (s=send, d=draft, q=clarification) ────────────────────────
+
+function handleAction_(data) {
+  var parts    = data.split('|');
+  var action   = parts[0];
+  var threadId = parts[1] || '';
+
+  if (action === 'q') {
+    handleClarification_(threadId, parseInt(parts[2] || '0', 10));
+    return;
+  }
+
+  var d = loadDraft_(threadId);
+  if (!d) { tg_('Это письмо уже обработано.'); return; }
+
+  if (action === 's') {
+    try {
+      emailer_({ action: 'reply', thread_id: threadId, body_plain: d.draft });
+      tg_('✅ Отправлено: <b>' + esc_(d.subject) + '</b>');
+    } catch (e) { tg_('❌ Ошибка отправки: ' + String(e.message)); }
+    deleteDraft_(threadId);
+    return;
+  }
+
+  if (action === 'd') {
+    try {
+      emailer_({ action: 'reply', thread_id: threadId, body_plain: d.draft, draft_only: true });
+      tg_('📝 Сохранено в Gmail Drafts:\n<b>' + esc_(d.subject) + '</b>\n\nОткрой Gmail → Черновики.');
+    } catch (_) {
+      tg_('📝 <b>' + esc_(d.subject) + '</b>\n\n<pre>' + esc_(d.draft) + '</pre>');
+    }
+    deleteDraft_(threadId);
+  }
+}
+
+// ── Inbox triage ──────────────────────────────────────────────────────────────
 
 function runTriage_() {
   tg_('📬 Сканирую inbox за последние ' + LOOKBACK_H_ + ' ч…');
-
   var res;
   try {
     res = emailer_({
-      action:      'find',
-      query:       'is:unread newer_than:' + LOOKBACK_H_ + 'h',
-      max_results: 30,
-      filter_junk: true
+      action: 'find', query: 'is:unread newer_than:' + LOOKBACK_H_ + 'h',
+      max_results: 30, filter_junk: true
     });
   } catch (e) {
     tg_('❌ Ошибка поиска писем: ' + String(e.message));
     return;
   }
-
   var threads = res.threads || [];
-  if (res.filtered_count) {
-    console.log('emailer pre-filtered ' + res.filtered_count + ' junk threads');
-  }
-
+  if (res.filtered_count) console.log('emailer pre-filtered ' + res.filtered_count + ' junk threads');
   if (!threads.length) { tg_('✅ Новых писем нет.'); return; }
 
-  // Classify
   var counts = {}, important = [];
   for (var j = 0; j < threads.length; j++) {
     var t = threads[j];
     var label = classify_(t);
     t._urgency = label;
     counts[label] = (counts[label] || 0) + 1;
-    if ((label === 'URGENT' || label === 'HIGH') && important.length < MAX_EMAILS_) {
-      important.push(t);
-    }
+    if ((label === 'URGENT' || label === 'HIGH') && important.length < MAX_EMAILS_) important.push(t);
   }
 
-  // Summary
   tg_('📊 <b>Inbox — ' + threads.length + ' писем</b>\n' +
-    (counts.URGENT ? '🔴 Срочные: '    + counts.URGENT + '\n' : '') +
-    (counts.HIGH   ? '🟠 Важные: '     + counts.HIGH   + '\n' : '') +
-    (counts.MEDIUM ? '🟡 Обычные: '    + counts.MEDIUM + '\n' : '') +
-    (counts.LOW    ? '⚪ Уведомления: ' + counts.LOW    + '\n' : ''));
+    (counts.URGENT ? '🔴 Срочные: '     + counts.URGENT + '\n' : '') +
+    (counts.HIGH   ? '🟠 Важные: '      + counts.HIGH   + '\n' : '') +
+    (counts.MEDIUM ? '🟡 Обычные: '     + counts.MEDIUM + '\n' : '') +
+    (counts.LOW    ? '⚪ Уведомления: '  + counts.LOW    + '\n' : ''));
 
   if (!important.length) { tg_('Срочных писем нет.'); return; }
 
-  // Draft and present each important email
   tg_('✍️ Готовлю черновики для ' + important.length + ' письма…');
   for (var k = 0; k < important.length; k++) {
     var email = important[k];
@@ -171,58 +325,24 @@ function runTriage_() {
   }
 }
 
-// ── Present one email with buttons ────────────────────────────────────────────
+// ── Present one triage email with send/draft buttons ──────────────────────────
 
 function presentEmail_(threadId) {
   var d = loadDraft_(threadId);
   if (!d) return;
   var icon = d.urgency === 'URGENT' ? '🔴' : '🟠';
-  var text = icon + ' <b>' + esc_(d.subject) + '</b>\n' +
-    'От: ' + esc_(d.from) + '\n\n' +
-    '<b>Черновик:</b>\n' + esc_(d.draft);
-  var kb = { inline_keyboard: [[
-    { text: '✅ Отправить', callback_data: 's|' + threadId },
-    { text: '📝 В черновики', callback_data: 'd|' + threadId }
-  ]]};
-  tg_(text, kb);
-}
-
-// ── Button handlers ───────────────────────────────────────────────────────────
-
-function handleAction_(data) {
-  var sep      = data.indexOf('|');
-  var action   = sep >= 0 ? data.substring(0, sep) : data;
-  var threadId = sep >= 0 ? data.substring(sep + 1) : '';
-  var d = loadDraft_(threadId);
-  if (!d) { tg_('Это письмо уже обработано.'); return; }
-
-  if (action === 's') {
-    try {
-      emailer_({ action: 'reply', thread_id: threadId, body: d.draft });
-      tg_('✅ Отправлено: <b>' + esc_(d.subject) + '</b>');
-    } catch (e) { tg_('❌ Ошибка отправки: ' + String(e.message)); }
-    deleteDraft_(threadId);
-    return;
-  }
-
-  if (action === 'd') {
-    try {
-      // draft_only:true saves to Gmail Drafts without sending
-      emailer_({ action: 'reply', thread_id: threadId, body: d.draft, draft_only: true });
-      tg_('📝 Сохранено в Gmail Drafts:\n<b>' + esc_(d.subject) + '</b>\n\nОткрой Gmail → Черновики.');
-    } catch (_) {
-      // Fallback: show draft text
-      tg_('📝 <b>' + esc_(d.subject) + '</b>\n\n<pre>' + esc_(d.draft) + '</pre>');
-    }
-    deleteDraft_(threadId);
-  }
+  tg_(icon + ' <b>' + esc_(d.subject) + '</b>\nОт: ' + esc_(d.from) +
+    '\n\n<b>Черновик:</b>\n' + esc_(d.draft),
+    { inline_keyboard: [[
+      { text: '✅ Отправить',    callback_data: 's|' + threadId },
+      { text: '📝 В черновики', callback_data: 'd|' + threadId }
+    ]]});
 }
 
 // ── Draft storage (Script Properties) ────────────────────────────────────────
 
 function storeDraft_(threadId, data) {
-  PropertiesService.getScriptProperties()
-    .setProperty('_d_' + threadId, JSON.stringify(data));
+  PropertiesService.getScriptProperties().setProperty('_d_' + threadId, JSON.stringify(data));
 }
 
 function loadDraft_(threadId) {
@@ -240,9 +360,7 @@ function deleteDraft_(threadId) {
 function classify_(thread) {
   var snippet = f_(thread, 'last_message_snippet', 'snippet').substring(0, 300);
   var system = 'Classify email urgency. Reply ONE word: URGENT, HIGH, MEDIUM, LOW, or SKIP.\n' +
-    'URGENT=action needed today (payment/complaint/contract/legal termination).\n' +
-    'HIGH=important business or B2B partner email.\n' +
-    'MEDIUM=general inquiry. LOW=newsletter/notification. SKIP=spam/auto.';
+    'URGENT=action needed today. HIGH=important business. MEDIUM=general. LOW=newsletter. SKIP=spam.';
   try {
     var label = claude_(system,
       'From: ' + f_(thread, 'last_message_from', 'from') +
@@ -267,12 +385,10 @@ function makeDraft_(thread, body) {
   try {
     return claude_(system,
       'From: ' + f_(thread, 'last_message_from', 'from') +
-      '\nSubject: ' + f_(thread, 'subject') +
-      '\n\n' + body, MODEL_MAIN_, 250);
+      '\nSubject: ' + f_(thread, 'subject') + '\n\n' + body,
+      MODEL_MAIN_, 250);
   } catch (_) { return '(Черновик недоступен — напиши вручную)'; }
 }
-
-// ── Field helper (emailer returns last_message_from, not from) ────────────────
 
 function f_(obj, k1, k2, k3) {
   var v = obj[k1]; if (v) return String(v);
