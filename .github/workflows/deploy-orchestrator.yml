@@ -36,3 +36,12 @@ jobs:
           DEPLOYMENT_ID=$(echo "$ORCHESTRATOR_EXEC_URL" | sed 's|.*/macros/s/\([^/]*\)/exec|\1|')
           clasp deploy -i "$DEPLOYMENT_ID" -d "auto $(date '+%Y-%m-%d %H:%M')"
           echo "✅ Deployed to $DEPLOYMENT_ID"
+
+      - name: Register Telegram webhook
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ORCHESTRATOR_EXEC_URL: ${{ secrets.ORCHESTRATOR_EXEC_URL }}
+        run: |
+          RESULT=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${ORCHESTRATOR_EXEC_URL}&drop_pending_updates=true")
+          echo "$RESULT"
+          echo "✅ Webhook registered"
