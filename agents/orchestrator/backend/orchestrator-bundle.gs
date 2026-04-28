@@ -123,7 +123,7 @@ function autoSendAndReport_(thread, result) {
       (summary ? '\n\n📝 ' + esc_(summary) : ''));
 }
 
-// ── Part 3: Clarification flow ────────────────────────────────────────────────
+// ── Clarification flow ────────────────────────────────────────────────────────
 
 function askClarification_(thread, body, result) {
   var subject = f_(thread, 'subject').substring(0, 80)             || '(без темы)';
@@ -224,38 +224,23 @@ function testConfig() {
   keys.forEach(function(k) { console.log(k + ': ' + (prop_(k) ? 'OK' : 'MISSING')); });
 }
 
-// ── doPost ────────────────────────────────────────────────────────────────────
+// ── doPost — process synchronously, dedup via update_id ──────────────────────
 
 function doPost(e) {
   var raw = (e && e.postData && e.postData.contents) || '{}';
   var EMPTY = ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
-  try {
-    var upd = JSON.parse(raw);
-    var uid = String(upd.update_id || '');
-    var props = PropertiesService.getScriptProperties();
-    if (uid) {
-      if (props.getProperty('_uid') === uid) return EMPTY;
-      props.setProperty('_uid', uid);
-    }
-    props.setProperty('_upd', raw);
-    ScriptApp.getProjectTriggers()
-      .filter(function(t) { return t.getHandlerFunction() === 'processUpdate_'; })
-      .forEach(function(t) { ScriptApp.deleteTrigger(t); });
-    ScriptApp.newTrigger('processUpdate_').timeBased().after(1000).create();
-  } catch (_) {
-    try { dispatch_(JSON.parse(raw)); } catch (__) {}
-  }
-  return EMPTY;
-}
+  var upd;
+  try { upd = JSON.parse(raw); } catch (_) { return EMPTY; }
 
-function processUpdate_() {
-  ScriptApp.getProjectTriggers()
-    .filter(function(t) { return t.getHandlerFunction() === 'processUpdate_'; })
-    .forEach(function(t) { ScriptApp.deleteTrigger(t); });
-  var raw = prop_('_upd') || '{}';
-  PropertiesService.getScriptProperties().deleteProperty('_upd');
-  var upd; try { upd = JSON.parse(raw); } catch (_) { return; }
-  try { dispatch_(upd); } catch (err) { tg_('⚠️ ' + String(err.message || err)); }
+  var uid = String(upd.update_id || '');
+  var props = PropertiesService.getScriptProperties();
+  if (uid && props.getProperty('_uid') === uid) return EMPTY;
+  if (uid) props.setProperty('_uid', uid);
+
+  try { dispatch_(upd); }
+  catch (err) { try { tg_('⚠️ ' + String(err.message || err)); } catch (_) {} }
+
+  return EMPTY;
 }
 
 // ── Dispatcher ────────────────────────────────────────────────────────────────
@@ -356,7 +341,6 @@ function handleAction_(data) {
   var action   = parts[0];
   var threadId = parts[1] || '';
 
-  // Clarification answer (Part 3)
   if (action === 'q') {
     handleClarification_(threadId, parseInt(parts[2] || '0', 10));
     return;
