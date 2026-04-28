@@ -109,10 +109,12 @@ function dispatch_(upd) {
 // ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
+  if (/^пинг$|^ping$/i.test(text)) { tg_('понг ✅'); return; }
+
   var searchMatch = text.match(/^найди\s+(.+)$/i);
   if (searchMatch) { runSearch_(searchMatch[1].trim()); return; }
   if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) { runTriage_(); return; }
-  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox');
+  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox\n• <b>пинг</b> — проверка связи');
 }
 
 // ── Search flow ───────────────────────────────────────────────────────────────
@@ -350,7 +352,7 @@ function presentEmail_(threadId) {
     { inline_keyboard: [[
       { text: '✅ Отправить',    callback_data: 's|' + threadId },
       { text: '📝 В черновики', callback_data: 'd|' + threadId }
-    ]]}); 
+    ]]});
 }
 
 // ── Draft storage (Script Properties) ────────────────────────────────────────
@@ -441,9 +443,11 @@ function emailer_(payload) {
 // ── Telegram ──────────────────────────────────────────────────────────────────
 
 function tg_(text, keyboard) {
-  var token  = prop_('TELEGRAM_BOT_TOKEN', true);
-  var chatId = prop_('ARAM_TELEGRAM_CHAT_ID', true);
-  var body   = { chat_id: chatId, text: text.substring(0, 4090), parse_mode: 'HTML' };
+  var props  = PropertiesService.getScriptProperties();
+  var token  = props.getProperty('TELEGRAM_BOT_TOKEN')  || '';
+  var chatId = props.getProperty('ARAM_TELEGRAM_CHAT_ID') || '';
+  if (!token || !chatId) { console.warn('tg_: missing token or chatId'); return; }
+  var body = { chat_id: chatId, text: String(text || '').substring(0, 4090), parse_mode: 'HTML' };
   if (keyboard) body.reply_markup = JSON.stringify(keyboard);
   UrlFetchApp.fetch(BOT_BASE_ + token + '/sendMessage', {
     method: 'post', contentType: 'application/json',
