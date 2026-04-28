@@ -327,6 +327,47 @@ is automatically trashed by the scheduled cleanup (same trigger as heartbeat).
 
 ---
 
+## Emailer Web App — required action: `trash_threads`
+
+The orchestrator's "удали ..." flow calls a new emailer action that you must
+add to your **emailer Apps Script project** (the Web App behind `EMAILER_EXEC_URL`).
+
+Add this handler to the emailer's `doPost` switch:
+
+```js
+// Move N threads to Trash (recoverable for 30 days)
+case 'trash_threads': {
+  var ids   = body.thread_ids || [];
+  var ok    = 0;
+  var fail  = [];
+  for (var i = 0; i < ids.length; i++) {
+    try {
+      GmailApp.getThreadById(ids[i]).moveToTrash();
+      ok++;
+    } catch (e) {
+      fail.push(ids[i]);
+    }
+    if (i % 20 === 19) Utilities.sleep(300);  // light throttle
+  }
+  return jsonOut_({ trashed: ok, failed: fail });
+}
+```
+
+Use `moveToTrash()`, **не** `GmailApp.moveThreadsToTrash([...])` напрямую — у
+батч-вариантов лимит 100 за раз и не возвращается per-thread статус.
+
+**Quotas:** Gmail consumer-аккаунт ≈ 20k операций/день. На массовый разгрёб
+(1000+) лучше Gmail-фильтром.
+
+**Smoke test:**
+1. Передеплой emailer Web App (новая версия).
+2. Telegram: `удали тестовая_рассылка_не_существует` → «Ничего не найдено».
+3. `удали newsletter` → список + кнопки «Удалить N / Отмена».
+4. Сначала «Отмена» — должно ответить «Отменено».
+5. Потом реально «Удалить» на маленьком запросе — проверь Корзину Gmail.
+
+---
+
 ## Security reminders
 
 - `ARAM_TELEGRAM_CHAT_ID` is the authorization gate — only updates from this chat ID are processed

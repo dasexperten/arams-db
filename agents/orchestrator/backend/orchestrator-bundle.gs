@@ -3,8 +3,9 @@
  *
  * Flows:
  *   1. "найди <запрос>" → search emails → analyzeEmail_ (skill routing) → auto-send → report
- *   2. "утренняя почта" → scan inbox → classify → draft → Telegram buttons
- *   3. Clarification inline keyboard → pick option → draft with context → auto-send → report
+ *   2. "удали <запрос>" → translate NL → Gmail-query → preview → confirm → trash_threads
+ *   3. "утренняя почта" → scan inbox → classify → draft → Telegram buttons
+ *   4. Clarification inline keyboard → pick option → draft with context → auto-send → report
  *
  * Script Properties required:
  *   TELEGRAM_BOT_TOKEN       — from @BotFather
@@ -132,8 +133,10 @@ function handleText_(text) {
 
   var searchMatch = text.match(/^найди\s+(.+)$/iu);
   if (searchMatch) { runSearch_(searchMatch[1].trim()); return; }
+  var trashMatch = text.match(/^удали\s+(.+)$/iu);
+  if (trashMatch) { runTrash_(trashMatch[1].trim()); return; }
   if (/почта|triage|inbox|письм|mail|сканир/iu.test(text)) { runTriage_(); return; }
-  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox\n• <b>пинг</b> — проверка связи\n• <b>тест</b> — диагностика');
+  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>удали [запрос]</b> — переместить в корзину (с подтверждением)\n• <b>утренняя почта</b> — разобрать inbox\n• <b>пинг</b> — проверка связи\n• <b>тест</b> — диагностика');
 }
 
 // ── Search flow ───────────────────────────────────────────────────────────────
@@ -286,6 +289,11 @@ function handleAction_(data) {
     return;
   }
 
+  if (action === 't') {
+    handleTrash_(threadId, parts[2] || 'n');
+    return;
+  }
+
   var d = loadDraft_(threadId);
   if (!d) { tg_('Это письмо уже обработано.'); return; }
 
@@ -307,6 +315,94 @@ function handleAction_(data) {
     }
     deleteDraft_(threadId);
   }
+}
+
+// ── Trash flow ────────────────────────────────────────────────────────────────
+//
+// Requires emailer Web App to support:
+//   { action: 'trash_threads', thread_ids: ['t1','t2',...] }
+//   → moves all threads to Gmail Trash (recoverable for 30 days).
+//   Returns: { trashed: <int>, failed: [<thread_id>...] }
+
+function runTrash_(natural) {
+  tg_('🔍 Ищу что удалить: «' + esc_(natural) + '»…');
+  var gmailQuery = translateQuery_(natural);
+  var res;
+  try {
+    res = emailer_({ action: 'find', query: gmailQuery, max_results: 50 });
+  } catch (e) {
+    tg_('❌ Ошибка поиска: ' + String(e.message));
+    return;
+  }
+  var threads = res.threads || [];
+  if (!threads.length) {
+    tg_('Ничего не найдено по запросу <code>' + esc_(gmailQuery) + '</code>');
+    return;
+  }
+
+  var ids   = threads.map(function(t) { return t.thread_id; });
+  var token = Utilities.getUuid().substring(0, 8);
+  PropertiesService.getScriptProperties().setProperty(
+    '_t_' + token,
+    JSON.stringify({ ids: ids, query: gmailQuery, natural: natural })
+  );
+
+  var preview = threads.slice(0, 8).map(function(t, i) {
+    var subj = (f_(t, 'subject') || '(без темы)').substring(0, 70);
+    var from = f_(t, 'last_message_from', 'from').substring(0, 40);
+    return (i + 1) + '. <b>' + esc_(subj) + '</b>\n   ' + esc_(from);
+  }).join('\n');
+  var more = threads.length > 8 ? '\n…и ещё ' + (threads.length - 8) : '';
+
+  tg_(
+    '🗑 Найдено <b>' + threads.length + '</b> писем по запросу:\n' +
+    '<code>' + esc_(gmailQuery) + '</code>\n\n' +
+    preview + more + '\n\nПереместить все в Корзину?',
+    { inline_keyboard: [[
+      { text: '🗑 Удалить ' + threads.length, callback_data: 't|' + token + '|y' },
+      { text: '✖ Отмена',                     callback_data: 't|' + token + '|n' }
+    ]] }
+  );
+}
+
+function handleTrash_(token, decision) {
+  var key = '_t_' + token;
+  var raw = PropertiesService.getScriptProperties().getProperty(key);
+  if (!raw) { tg_('Запрос на удаление устарел.'); return; }
+  PropertiesService.getScriptProperties().deleteProperty(key);
+
+  if (decision !== 'y') { tg_('✖ Отменено. Ничего не удалено.'); return; }
+
+  var state;
+  try { state = JSON.parse(raw); } catch (_) { tg_('Ошибка чтения контекста.'); return; }
+
+  try {
+    var resp = emailer_({ action: 'trash_threads', thread_ids: state.ids });
+    var ok   = (resp && typeof resp.trashed === 'number') ? resp.trashed : state.ids.length;
+    var fail = (resp && resp.failed && resp.failed.length) || 0;
+    tg_('✅ В корзину отправлено <b>' + ok + '</b> писем.' +
+        (fail ? '\n⚠️ Не удалось: ' + fail : '') +
+        '\nВосстановить в Gmail → Корзина (30 дней).');
+  } catch (e) {
+    tg_('❌ Ошибка удаления: ' + String(e.message));
+  }
+}
+
+// ── NL → Gmail query translator ──────────────────────────────────────────────
+
+function translateQuery_(natural) {
+  var system =
+    'Ты переводишь русский/английский натуральный запрос в Gmail-search синтаксис. ' +
+    'Верни ТОЛЬКО строку запроса. Без кавычек, без markdown, без пояснений. ' +
+    'Используй from:, subject:, has:attachment, filename:, newer_than:, OR, скобки. ' +
+    'Если запрос про "рассылки/newsletter/promo/spam" — добавь (list:* OR unsubscribe). ' +
+    'Если запрос про конкретного отправителя или организацию — используй from:(вариант1 OR вариант2_транслит). ' +
+    'Если временной диапазон не указан явно — НЕ добавляй newer_than, чтобы не отрезать старое.';
+  try {
+    var q = claude_(system, natural, MODEL_FAST_, 100).trim()
+      .replace(/^["'`]+|["'`]+$/g, '').replace(/\s*\n+\s*/g, ' ');
+    return q || natural;
+  } catch (_) { return natural; }
 }
 
 // ── Inbox triage ──────────────────────────────────────────────────────────────
