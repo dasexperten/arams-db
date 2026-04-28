@@ -13,6 +13,7 @@
  *   get_thread          → ActionGetThread.handle(payload)
  *   download_attachment → ActionDownloadAttachment.handle(payload)
  *   archive             → ActionArchive.handle(payload) — write a Doc to REPORTER_FOLDER_ID without sending mail
+ *   trash_threads       → ActionTrashThreads.handle(payload) — move N threads to Gmail Trash (recoverable 30 days)
  *
  * Universal flag: draft_only:true on send/reply/reply_all creates a Gmail
  * draft instead of sending. Reporter is NOT called for drafts.
@@ -87,6 +88,8 @@ function dispatchAction_(payload) {
       return ActionDownloadAttachment.handle(payload);
     case 'archive':
       return ActionArchive.handle(payload);
+    case 'trash_threads':
+      return ActionTrashThreads.handle(payload);
     default:
       return { success: false, error: 'Unknown action: ' + action };
   }
