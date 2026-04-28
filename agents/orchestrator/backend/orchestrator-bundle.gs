@@ -104,7 +104,7 @@ function autoSendAndReport_(thread, result) {
   var skill   = SKILLS_[result.skill] || SKILLS_.DEFAULT;
 
   try {
-    emailer_({ action: 'reply', thread_id: thread.thread_id, body: result.draft });
+    emailer_({ action: 'reply', thread_id: thread.thread_id, body_plain: result.draft });
   } catch (e) {
     tg_('❌ Не удалось отправить «' + esc_(subject) + '»: ' + String(e.message));
     return;
@@ -168,7 +168,7 @@ function handleClarification_(threadId, optionIdx) {
   catch (e) { tg_('❌ Генерация: ' + String(e.message)); deletePending_(threadId); return; }
 
   try {
-    emailer_({ action: 'reply', thread_id: threadId, body: draft });
+    emailer_({ action: 'reply', thread_id: threadId, body_plain: draft });
   } catch (e) {
     tg_('❌ Отправка: ' + String(e.message));
     deletePending_(threadId);
@@ -351,7 +351,7 @@ function handleAction_(data) {
 
   if (action === 's') {
     try {
-      emailer_({ action: 'reply', thread_id: threadId, body: d.draft });
+      emailer_({ action: 'reply', thread_id: threadId, body_plain: d.draft });
       tg_('✅ Отправлено: <b>' + esc_(d.subject) + '</b>');
     } catch (e) { tg_('❌ ' + String(e.message)); }
     deleteDraft_(threadId);
@@ -359,7 +359,7 @@ function handleAction_(data) {
   }
   if (action === 'd') {
     try {
-      emailer_({ action: 'reply', thread_id: threadId, body: d.draft, draft_only: true });
+      emailer_({ action: 'reply', thread_id: threadId, body_plain: d.draft, draft_only: true });
       tg_('📝 В Gmail Drafts: <b>' + esc_(d.subject) + '</b>');
     } catch (_) {
       tg_('📝 <b>' + esc_(d.subject) + '</b>\n\n<pre>' + esc_(d.draft) + '</pre>');
