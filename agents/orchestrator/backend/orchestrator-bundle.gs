@@ -109,12 +109,31 @@ function dispatch_(upd) {
 // ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
+  console.log('handleText_: ' + text);
   if (/^пинг$|^ping$/i.test(text)) { tg_('понг ✅'); return; }
 
-  var searchMatch = text.match(/^найди\s+(.+)$/i);
+  if (/^тест$|^test$/i.test(text)) {
+    tg_('⚙️ Шаг 1: tg_ OK. Проверяю emailer…');
+    try {
+      var r = emailer_({ action: 'find', query: 'test', max_results: 1 });
+      tg_('⚙️ Шаг 2: emailer OK (' + (r.total_found || 0) + ' писем). Проверяю Claude…');
+    } catch (e) {
+      tg_('❌ Emailer ERROR: ' + String(e.message));
+      return;
+    }
+    try {
+      var ans = claude_('Reply with one word: OK', 'ping', MODEL_FAST_, 5);
+      tg_('⚙️ Шаг 3: Claude OK («' + ans.trim() + '»). Всё работает ✅');
+    } catch (e) {
+      tg_('❌ Claude ERROR: ' + String(e.message));
+    }
+    return;
+  }
+
+  var searchMatch = text.match(/^найди\s+(.+)$/iu);
   if (searchMatch) { runSearch_(searchMatch[1].trim()); return; }
-  if (/почта|triage|inbox|письм|mail|сканир/i.test(text)) { runTriage_(); return; }
-  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox\n• <b>пинг</b> — проверка связи');
+  if (/почта|triage|inbox|письм|mail|сканир/iu.test(text)) { runTriage_(); return; }
+  tg_('Привет. Команды:\n• <b>найди [запрос]</b> — поиск письма\n• <b>утренняя почта</b> — разобрать inbox\n• <b>пинг</b> — проверка связи\n• <b>тест</b> — диагностика');
 }
 
 // ── Search flow ───────────────────────────────────────────────────────────────
