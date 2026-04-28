@@ -3,8 +3,8 @@ Task: Find all event-related emails from the last 2 months.
 Events = exhibitions, conferences, seminars, forums, summits, meetings,
          congresses, workshops, presentations, invitations.
 
-Three-stage pipeline:
-  1. Regex pre-filter  — free, filters obvious non-events (invoices, receipts, noreply senders)
+Two-stage pipeline:
+  1. Emailer finds + filters junk (filter_junk:true) — regex inside ActionFind.gs
   2. Claude Haiku      — reads email body, decides EVENT vs NOT
   3. Claude Sonnet     — full analysis in Russian + draft reply
 
@@ -15,8 +15,8 @@ Output: GitHub Actions step summary + results/exhibitions.md
 Telegram: one message per confirmed event.
 """
 
-import os, sys, json, re, urllib.request
-from datetime import datetime, timedelta, date
+import os, sys, json, urllib.request
+from datetime import datetime, timedelta
 
 LOOKBACK_DAYS = 60
 WINDOW_DAYS   = 7
@@ -27,27 +27,6 @@ BASE_QUERY = "-in:sent -in:trash -in:spam -category:promotions -category:social 
 
 MODEL_FILTER = "claude-haiku-4-5-20251001"
 MODEL_DETAIL = "claude-sonnet-4-6"
-
-# ── Regex pre-filters (stage 1 — free) ───────────────────────────────────────
-
-JUNK_SENDER_RE = re.compile(
-    r"noreply|no-reply|donotreply|do-not-reply|billing@|support@|"
-    r"postmaster@|mailer-daemon|notifications?@|info@|newsletter@|"
-    r"unsubscribe|автоответ|автоуведомление",
-    re.IGNORECASE,
-)
-
-JUNK_SUBJECT_RE = re.compile(
-    r"\binvoice\b|\breceipt\b|\bpassword\b|\bverif|\bconfirm your|\b"
-    r"order #|\btracking|\bshipment|\bdelivery|\bsupport ticket|\b"
-    r"счёт\b|квитанци|подтвердите|сбросить пароль|ваш заказ|отслеживани",
-    re.IGNORECASE,
-)
-
-def is_junk_by_regex(thread):
-    sender  = f(thread, "last_message_from", "from")
-    subject = f(thread, "subject")
-    return bool(JUNK_SENDER_RE.search(sender) or JUNK_SUBJECT_RE.search(subject))
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -68,16 +47,24 @@ def emailer(payload):
     return resp
 
 def fetch_all_threads():
-    """Weekly windows over last LOOKBACK_DAYS days — bypasses 50-result cap."""
-    today     = datetime.utcnow().date()
-    seen      = {}
+    """Weekly windows over last LOOKBACK_DAYS days — bypasses 50-result cap.
+    filter_junk:true lets the emailer strip noreply/invoice/notification threads."""
+    today       = datetime.utcnow().date()
+    seen        = {}
     all_threads = []
+    total_filtered = 0
     for w in range(0, LOOKBACK_DAYS, WINDOW_DAYS):
         end_d   = today - timedelta(days=w)
         start_d = today - timedelta(days=w + WINDOW_DAYS)
         query   = f"{BASE_QUERY} after:{start_d.isoformat()} before:{end_d.isoformat()}"
         try:
-            res = emailer({"action": "find", "query": query, "max_results": PER_WINDOW})
+            res = emailer({
+                "action":      "find",
+                "query":       query,
+                "max_results": PER_WINDOW,
+                "filter_junk": True,
+            })
+            total_filtered += res.get("filtered_count", 0)
             for t in (res.get("threads") or []):
                 tid = t.get("thread_id")
                 if tid and tid not in seen:
@@ -85,6 +72,7 @@ def fetch_all_threads():
                     all_threads.append(t)
         except Exception as e:
             print(f"  WARN window {start_d}–{end_d}: {e}", file=sys.stderr)
+    print(f"  (emailer pre-filtered {total_filtered} junk threads total)")
     return all_threads
 
 def get_body(thread_id):
@@ -175,20 +163,15 @@ def tg(text):
 def main():
     print(f"Scanning last {LOOKBACK_DAYS} days via {LOOKBACK_DAYS // WINDOW_DAYS} weekly windows…")
 
-    # Stage 1 — fetch all threads (weekly windows)
-    all_threads = fetch_all_threads()
-    print(f"Fetched {len(all_threads)} unique threads total.")
+    # Stage 1 — fetch + emailer-level junk filter (weekly windows)
+    candidates = fetch_all_threads()
+    print(f"Candidates after emailer filter: {len(candidates)}")
 
-    if not all_threads:
+    if not candidates:
         msg = "## Мероприятия\n\nПисем за последние 60 дней не найдено."
         write_summary(msg)
         tg("📭 Выставки/конференции: писем за 60 дней не найдено.")
         return
-
-    # Stage 1b — regex pre-filter (free, no API)
-    candidates = [t for t in all_threads if not is_junk_by_regex(t)]
-    junk_count = len(all_threads) - len(candidates)
-    print(f"After regex pre-filter: {len(candidates)} candidates ({junk_count} junk skipped).")
 
     # Stage 2 — Haiku body filter
     events = []
@@ -215,14 +198,14 @@ def main():
     if not events:
         msg = (
             f"## Мероприятия\n\n"
-            f"Кандидатов: **{len(all_threads)}** → после фильтра регулярок: **{len(candidates)}** "
+            f"Кандидатов после emailer-фильтра: **{len(candidates)}** "
             f"→ после Claude: **0 реальных приглашений**."
         )
         write_summary(msg)
-        tg(f"📭 Выставки/конференции: {len(all_threads)} писем, ни одного реального приглашения.")
+        tg(f"📭 Выставки/конференции: {len(candidates)} кандидатов, ни одного реального приглашения.")
         return
 
-    tg(f"📋 Найдено <b>{len(events)}</b> мероприятий из {len(all_threads)} писем. Анализирую…")
+    tg(f"📋 Найдено <b>{len(events)}</b> мероприятий из {len(candidates)} кандидатов. Анализирую…")
 
     # Stage 3 — Sonnet analysis + draft per event
     results = []
@@ -249,7 +232,6 @@ def main():
             "draft":     draft,
         })
 
-        # Telegram: one message per event
         tg_msg = (
             f"📅 <b>{subject[:100]}</b>\n"
             f"От: {sender[:80]}\n\n"
@@ -261,7 +243,7 @@ def main():
     # Build markdown
     lines = [
         f"# Мероприятия — {datetime.now().strftime('%d.%m.%Y')}",
-        f"\nВсего писем: **{len(all_threads)}** | После фильтров: **{len(results)}** реальных приглашений\n",
+        f"\nКандидатов: **{len(candidates)}** | Реальных приглашений: **{len(results)}**\n",
         "---",
     ]
     for n, r in enumerate(results, 1):
