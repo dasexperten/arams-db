@@ -33,7 +33,10 @@ function authorize() {
 function registerWebhook() {
   var token = prop_('TELEGRAM_BOT_TOKEN', true);
   var url   = prop_('ORCHESTRATOR_EXEC_URL', true);
-  var r = UrlFetchApp.fetch(BOT_BASE_ + token + '/setWebhook?url=' + encodeURIComponent(url));
+  var r = UrlFetchApp.fetch(
+    BOT_BASE_ + token + '/setWebhook?url=' + encodeURIComponent(url) +
+    '&drop_pending_updates=true'
+  );
   console.log(r.getContentText());
 }
 
@@ -46,8 +49,16 @@ function testConfig() {
 
 function doPost(e) {
   var raw = (e && e.postData && e.postData.contents) || '{}';
+  var EMPTY = ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
   try {
-    PropertiesService.getScriptProperties().setProperty('_upd', raw);
+    var upd = JSON.parse(raw);
+    var uid = String(upd.update_id || '');
+    var props = PropertiesService.getScriptProperties();
+    if (uid) {
+      if (props.getProperty('_uid') === uid) return EMPTY;
+      props.setProperty('_uid', uid);
+    }
+    props.setProperty('_upd', raw);
     ScriptApp.getProjectTriggers()
       .filter(function(t) { return t.getHandlerFunction() === 'processUpdate_'; })
       .forEach(function(t) { ScriptApp.deleteTrigger(t); });
@@ -55,7 +66,7 @@ function doPost(e) {
   } catch (_) {
     try { dispatch_(JSON.parse(raw)); } catch (__) {}
   }
-  return ContentService.createTextOutput('{}').setMimeType(ContentService.MimeType.JSON);
+  return EMPTY;
 }
 
 function processUpdate_() {
