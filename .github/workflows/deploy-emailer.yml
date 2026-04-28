@@ -1,0 +1,38 @@
+name: Deploy Emailer → Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'my-tools/emailer/src/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Authenticate
+        run: echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
+
+      - name: Push code to Apps Script
+        run: |
+          cd my-tools/emailer
+          clasp push --force
+
+      - name: Update web app deployment
+        env:
+          EMAILER_EXEC_URL: ${{ secrets.EMAILER_EXEC_URL }}
+        run: |
+          cd my-tools/emailer
+          DEPLOYMENT_ID=$(echo "$EMAILER_EXEC_URL" | sed 's|.*/macros/s/\([^/]*\)/exec|\1|')
+          clasp deploy -i "$DEPLOYMENT_ID" -d "auto $(date +%Y-%m-%d %H:%M)"
+          echo "✅ Deployed to $DEPLOYMENT_ID"
