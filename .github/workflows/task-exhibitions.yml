@@ -20,8 +20,10 @@ jobs:
 
       - name: Find exhibition emails
         env:
-          EMAILER_EXEC_URL:  ${{ secrets.EMAILER_EXEC_URL }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EMAILER_EXEC_URL:       ${{ secrets.EMAILER_EXEC_URL }}
+          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN:     ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ARAM_TELEGRAM_CHAT_ID:  ${{ secrets.ARAM_TELEGRAM_CHAT_ID }}
         run: python agents/orchestrator/tasks/find_exhibition_emails.py
 
       - name: Save results to repo
