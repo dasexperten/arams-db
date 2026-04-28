@@ -69,7 +69,12 @@ function doPost(e) {
   if (uid && props.getProperty('_uid') === uid) return EMPTY;
   if (uid) props.setProperty('_uid', uid);
   try { dispatch_(upd); }
-  catch (err) { try { tg_('⚠️ ' + String(err.message || err)); } catch (_) {} }
+  catch (err) {
+    try {
+      var msg = String(err.message || err).replace(/bot\d+:[A-Za-z0-9_-]+\//g, 'bot<token>/');
+      tg_('⚠️ ' + msg);
+    } catch (_) {}
+  }
   return EMPTY;
 }
 
