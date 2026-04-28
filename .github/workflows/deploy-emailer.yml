@@ -30,7 +30,7 @@ jobs:
 
       - name: Update web app deployment
         env:
-          EMAILER_EXEC_URL: ${{ secrets.EMAILER_EXEC_URL }}
+          EMAILER_EXEC_URL: ${{ secrets.EMAILER_URL }}
         run: |
           cd my-tools/emailer
           DEPLOYMENT_ID=$(echo "$EMAILER_EXEC_URL" | sed 's|.*/macros/s/\([^/]*\)/exec|\1|')
