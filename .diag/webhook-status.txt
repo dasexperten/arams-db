@@ -1,0 +1,4 @@
+set_webhook: {"ok":true,"result":true,"description":"Webhook was set"}
+webhook_info: {"ok":true,"result":{"url":"https://script.google.com/macros/s/AKfycbxZ22caqcCv2srn_8ir2YK2nnUo1KTVgAczozX9oLu_eEDSXe3JzWWe9mHQO_62yJZd0Q/exec","has_custom_certificate":false,"pending_update_count":0,"max_connections":40,"ip_address":"172.253.139.102","allowed_updates":["message","edited_message","channel_post","edited_channel_post","callback_query","my_chat_member","chat_member","chat_join_request","message_reaction","business_connection","business_message","edited_business_message","deleted_business_messages"]}}
+configured_url: https://script.google.com/macros/s/AKfycbxZ22caqcCv2srn_8ir2YK2nnUo1KTVgAczozX9oLu_eEDSXe3JzWWe9mHQO_62yJZd0Q/exec
+timestamp: 2026-04-29T13:39:59Z
