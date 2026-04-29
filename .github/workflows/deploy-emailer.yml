@@ -34,5 +34,18 @@ jobs:
         run: |
           cd my-tools/emailer
           DEPLOYMENT_ID=$(echo "$EMAILER_EXEC_URL" | sed 's|.*/macros/s/\([^/]*\)/exec|\1|')
-          clasp deploy -i "$DEPLOYMENT_ID" -d "auto $(date '+%Y-%m-%d %H:%M')"
-          echo "✅ Deployed to $DEPLOYMENT_ID"
+          STAMP="auto $(date '+%Y-%m-%d %H:%M:%S')"
+
+          # Step 1: snapshot HEAD as a new immutable version
+          VERSION_OUTPUT=$(clasp version "$STAMP")
+          echo "clasp version output: $VERSION_OUTPUT"
+          VERSION_NUMBER=$(echo "$VERSION_OUTPUT" | grep -oE '[0-9]+' | tail -1)
+          if [ -z "$VERSION_NUMBER" ]; then
+            echo "::error::Could not parse version number from clasp output"
+            exit 1
+          fi
+          echo "Created version $VERSION_NUMBER"
+
+          # Step 2: rebind the deployment URL to that new version
+          clasp deploy -i "$DEPLOYMENT_ID" -V "$VERSION_NUMBER" -d "$STAMP"
+          echo "✅ Deployed v$VERSION_NUMBER to $DEPLOYMENT_ID"

@@ -1,5 +1,6 @@
 /**
  * Main.gs — action-based dispatcher for the Emailer Apps Script web app.
+ * (deploy bump: trash_threads action)
  *
  * One POST endpoint. payload.action selects the handler. Each handler lives
  * in src/actions/ and returns a standardised response object that this file
