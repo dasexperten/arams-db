@@ -129,6 +129,7 @@ function dispatch_(upd) {
 // ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
+  try { tg_('🔎 received: <code>' + esc_(text) + '</code> (len=' + text.length + ')'); } catch (e) { console.warn('echo failed: ' + e.message); }
   console.log('handleText_: ' + text);
   if (/^пинг$|^ping$/i.test(text)) { tg_('понг v6 ✅'); return; }
 
