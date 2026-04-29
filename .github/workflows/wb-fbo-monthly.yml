@@ -1,4 +1,4 @@
-name: WB FBO Monthly Supply Plan
+name: WB FBO Daily Supply Plan
 
 on:
   workflow_dispatch:
@@ -8,8 +8,8 @@ on:
         required: false
         default: "30"
   schedule:
-    # 1st of every month at 09:00 MSK = 06:00 UTC
-    - cron: "0 6 1 * *"
+    # every day at 09:00 MSK = 06:00 UTC
+    - cron: "0 6 * * *"
 
 jobs:
   wb-fbo-monthly:
