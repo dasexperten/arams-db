@@ -10,6 +10,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -55,6 +57,26 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ORCHESTRATOR_EXEC_URL: ${{ secrets.ORCHESTRATOR_EXEC_URL }}
         run: |
-          RESULT=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${ORCHESTRATOR_EXEC_URL}&drop_pending_updates=true")
-          echo "$RESULT"
-          echo "✅ Webhook registered"
+          SET_RESULT=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${ORCHESTRATOR_EXEC_URL}&drop_pending_updates=true")
+          echo "setWebhook: $SET_RESULT"
+          INFO=$(curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo")
+          echo "getWebhookInfo: $INFO"
+          mkdir -p .diag
+          {
+            echo "set_webhook: $SET_RESULT"
+            echo "webhook_info: $INFO"
+            echo "configured_url: $ORCHESTRATOR_EXEC_URL"
+            echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > .diag/webhook-status.txt
+
+      - name: Commit diagnostic file
+        run: |
+          git config user.name  "deploy-orchestrator-bot"
+          git config user.email "deploy@das-experten.local"
+          git add .diag/webhook-status.txt
+          if git diff --quiet --cached; then
+            echo "no diag change"
+          else
+            git commit -m "diag: webhook status after deploy [skip ci]"
+            git push origin HEAD:main || echo "push failed (non-fatal)"
+          fi

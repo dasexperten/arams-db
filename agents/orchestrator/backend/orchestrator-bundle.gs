@@ -130,7 +130,7 @@ function dispatch_(upd) {
 
 function handleText_(text) {
   console.log('handleText_: ' + text);
-  if (/^пинг$|^ping$/i.test(text)) { tg_('понг v4 ✅'); return; }
+  if (/^пинг$|^ping$/i.test(text)) { tg_('понг v5 ✅'); return; }
 
   if (/^тест$|^test$/i.test(text)) {
     tg_('⚙️ Шаг 1: tg_ OK. Проверяю emailer…');
