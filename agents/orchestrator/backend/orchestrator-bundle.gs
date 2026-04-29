@@ -93,6 +93,25 @@ function doPost(e) {
 function dispatch_(upd) {
   var myChat = prop_('ARAM_TELEGRAM_CHAT_ID');
 
+  // DIAG: log every incoming update so we can spot phantom traffic
+  var diagSrc =
+    (upd.message && upd.message.chat && upd.message.chat.id) ||
+    (upd.edited_message && upd.edited_message.chat && upd.edited_message.chat.id) ||
+    (upd.callback_query && upd.callback_query.message && upd.callback_query.message.chat && upd.callback_query.message.chat.id) ||
+    (upd.channel_post && upd.channel_post.chat && upd.channel_post.chat.id) ||
+    '?';
+  var diagFrom =
+    (upd.message && upd.message.from && (upd.message.from.username || upd.message.from.id)) ||
+    (upd.callback_query && upd.callback_query.from && (upd.callback_query.from.username || upd.callback_query.from.id)) ||
+    '?';
+  var diagText =
+    (upd.message && upd.message.text) ||
+    (upd.callback_query && ('cbq:' + upd.callback_query.data)) ||
+    (upd.edited_message && ('edit:' + upd.edited_message.text)) ||
+    (upd.channel_post && ('channel:' + upd.channel_post.text)) ||
+    Object.keys(upd).filter(function(k){ return k !== 'update_id'; }).join(',');
+  console.log('dispatch_ src=' + diagSrc + ' (mine=' + myChat + ') from=' + diagFrom + ' kind=' + String(diagText).substring(0, 200));
+
   if (upd.callback_query) {
     var cbq = upd.callback_query;
     answerCbq_(cbq.id);
