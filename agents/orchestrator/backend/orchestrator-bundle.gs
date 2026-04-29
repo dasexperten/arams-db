@@ -129,25 +129,12 @@ function dispatch_(upd) {
 // ── Text handler ──────────────────────────────────────────────────────────────
 
 function handleText_(text) {
-  try { tg_('🔎 received: <code>' + esc_(text) + '</code> (len=' + text.length + ')'); } catch (e) { console.warn('echo failed: ' + e.message); }
   console.log('handleText_: ' + text);
-  if (/^пинг$|^ping$/i.test(text)) { tg_('понг v6 ✅'); return; }
+  if (/^пинг$|^ping$/i.test(text)) { tg_('понг v7 (async) ✅'); return; }
 
   if (/^тест$|^test$/i.test(text)) {
-    tg_('⚙️ Шаг 1: tg_ OK. Проверяю emailer…');
-    try {
-      var r = emailer_({ action: 'find', query: 'test', max_results: 1 });
-      tg_('⚙️ Шаг 2: emailer OK (' + (r.total_found || 0) + ' писем). Проверяю Claude…');
-    } catch (e) {
-      tg_('❌ Emailer ERROR: ' + String(e.message));
-      return;
-    }
-    try {
-      var ans = claude_('Reply with one word: OK', 'ping', MODEL_FAST_, 5);
-      tg_('⚙️ Шаг 3: Claude OK («' + ans.trim() + '»). Всё работает ✅');
-    } catch (e) {
-      tg_('❌ Claude ERROR: ' + String(e.message));
-    }
+    tg_('⚙️ Запускаю диагностику в фоне (~10 сек)...');
+    queueJob_('test', {});
     return;
   }
 
@@ -162,7 +149,12 @@ function handleText_(text) {
 // ── Search flow ───────────────────────────────────────────────────────────────
 
 function runSearch_(query) {
-  tg_('🔍 Ищу письма «' + esc_(query) + '»…');
+  tg_('🔍 Принял «' + esc_(query) + '», ищу в фоне...');
+  queueJob_('search', { query: query });
+}
+
+function runJobSearch_(job) {
+  var query = job.payload.query;
   var res;
   try {
     res = emailer_({ action: 'find', query: query, max_results: 10 });
@@ -345,7 +337,12 @@ function handleAction_(data) {
 //   Returns: { trashed: <int>, failed: [<thread_id>...] }
 
 function runTrash_(natural) {
-  tg_('🔍 Ищу что удалить: «' + esc_(natural) + '»…');
+  tg_('🔍 Принял «' + esc_(natural) + '», ищу в фоне (~10 сек)...');
+  queueJob_('trash_search', { natural: natural });
+}
+
+function runJobTrashSearch_(job) {
+  var natural = job.payload.natural;
   var gmailQuery = translateQuery_(natural);
   var res;
   try {
@@ -396,9 +393,15 @@ function handleTrash_(token, decision) {
   var state;
   try { state = JSON.parse(raw); } catch (_) { tg_('Ошибка чтения контекста.'); return; }
 
+  tg_('⏳ Перемещаю ' + state.ids.length + ' писем в Корзину (в фоне)...');
+  queueJob_('trash_apply', { ids: state.ids });
+}
+
+function runJobTrashApply_(job) {
+  var ids = job.payload.ids || [];
   try {
-    var resp = emailer_({ action: 'trash_threads', thread_ids: state.ids });
-    var ok   = (resp && typeof resp.trashed === 'number') ? resp.trashed : state.ids.length;
+    var resp = emailer_({ action: 'trash_threads', thread_ids: ids });
+    var ok   = (resp && typeof resp.trashed === 'number') ? resp.trashed : ids.length;
     var fail = (resp && resp.failed && resp.failed.length) || 0;
     tg_('✅ В корзину отправлено <b>' + ok + '</b> писем.' +
         (fail ? '\n⚠️ Не удалось: ' + fail : '') +
@@ -423,6 +426,88 @@ function translateQuery_(natural) {
       .replace(/^["'`]+|["'`]+$/g, '').replace(/\s*\n+\s*/g, ' ');
     return q || natural;
   } catch (_) { return natural; }
+}
+
+// ── Async job queue ──────────────────────────────────────────────────────────
+//
+// Apps Script Web Apps must respond within 60s or Telegram considers delivery
+// failed and retries. Heavy commands (тест, найди, удали + trash confirm) can
+// blow that with cold starts of emailer + Claude. Pattern: doPost replies
+// instantly with an ack, queues the actual work into Script Properties,
+// schedules a one-shot time-driven trigger to run it asynchronously in a
+// fresh execution with its own 6-min budget.
+
+function queueJob_(type, payload) {
+  var jobId = Utilities.getUuid().substring(0, 8);
+  PropertiesService.getScriptProperties().setProperty(
+    '_job_' + jobId,
+    JSON.stringify({ id: jobId, type: type, payload: payload || {}, status: 'pending', created: new Date().toISOString() })
+  );
+  try {
+    ScriptApp.newTrigger('processJobs_').timeBased().after(2000).create();
+  } catch (e) {
+    tg_('❌ Не смог создать фоновый триггер: ' + String(e.message) + '. Запускаю синхронно...');
+    processJobs_();
+  }
+  return jobId;
+}
+
+function processJobs_() {
+  var props   = PropertiesService.getScriptProperties();
+  var allKeys = props.getKeys();
+  var jobKeys = allKeys.filter(function(k) { return k.indexOf('_job_') === 0; });
+
+  jobKeys.forEach(function(key) {
+    var raw = props.getProperty(key);
+    if (!raw) return;
+    var job;
+    try { job = JSON.parse(raw); } catch (_) { props.deleteProperty(key); return; }
+    if (job.status !== 'pending') return;
+
+    job.status = 'running';
+    props.setProperty(key, JSON.stringify(job));
+
+    try {
+      switch (job.type) {
+        case 'test':         runJobTest_(job);        break;
+        case 'search':       runJobSearch_(job);      break;
+        case 'trash_search': runJobTrashSearch_(job); break;
+        case 'trash_apply':  runJobTrashApply_(job);  break;
+        default: tg_('❓ Unknown job type: ' + job.type);
+      }
+    } catch (err) {
+      tg_('❌ Job ' + job.type + ' error: ' + String(err.message || err).substring(0, 200));
+    }
+
+    props.deleteProperty(key);
+  });
+
+  cleanupOneShotTriggers_();
+}
+
+function cleanupOneShotTriggers_() {
+  ScriptApp.getProjectTriggers().forEach(function(trig) {
+    if (trig.getHandlerFunction() === 'processJobs_') {
+      try { ScriptApp.deleteTrigger(trig); } catch (_) {}
+    }
+  });
+}
+
+function runJobTest_(job) {
+  tg_('⚙️ Шаг 1: tg_ OK. Проверяю emailer…');
+  try {
+    var r = emailer_({ action: 'find', query: 'test', max_results: 1 });
+    tg_('⚙️ Шаг 2: emailer OK (' + (r.total_found || 0) + ' писем). Проверяю Claude…');
+  } catch (e) {
+    tg_('❌ Emailer ERROR: ' + String(e.message));
+    return;
+  }
+  try {
+    var ans = claude_('Reply with one word: OK', 'ping', MODEL_FAST_, 5);
+    tg_('⚙️ Шаг 3: Claude OK («' + ans.trim() + '»). Всё работает ✅');
+  } catch (e) {
+    tg_('❌ Claude ERROR: ' + String(e.message));
+  }
 }
 
 // ── Inbox triage ──────────────────────────────────────────────────────────────
