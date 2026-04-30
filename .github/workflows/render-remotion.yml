@@ -1,0 +1,96 @@
+name: Render Remotion Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      composition_id:
+        description: "Какую композицию рендерить (см. remotion/src/Root.tsx)"
+        required: true
+        default: "ProductCard"
+        type: string
+      sku:
+        description: "SKU (например DE201)"
+        required: false
+        default: "DE201"
+        type: string
+      product_name:
+        description: "Название товара (крупный заголовок)"
+        required: false
+        default: "SCHWARZ"
+        type: string
+      tagline:
+        description: "Подзаголовок"
+        required: false
+        default: "Чёрная зубная паста с активированным углём"
+        type: string
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: remotion
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: remotion/package-lock.json
+
+      - name: Install Chrome dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+            libxkbcommon0 libpango-1.0-0 libcairo2 libasound2t64 \
+            fonts-liberation fonts-noto-color-emoji fonts-noto-cjk
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build props JSON
+        id: props
+        run: |
+          cat > /tmp/props.json <<EOF
+          {
+            "sku": "${{ github.event.inputs.sku }}",
+            "productName": "${{ github.event.inputs.product_name }}",
+            "tagline": "${{ github.event.inputs.tagline }}",
+            "benefits": [
+              "Отбеливание без абразива",
+              "RDA 60 — безопасно для эмали",
+              "Свежесть на 12 часов"
+            ],
+            "accentColor": "#0a0a0a",
+            "highlightColor": "#c8a85a"
+          }
+          EOF
+          echo "props_path=/tmp/props.json" >> "$GITHUB_OUTPUT"
+
+      - name: Render video
+        run: |
+          mkdir -p out
+          npx remotion render src/index.ts \
+            "${{ github.event.inputs.composition_id }}" \
+            "out/${{ github.event.inputs.composition_id }}.mp4" \
+            --props="${{ steps.props.outputs.props_path }}" \
+            --log=info
+
+      - name: Upload mp4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.composition_id }}-mp4
+          path: remotion/out/*.mp4
+          retention-days: 14

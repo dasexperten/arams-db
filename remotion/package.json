@@ -1,0 +1,21 @@
+{
+  "name": "das-experten-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ProductCard out/product-card.mp4",
+    "render-all": "remotion render src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.221",
+    "@remotion/renderer": "4.0.221",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.221"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.3",
+    "typescript": "5.4.5"
+  }
+}
