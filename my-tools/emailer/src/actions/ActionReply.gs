@@ -24,6 +24,15 @@ var ActionReply = (function () {
       return { success: false, action: 'reply', error: 'Invalid or inaccessible thread_id: ' + payload.thread_id };
     }
 
+    // Validate optional "from" override against whitelist
+    if (payload.from) {
+      var fromLower = String(payload.from).toLowerCase().trim();
+      var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+      if (allowedLower.indexOf(fromLower) === -1) {
+        return { ok: false, success: false, action: 'reply', error: 'INVALID_FROM', allowed: ALLOWED_SENDER_INBOXES };
+      }
+    }
+
     var isDraft = !!payload.draft_only;
     var threadContext = getThreadContext(payload.thread_id);
 
@@ -45,12 +54,19 @@ var ActionReply = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReply draft: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var draftResult = createDraft('reply', {
         threadId: payload.thread_id,
         bodyHtml: payload.body_html || null,
         bodyText: payload.body_plain || null,
-        attachmentLink: payload.attachment_link || null
+        attachmentLink: payload.attachment_link || null,
+        fromAddress: resolvedFrom || null
       });
       result.success = true;
       result.draft_id = draftResult.draft_id;
@@ -77,13 +93,20 @@ var ActionReply = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReply: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var sendResult = replyToThread(
         payload.thread_id,
         payload.body_html || null,
         payload.body_plain || null,
         payload.attachment_link || null,
-        payload.in_reply_to_message_id || null
+        payload.in_reply_to_message_id || null,
+        resolvedFrom || null
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
@@ -99,7 +122,7 @@ var ActionReply = (function () {
     var recipientAddress = extractBareEmail_(threadContext.last_message_from);
     try {
       var archiveResult = buildArchive({
-        from: Session.getActiveUser().getEmail(),
+        from: resolvedFrom || Session.getActiveUser().getEmail(),
         to: recipientAddress,
         subject: threadContext.subject || '(no subject)',
         date: new Date().toISOString(),

@@ -29,6 +29,15 @@ var ActionSend = (function () {
       return { success: false, action: 'send', error: 'Missing required field: body_html or body_plain (at least one required).' };
     }
 
+    // Validate optional "from" against whitelist
+    if (payload.from) {
+      var fromLower = String(payload.from).toLowerCase().trim();
+      var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+      if (allowedLower.indexOf(fromLower) === -1) {
+        return { ok: false, success: false, action: 'send', error: 'INVALID_FROM', allowed: ALLOWED_SENDER_INBOXES };
+      }
+    }
+
     var isDraft = !!payload.draft_only;
 
     if (isDraft) {
@@ -55,7 +64,8 @@ var ActionSend = (function () {
         subject: payload.subject,
         bodyHtml: payload.body_html || null,
         bodyText: payload.body_plain || null,
-        attachmentLink: payload.attachment_link || null
+        attachmentLink: payload.attachment_link || null,
+        fromAddress: payload.from || null
       });
       result.success = true;
       result.draft_id = draftResult.draft_id;
@@ -82,13 +92,16 @@ var ActionSend = (function () {
       error: null
     };
 
+    var resolvedFrom = payload.from || null;
+
     try {
       var sendResult = sendNew(
         payload.recipient,
         payload.subject,
         payload.body_html || null,
         payload.body_plain || null,
-        payload.attachment_link || null
+        payload.attachment_link || null,
+        resolvedFrom
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
@@ -103,7 +116,7 @@ var ActionSend = (function () {
     // Reporter — mandatory, non-fatal
     try {
       var archiveResult = buildArchive({
-        from: Session.getActiveUser().getEmail(),
+        from: resolvedFrom || Session.getActiveUser().getEmail(),
         to: payload.recipient,
         subject: payload.subject,
         date: new Date().toISOString(),

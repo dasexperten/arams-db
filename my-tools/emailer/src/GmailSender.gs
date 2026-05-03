@@ -17,15 +17,17 @@
  * @param {?string} bodyHtml
  * @param {?string} bodyText
  * @param {?string} attachmentLink
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink) {
+function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAddress) {
   if (!recipient) throw new Error('sendNew: recipient is required.');
   if (!subject) throw new Error('sendNew: subject is required.');
 
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   GmailApp.sendEmail(recipient, subject, bodies.plain, options);
 
   return locateSentMessage_('to:' + recipient + ' subject:"' + escapeQuery_(subject) + '"');
@@ -39,15 +41,17 @@ function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink) {
  * @param {?string} bodyText
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId  (informational; thread.reply() handles headers)
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId) {
+function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
   if (!threadId) throw new Error('replyToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   thread.reply(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -64,15 +68,17 @@ function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMe
  * @param {?string} bodyText
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId) {
+function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
   if (!threadId) throw new Error('replyAllToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   thread.replyAll(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -100,6 +106,7 @@ function createDraft(mode, params) {
   var bodies = finalizeBodies_(params.bodyHtml || null, params.bodyText || null, params.attachmentLink || null);
 
   var userEmail = Session.getActiveUser().getEmail();
+  var fromEmail = params.fromAddress || userEmail;
   var rawMessage;
 
   if (mode === 'new') {
@@ -108,7 +115,7 @@ function createDraft(mode, params) {
     rawMessage = buildMimeMessage_({
       to: params.recipient,
       subject: params.subject,
-      from: userEmail,
+      from: fromEmail,
       bodyHtml: bodies.html,
       bodyText: bodies.plain
     });
@@ -154,7 +161,7 @@ function createDraft(mode, params) {
       to: toAddr,
       cc: ccAddr,
       subject: replySubject,
-      from: userEmail,
+      from: fromEmail,
       bodyHtml: bodies.html,
       bodyText: bodies.plain,
       inReplyTo: lastMsgId,
@@ -310,4 +317,44 @@ function stripHtml_(s) {
     .replace(/&#39;/g, "'")
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+/**
+ * detectInboxFromThread_ — scans all messages in the thread and returns the
+ * first To/CC address that matches ALLOWED_SENDER_INBOXES, or null if none found.
+ *
+ * Used by reply / reply_all to auto-select the correct outgoing alias so that
+ * replies appear to come from the same inbox the customer originally wrote to.
+ *
+ * @param {string} threadId
+ * @returns {?string} matched address from ALLOWED_SENDER_INBOXES, or null
+ * @private
+ */
+function detectInboxFromThread_(threadId) {
+  var thread;
+  try {
+    thread = GmailApp.getThreadById(threadId);
+  } catch (err) {
+    return null;
+  }
+  if (!thread) return null;
+
+  var messages = thread.getMessages();
+  var lowerAllowed = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+
+  for (var i = 0; i < messages.length; i++) {
+    var m = messages[i];
+    var combined = [];
+    var to = m.getTo();
+    var cc = m.getCc();
+    if (to) combined = combined.concat(to.split(','));
+    if (cc) combined = combined.concat(cc.split(','));
+
+    for (var j = 0; j < combined.length; j++) {
+      var bare = extractEmailAddress_(combined[j].trim()).toLowerCase();
+      var idx = lowerAllowed.indexOf(bare);
+      if (idx !== -1) return ALLOWED_SENDER_INBOXES[idx];
+    }
+  }
+  return null;
 }
