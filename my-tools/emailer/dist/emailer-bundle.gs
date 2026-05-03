@@ -28,6 +28,18 @@ function authorize() {
 
 
 // ============================================================================
+// Sender inbox whitelist — used by send / reply / reply_all for from-validation
+// and reply inbox auto-detection.
+// ============================================================================
+
+var ALLOWED_SENDER_INBOXES = [
+  'eurasia@dasexperten.de',
+  'emea@dasexperten.de',
+  'export@dasexperten.de',
+  'marketing@dasexperten.de'
+];
+
+// ============================================================================
 // src/Logger.gs
 // ============================================================================
 
@@ -665,15 +677,17 @@ function validateThreadAccess(threadId) {
  * @param {?string} bodyHtml
  * @param {?string} bodyText
  * @param {?string} attachmentLink
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink) {
+function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAddress) {
   if (!recipient) throw new Error('sendNew: recipient is required.');
   if (!subject) throw new Error('sendNew: subject is required.');
 
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   GmailApp.sendEmail(recipient, subject, bodies.plain, options);
 
   return locateSentMessage_('to:' + recipient + ' subject:"' + escapeQuery_(subject) + '"');
@@ -687,15 +701,17 @@ function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink) {
  * @param {?string} bodyText
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId  (informational; thread.reply() handles headers)
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId) {
+function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
   if (!threadId) throw new Error('replyToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   thread.reply(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -712,15 +728,17 @@ function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMe
  * @param {?string} bodyText
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId
+ * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId) {
+function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
   if (!threadId) throw new Error('replyAllToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
   var bodies = finalizeBodies_(bodyHtml, bodyText, attachmentLink);
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
+  if (fromAddress) options.from = fromAddress;
   thread.replyAll(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -748,6 +766,7 @@ function createDraft(mode, params) {
   var bodies = finalizeBodies_(params.bodyHtml || null, params.bodyText || null, params.attachmentLink || null);
 
   var userEmail = Session.getActiveUser().getEmail();
+  var fromEmail = params.fromAddress || userEmail;
   var rawMessage;
 
   if (mode === 'new') {
@@ -756,7 +775,7 @@ function createDraft(mode, params) {
     rawMessage = buildMimeMessage_({
       to: params.recipient,
       subject: params.subject,
-      from: userEmail,
+      from: fromEmail,
       bodyHtml: bodies.html,
       bodyText: bodies.plain
     });
@@ -802,7 +821,7 @@ function createDraft(mode, params) {
       to: toAddr,
       cc: ccAddr,
       subject: replySubject,
-      from: userEmail,
+      from: fromEmail,
       bodyHtml: bodies.html,
       bodyText: bodies.plain,
       inReplyTo: lastMsgId,
@@ -960,6 +979,46 @@ function stripHtml_(s) {
     .trim();
 }
 
+/**
+ * detectInboxFromThread_ — scans all messages in the thread and returns the
+ * first To/CC address that matches ALLOWED_SENDER_INBOXES, or null if none found.
+ *
+ * Used by reply / reply_all to auto-select the correct outgoing alias so that
+ * replies appear to come from the same inbox the customer originally wrote to.
+ *
+ * @param {string} threadId
+ * @returns {?string} matched address from ALLOWED_SENDER_INBOXES, or null
+ * @private
+ */
+function detectInboxFromThread_(threadId) {
+  var thread;
+  try {
+    thread = GmailApp.getThreadById(threadId);
+  } catch (err) {
+    return null;
+  }
+  if (!thread) return null;
+
+  var messages = thread.getMessages();
+  var lowerAllowed = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+
+  for (var i = 0; i < messages.length; i++) {
+    var m = messages[i];
+    var combined = [];
+    var to = m.getTo();
+    var cc = m.getCc();
+    if (to) combined = combined.concat(to.split(','));
+    if (cc) combined = combined.concat(cc.split(','));
+
+    for (var j = 0; j < combined.length; j++) {
+      var bare = extractEmailAddress_(combined[j].trim()).toLowerCase();
+      var idx = lowerAllowed.indexOf(bare);
+      if (idx !== -1) return ALLOWED_SENDER_INBOXES[idx];
+    }
+  }
+  return null;
+}
+
 // ============================================================================
 // src/actions/ActionSend.gs
 // ============================================================================
@@ -995,6 +1054,15 @@ var ActionSend = (function () {
       return { success: false, action: 'send', error: 'Missing required field: body_html or body_plain (at least one required).' };
     }
 
+    // Validate optional "from" against whitelist
+    if (payload.from) {
+      var fromLower = String(payload.from).toLowerCase().trim();
+      var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+      if (allowedLower.indexOf(fromLower) === -1) {
+        return { ok: false, success: false, action: 'send', error: 'INVALID_FROM', allowed: ALLOWED_SENDER_INBOXES };
+      }
+    }
+
     var isDraft = !!payload.draft_only;
 
     if (isDraft) {
@@ -1021,7 +1089,8 @@ var ActionSend = (function () {
         subject: payload.subject,
         bodyHtml: payload.body_html || null,
         bodyText: payload.body_plain || null,
-        attachmentLink: payload.attachment_link || null
+        attachmentLink: payload.attachment_link || null,
+        fromAddress: payload.from || null
       });
       result.success = true;
       result.draft_id = draftResult.draft_id;
@@ -1048,13 +1117,16 @@ var ActionSend = (function () {
       error: null
     };
 
+    var resolvedFrom = payload.from || null;
+
     try {
       var sendResult = sendNew(
         payload.recipient,
         payload.subject,
         payload.body_html || null,
         payload.body_plain || null,
-        payload.attachment_link || null
+        payload.attachment_link || null,
+        resolvedFrom
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
@@ -1069,7 +1141,7 @@ var ActionSend = (function () {
     // Reporter — mandatory, non-fatal
     try {
       var archiveResult = buildArchive({
-        from: Session.getActiveUser().getEmail(),
+        from: resolvedFrom || Session.getActiveUser().getEmail(),
         to: payload.recipient,
         subject: payload.subject,
         date: new Date().toISOString(),
@@ -1123,6 +1195,15 @@ var ActionReply = (function () {
       return { success: false, action: 'reply', error: 'Invalid or inaccessible thread_id: ' + payload.thread_id };
     }
 
+    // Validate optional "from" override against whitelist
+    if (payload.from) {
+      var fromLower = String(payload.from).toLowerCase().trim();
+      var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+      if (allowedLower.indexOf(fromLower) === -1) {
+        return { ok: false, success: false, action: 'reply', error: 'INVALID_FROM', allowed: ALLOWED_SENDER_INBOXES };
+      }
+    }
+
     var isDraft = !!payload.draft_only;
     var threadContext = getThreadContext(payload.thread_id);
 
@@ -1144,12 +1225,19 @@ var ActionReply = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReply draft: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var draftResult = createDraft('reply', {
         threadId: payload.thread_id,
         bodyHtml: payload.body_html || null,
         bodyText: payload.body_plain || null,
-        attachmentLink: payload.attachment_link || null
+        attachmentLink: payload.attachment_link || null,
+        fromAddress: resolvedFrom || null
       });
       result.success = true;
       result.draft_id = draftResult.draft_id;
@@ -1176,13 +1264,20 @@ var ActionReply = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReply: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var sendResult = replyToThread(
         payload.thread_id,
         payload.body_html || null,
         payload.body_plain || null,
         payload.attachment_link || null,
-        payload.in_reply_to_message_id || null
+        payload.in_reply_to_message_id || null,
+        resolvedFrom || null
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
@@ -1198,7 +1293,7 @@ var ActionReply = (function () {
     var recipientAddress = extractBareEmail_(threadContext.last_message_from);
     try {
       var archiveResult = buildArchive({
-        from: Session.getActiveUser().getEmail(),
+        from: resolvedFrom || Session.getActiveUser().getEmail(),
         to: recipientAddress,
         subject: threadContext.subject || '(no subject)',
         date: new Date().toISOString(),
@@ -1257,6 +1352,15 @@ var ActionReplyAll = (function () {
       return { success: false, action: 'reply_all', error: 'Invalid or inaccessible thread_id: ' + payload.thread_id };
     }
 
+    // Validate optional "from" override against whitelist
+    if (payload.from) {
+      var fromLower = String(payload.from).toLowerCase().trim();
+      var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
+      if (allowedLower.indexOf(fromLower) === -1) {
+        return { ok: false, success: false, action: 'reply_all', error: 'INVALID_FROM', allowed: ALLOWED_SENDER_INBOXES };
+      }
+    }
+
     var isDraft = !!payload.draft_only;
     var threadContext = getFullThreadContext_(payload.thread_id);
 
@@ -1278,12 +1382,19 @@ var ActionReplyAll = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReplyAll draft: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var draftResult = createDraft('reply_all', {
         threadId: payload.thread_id,
         bodyHtml: payload.body_html || null,
         bodyText: payload.body_plain || null,
-        attachmentLink: payload.attachment_link || null
+        attachmentLink: payload.attachment_link || null,
+        fromAddress: resolvedFrom || null
       });
       result.success = true;
       result.draft_id = draftResult.draft_id;
@@ -1310,13 +1421,20 @@ var ActionReplyAll = (function () {
       error: null
     };
 
+    // "from" override takes precedence; otherwise auto-detect from thread recipients
+    var resolvedFrom = payload.from || detectInboxFromThread_(payload.thread_id);
+    if (!resolvedFrom) {
+      console.warn('ActionReplyAll: no matching inbox found in thread ' + payload.thread_id + ', using script owner default.');
+    }
+
     try {
       var sendResult = replyAllToThread(
         payload.thread_id,
         payload.body_html || null,
         payload.body_plain || null,
         payload.attachment_link || null,
-        payload.in_reply_to_message_id || null
+        payload.in_reply_to_message_id || null,
+        resolvedFrom || null
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
@@ -1332,7 +1450,7 @@ var ActionReplyAll = (function () {
     var recipientList = threadContext.all_recipients.join(', ') || 'unknown';
     try {
       var archiveResult = buildArchive({
-        from: Session.getActiveUser().getEmail(),
+        from: resolvedFrom || Session.getActiveUser().getEmail(),
         to: recipientList,
         subject: threadContext.subject || '(no subject)',
         date: new Date().toISOString(),

@@ -168,9 +168,22 @@ If any check fails → HALT or rewrite. Never bypass.
 - **Attachments:** delivered via Drive link (not as MIME attachment) — caller passes `attachment_link` in payload, appears in email body as "Open attachment" link
 - **Threading:** Gmail handles In-Reply-To and References headers automatically via `thread.reply()` — replies never become orphans
 
+### Multi-inbox sending
+
+The emailer supports outbound email from all 4 Das Experten inboxes. Pass the
+optional `"from"` field on `send`, `reply`, or `reply_all` to specify the
+sending address. Accepted values are `eurasia@dasexperten.de`,
+`emea@dasexperten.de`, `export@dasexperten.de`, and `marketing@dasexperten.de`
+— anything else returns an `INVALID_FROM` error immediately. For `reply` and
+`reply_all`, the inbox is **auto-detected** from the thread's `To`/`CC` headers
+if `"from"` is omitted, so replies automatically originate from the same inbox
+the customer originally wrote to. See `my-tools/emailer/inbox-routing.md` for
+the whitelist and detection rule, and `my-tools/emailer/actions.md` for the
+full `from` parameter contract.
+
 ### 7 actions exposed
 
-See `reference/actions.md` for full decision tree, required/optional fields, returns, and anti-patterns.
+See `my-tools/emailer/actions.md` for full decision tree, required/optional fields, returns, and error codes.
 
 | Action | Use when |
 |---|---|
