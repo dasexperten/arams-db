@@ -36,7 +36,9 @@ var ALLOWED_SENDER_INBOXES = [
   'eurasia@dasexperten.de',
   'emea@dasexperten.de',
   'export@dasexperten.de',
-  'marketing@dasexperten.de'
+  'marketing@dasexperten.de',
+  'sales@dasexperten.de',
+  'support@dasexperten.de'
 ];
 
 // ============================================================================

@@ -29,18 +29,24 @@ which inbox the email appears to be sent from.
 
 ### Whitelist
 
-Only these four addresses are accepted:
+Only these six addresses are accepted:
 
 ```
 eurasia@dasexperten.de
 emea@dasexperten.de
 export@dasexperten.de
 marketing@dasexperten.de
+sales@dasexperten.de
+support@dasexperten.de
 ```
 
 The whitelist is enforced in `ALLOWED_SENDER_INBOXES` inside `emailer-bundle.gs`.
 Every address must be configured as a send-as alias in the Workspace account
 before Gmail will honour the `from` option.
+
+> Note: `sales@dasexperten.de` and `support@dasexperten.de` are placeholders —
+> the send-as alias has not yet been configured in Gmail, so any send from
+> these addresses will fail at the Gmail layer until setup is completed.
 
 ### Behaviour for `send`
 
@@ -81,7 +87,9 @@ without the caller needing to specify it explicitly.
     "eurasia@dasexperten.de",
     "emea@dasexperten.de",
     "export@dasexperten.de",
-    "marketing@dasexperten.de"
+    "marketing@dasexperten.de",
+    "sales@dasexperten.de",
+    "support@dasexperten.de"
   ]
 }
 ```
