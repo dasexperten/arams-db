@@ -161,6 +161,21 @@ If any check fails → HALT or rewrite. Never bypass.
 - **Required scopes:** Gmail, Drive, Docs, Sheets — authorized once via `authorize()` function
 - **Rate limits:** Gmail send quota = ~100 emails/day for free Gmail, ~1500/day for Workspace; emailer queues with backoff if hit
 
+### Inbox attachment auto-download
+
+When `find` or `get_thread` encounters a message that contains attachments,
+every attachment (up to 25 MB per file) is **automatically uploaded to
+Cloudflare R2** bucket `emailer-attachments`. The upload happens inside the
+Apps Script execution — no separate call required. Each thread summary (`find`)
+and each message object (`get_thread`) gains an `attachments_resolved` array;
+each entry contains `filename`, `size_bytes`, `mime_type`, `r2_url`, `sha256`,
+and `skipped_reason` (null on success). Dedup is by SHA-256 of file content:
+if the identical file was already uploaded, the existing R2 URL is returned
+instantly without re-uploading. Files exceeding 25 MB are skipped
+(`skipped_reason: "too_large"`). R2 credentials are stored in Script
+Properties `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE`, `R2_API_TOKEN` —
+never hardcoded. The manual `download_attachment` action is unchanged.
+
 ### Message format constraints
 
 - **Max length:** No hard limit (Gmail accepts large bodies; Reporter Doc fails on >80KB — use `archive` action for huge text instead)
