@@ -72,9 +72,10 @@ var ActionFind = (function () {
       var atts = m.getAttachments();
       if (atts.length > 0) hasAttachments = true;
       var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+      var msgFrom = m.getFrom() || '';
       atts.forEach(function (att) {
         try {
-          var resolved = uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+          var resolved = uploadInboxAttachmentToR2(att, att.getName(), msgDateIso, msgFrom);
           attachmentsResolved.push(resolved);
         } catch (err) {
           attachmentsResolved.push({

@@ -50,10 +50,11 @@ var ActionGetThread = (function () {
         var attachments = m.getAttachments();
         var attachmentNames = attachments.map(function (a) { return a.getName(); });
         var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+        var msgFrom = m.getFrom() || '';
 
         var attachmentsResolved = attachments.map(function (att) {
           try {
-            return uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+            return uploadInboxAttachmentToR2(att, att.getName(), msgDateIso, msgFrom);
           } catch (err) {
             return {
               filename: att.getName(),
