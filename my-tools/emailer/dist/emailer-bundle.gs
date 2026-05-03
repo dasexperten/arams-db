@@ -308,13 +308,23 @@ function saveAttachmentToDrive(senderEmail, attachmentBlob, originalFilename, su
  *   R2_PUBLIC_BASE  — public read base URL, trailing slash optional
  *   R2_API_TOKEN    — Cloudflare API token with R2 read+write permissions
  *
- * Path format:  inbox/<YYYY-MM-DD>/<sha256>_<sanitized_filename>
- * Dedup:        HEAD request before PUT — skip upload if key already exists.
- * Size limit:   25 MB. Files above this limit are returned with
- *               skipped_reason: "too_large", no upload attempted.
+ * Path format:  inbox/<YYYY-MM-DD>/<sender_clean>_<filename_clean>_<MMDD>_<xxx>.<ext>
+ *   sender_clean   — sanitized display name (or local-part fallback)
+ *   filename_clean — sanitized basename without extension
+ *   MMDD           — 4-digit month+day, derived from the same date as the folder
+ *   xxx            — first 3 hex chars of SHA-256 (collision-prone after ~64 files
+ *                    by design; Aram is aware)
+ *   .ext           — original extension preserved (lowercased)
+ *
+ * Dedup:  hash-indexed via dedup/<full_sha256> — small text object containing the
+ *         actual key. GET dedup/<sha> first; on 200 read the stored key and
+ *         return its public URL. On 404 upload the file then write the index.
+ * Size limit: 25 MB. Files above this are returned with skipped_reason:"too_large".
  */
 
 var R2_SIZE_LIMIT_BYTES_ = 25 * 1024 * 1024;
+var R2_DEDUP_PREFIX_ = 'dedup/';
+var R2_KEY_MAX_PART_LEN_ = 40;
 
 /**
  * uploadInboxAttachmentToR2 — resolves one Gmail attachment against R2.
@@ -322,6 +332,7 @@ var R2_SIZE_LIMIT_BYTES_ = 25 * 1024 * 1024;
  * @param {GoogleAppsScript.Gmail.GmailAttachment} attachmentBlob
  * @param {string} originalFilename
  * @param {string} messageDateIso - ISO datetime of the containing message
+ * @param {string} senderRaw      - raw From header ("Display <email>" or "<email>")
  * @returns {{
  *   filename:       string,
  *   size_bytes:     number,
@@ -331,7 +342,7 @@ var R2_SIZE_LIMIT_BYTES_ = 25 * 1024 * 1024;
  *   skipped_reason: string|null
  * }}
  */
-function uploadInboxAttachmentToR2(attachmentBlob, originalFilename, messageDateIso) {
+function uploadInboxAttachmentToR2(attachmentBlob, originalFilename, messageDateIso, senderRaw) {
   var filename = String(originalFilename || 'attachment');
   var mimeType = attachmentBlob.getContentType() || 'application/octet-stream';
   var bytes = attachmentBlob.getBytes();
@@ -351,14 +362,9 @@ function uploadInboxAttachmentToR2(attachmentBlob, originalFilename, messageDate
     return h.length === 1 ? '0' + h : h;
   }).join('');
 
-  // Date folder: first 10 chars of ISO string (YYYY-MM-DD)
   var dateFolder = messageDateIso
     ? String(messageDateIso).slice(0, 10)
     : Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'UTC', 'yyyy-MM-dd');
-
-  // Sanitize filename — replace path-illegal chars with _
-  var safeFilename = filename.replace(/[\/\\:*?"<>|]/g, '_');
-  var r2Key = 'inbox/' + dateFolder + '/' + sha256 + '_' + safeFilename;
 
   var props = PropertiesService.getScriptProperties();
   var accountId = props.getProperty('R2_ACCOUNT_ID');
@@ -376,28 +382,35 @@ function uploadInboxAttachmentToR2(attachmentBlob, originalFilename, messageDate
     };
   }
 
-  var apiBase   = 'https://api.cloudflare.com/client/v4/accounts/' + accountId +
-                  '/r2/buckets/' + bucket + '/objects/';
-  var objectUrl = apiBase + encodeURIComponent(r2Key);
-  var publicUrl = pubBase.replace(/\/$/, '') + '/' + r2Key;
-  var authHeader = { 'Authorization': 'Bearer ' + apiToken };
+  var apiBase    = 'https://api.cloudflare.com/client/v4/accounts/' + accountId +
+                   '/r2/buckets/' + bucket + '/objects/';
+  var pubBaseTrim = pubBase.replace(/\/$/, '');
+  var authHeader  = { 'Authorization': 'Bearer ' + apiToken };
 
-  // Dedup: HEAD check — 200 means object already exists
+  // Hash-indexed dedup: GET dedup/<sha> — if present, return URL pointing to the
+  // stored key (which may use any historical or future format).
+  var dedupKey = R2_DEDUP_PREFIX_ + sha256;
+  var dedupUrl = apiBase + encodeURIComponent(dedupKey);
   try {
-    var headResp = UrlFetchApp.fetch(objectUrl, {
-      method: 'get',
-      headers: authHeader,
-      muteHttpExceptions: true
+    var dedupResp = UrlFetchApp.fetch(dedupUrl, {
+      method: 'get', headers: authHeader, muteHttpExceptions: true
     });
-    if (headResp.getResponseCode() === 200) {
-      return {
-        filename: filename, size_bytes: sizeBytes, mime_type: mimeType,
-        r2_url: publicUrl, sha256: sha256, skipped_reason: null
-      };
+    if (dedupResp.getResponseCode() === 200) {
+      var existingKey = String(dedupResp.getContentText() || '').trim();
+      if (existingKey) {
+        return {
+          filename: filename, size_bytes: sizeBytes, mime_type: mimeType,
+          r2_url: pubBaseTrim + '/' + existingKey, sha256: sha256, skipped_reason: null
+        };
+      }
     }
-  } catch (headErr) {
-    // Network error on existence check — fall through to upload attempt
+  } catch (dedupErr) {
+    // Network error — fall through to upload attempt
   }
+
+  var r2Key = buildR2Key_(senderRaw, filename, dateFolder, sha256);
+  var objectUrl = apiBase + encodeURIComponent(r2Key);
+  var publicUrl = pubBaseTrim + '/' + r2Key;
 
   // PUT upload
   var putResp;
@@ -425,10 +438,100 @@ function uploadInboxAttachmentToR2(attachmentBlob, originalFilename, messageDate
     };
   }
 
+  // Best-effort write of dedup index — failure here does not break the response.
+  try {
+    UrlFetchApp.fetch(dedupUrl, {
+      method: 'put',
+      headers: { 'Authorization': 'Bearer ' + apiToken, 'Content-Type': 'text/plain' },
+      payload: r2Key,
+      muteHttpExceptions: true
+    });
+  } catch (idxErr) {
+    // Swallow — file is uploaded; missing index just means next call re-uploads.
+  }
+
   return {
     filename: filename, size_bytes: sizeBytes, mime_type: mimeType,
     r2_url: publicUrl, sha256: sha256, skipped_reason: null
   };
+}
+
+/**
+ * sanitizeForKey_ — lowercase, replace illegal chars and whitespace with -,
+ * collapse runs of -, trim, truncate to maxLength.
+ */
+function sanitizeForKey_(input, maxLength) {
+  var s = String(input == null ? '' : input).toLowerCase();
+  s = s.replace(/[\/\\:*?"<>|()\s.]+/g, '-');
+  s = s.replace(/-+/g, '-');
+  s = s.replace(/^-+|-+$/g, '');
+  if (maxLength && s.length > maxLength) s = s.slice(0, maxLength).replace(/-+$/, '');
+  return s;
+}
+
+/**
+ * extractDisplayName_ — pull display name from a raw From header.
+ * Falls back to the local-part of the email when no display name is present.
+ * Always returns the sanitized form (or 'unknown' if both sources are empty).
+ */
+function extractDisplayName_(senderRaw) {
+  var raw = String(senderRaw == null ? '' : senderRaw).trim();
+  if (!raw) return 'unknown';
+
+  var emailMatch = raw.match(/<\s*([^>]+)\s*>/);
+  var emailAddr = emailMatch ? emailMatch[1].trim() : (raw.indexOf('@') !== -1 ? raw : '');
+  var displayPart = emailMatch ? raw.slice(0, emailMatch.index).trim() : '';
+
+  // Strip surrounding quotes around display name
+  displayPart = displayPart.replace(/^["']+|["']+$/g, '').trim();
+
+  var clean = sanitizeForKey_(displayPart, R2_KEY_MAX_PART_LEN_);
+  if (clean) return clean;
+
+  if (emailAddr) {
+    var localPart = emailAddr.split('@')[0];
+    var cleanLocal = sanitizeForKey_(localPart, R2_KEY_MAX_PART_LEN_);
+    if (cleanLocal) return cleanLocal;
+  }
+
+  return 'unknown';
+}
+
+/**
+ * formatMMDD_ — MMDD from a YYYY-MM-DD prefix; returns '0000' if unparseable.
+ */
+function formatMMDD_(isoDateOrPrefix) {
+  var s = String(isoDateOrPrefix == null ? '' : isoDateOrPrefix);
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return '0000';
+  return m[2] + m[3];
+}
+
+/**
+ * buildR2Key_ — assembles the R2 object key per the human-readable spec.
+ */
+function buildR2Key_(senderRaw, originalFilename, dateFolder, sha256) {
+  var sender = extractDisplayName_(senderRaw);
+
+  var name = String(originalFilename || 'attachment');
+  var dotIdx = name.lastIndexOf('.');
+  var base, ext;
+  if (dotIdx > 0 && dotIdx < name.length - 1) {
+    base = name.slice(0, dotIdx);
+    ext  = name.slice(dotIdx + 1).toLowerCase().replace(/[^a-z0-9]+/g, '');
+  } else {
+    base = name;
+    ext  = '';
+  }
+
+  var baseClean = sanitizeForKey_(base, R2_KEY_MAX_PART_LEN_) || 'file';
+  var mmdd = formatMMDD_(dateFolder);
+  var shortHash = String(sha256 || '').slice(0, 3) || '000';
+
+  var filenamePart = sender + '_' + baseClean + '_' + mmdd + '_' + shortHash;
+  if (ext) filenamePart += '.' + ext;
+
+  return 'inbox/' + dateFolder + '/' + filenamePart;
 }
 
 // ============================================================================
@@ -1720,9 +1823,10 @@ var ActionFind = (function () {
       var atts = m.getAttachments();
       if (atts.length > 0) hasAttachments = true;
       var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+      var msgFrom = m.getFrom() || '';
       atts.forEach(function (att) {
         try {
-          var resolved = uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+          var resolved = uploadInboxAttachmentToR2(att, att.getName(), msgDateIso, msgFrom);
           attachmentsResolved.push(resolved);
         } catch (err) {
           attachmentsResolved.push({
@@ -1819,10 +1923,11 @@ var ActionGetThread = (function () {
         var attachments = m.getAttachments();
         var attachmentNames = attachments.map(function (a) { return a.getName(); });
         var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+        var msgFrom = m.getFrom() || '';
 
         var attachmentsResolved = attachments.map(function (att) {
           try {
-            return uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+            return uploadInboxAttachmentToR2(att, att.getName(), msgDateIso, msgFrom);
           } catch (err) {
             return {
               filename: att.getName(),

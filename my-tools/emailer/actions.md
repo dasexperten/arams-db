@@ -201,6 +201,31 @@ the rest of the response is unaffected — the failed entry carries
 `skipped_reason: "upload_failed: ..."`. The existing manual
 `download_attachment` action is unchanged.
 
+**R2 key format** (human-readable):
+
+```
+inbox/<YYYY-MM-DD>/<sender_clean>_<filename_clean>_<MMDD>_<xxx>.<ext>
+```
+
+- `sender_clean` — sanitized display name (lowercased, illegal chars + whitespace
+  collapsed to `-`, trimmed, capped at 40 chars). Falls back to the local-part
+  of the address when no display name is present.
+- `filename_clean` — same sanitization applied to the filename basename
+  (extension preserved separately and lowercased).
+- `MMDD` — month + day from the message date (matches the date folder).
+- `xxx` — first 3 hex characters of the full SHA-256 (4096 distinct values;
+  collisions become statistically likely after ~64 distinct files).
+- `.ext` — original extension preserved.
+
+Example: `inbox/2022-11-08/honghui-ellen_co_1108_937.pdf`.
+
+**Dedup** is hash-indexed via small `dedup/<full_sha256>` text objects in the
+same bucket. The uploader GETs `dedup/<sha256>` first; on hit it reads the
+stored key and returns its public URL without re-uploading (so the existing
+key — whatever its format — is reused). Only objects uploaded under this
+revision and later have dedup entries; older PR #52 keys are not migrated and
+will be re-uploaded under the new format on next fetch.
+
 **Success response:**
 ```json
 {
@@ -223,7 +248,7 @@ the rest of the response is unaffected — the failed entry carries
           "filename": "contract_v3.pdf",
           "size_bytes": 204800,
           "mime_type": "application/pdf",
-          "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/a1b2c3..._contract_v3.pdf",
+          "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/partner-example_contract-v3_0430_a1b.pdf",
           "sha256": "a1b2c3...",
           "skipped_reason": null
         },
@@ -250,10 +275,11 @@ the rest of the response is unaffected — the failed entry carries
 Returns all messages oldest-first with full plain-text bodies, participant
 list, and attachment filenames.
 
-**Attachment auto-download:** same R2 logic as `find`. Each message object
-gains an `attachments_resolved` array alongside the existing `attachment_names`
-array. Dedup by SHA-256 — if the same file was already uploaded in a previous
-call, the existing R2 URL is returned without re-uploading.
+**Attachment auto-download:** same R2 logic, key format, and hash-indexed
+dedup as `find`. Each message object gains an `attachments_resolved` array
+alongside the existing `attachment_names` array. If the same SHA-256 has
+been uploaded before, the existing R2 URL (under whatever historical key
+format) is returned without re-uploading.
 
 **Message shape with attachments:**
 ```json
@@ -271,7 +297,7 @@ call, the existing R2 URL is returned without re-uploading.
       "filename": "contract_v3.pdf",
       "size_bytes": 204800,
       "mime_type": "application/pdf",
-      "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/a1b2c3..._contract_v3.pdf",
+      "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/partner-example_contract-v3_0430_a1b.pdf",
       "sha256": "a1b2c3...",
       "skipped_reason": null
     }
