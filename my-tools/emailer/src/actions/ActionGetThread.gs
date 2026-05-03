@@ -6,6 +6,12 @@
  * Returns full thread context: all messages ordered chronologically (oldest first),
  * full plain-text bodies, participant list, attachment filenames.
  * Reporter does NOT run for read-only actions.
+ *
+ * Attachments: every attachment in every message is automatically uploaded to R2
+ * via uploadInboxAttachmentToR2.  Each message object in the response includes an
+ * "attachments_resolved" array alongside the existing "attachment_names" field.
+ * Files >25 MB are skipped with skipped_reason: "too_large".  Upload errors are
+ * captured per-file; they never prevent the action from returning successfully.
  */
 
 var ActionGetThread = (function () {
@@ -43,6 +49,22 @@ var ActionGetThread = (function () {
 
         var attachments = m.getAttachments();
         var attachmentNames = attachments.map(function (a) { return a.getName(); });
+        var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+
+        var attachmentsResolved = attachments.map(function (att) {
+          try {
+            return uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+          } catch (err) {
+            return {
+              filename: att.getName(),
+              size_bytes: null,
+              mime_type: att.getContentType() || null,
+              r2_url: null,
+              sha256: null,
+              skipped_reason: 'upload_failed: ' + String(err.message || err)
+            };
+          }
+        });
 
         return {
           message_id: m.getId(),
@@ -52,7 +74,8 @@ var ActionGetThread = (function () {
           date: m.getDate() ? m.getDate().toISOString() : '',
           body_plain: (m.getPlainBody() || '').trim(),
           has_attachments: attachments.length > 0,
-          attachment_names: attachmentNames
+          attachment_names: attachmentNames,
+          attachments_resolved: attachmentsResolved
         };
       });
 

@@ -12,8 +12,8 @@ all 7 actions exposed by the Apps Script web app.
 | `send`                | `recipient`, `subject`, `body_html` or `body_plain`     | `from`, `attachment_link`, `context`, `draft_only`                                       | Yes (Doc archive, not for drafts) |
 | `reply`               | `thread_id`, `body_html` or `body_plain`                | `from`, `attachment_link`, `context`, `draft_only`, `in_reply_to_message_id`             | Yes (not for drafts)              |
 | `reply_all`           | `thread_id`, `body_html` or `body_plain`                | `from`, `attachment_link`, `context`, `draft_only`, `in_reply_to_message_id`             | Yes (not for drafts)              |
-| `find`                | `query`                                                 | `max_results` (default 10, cap 50)                                                       | No                                |
-| `get_thread`          | `thread_id`                                             | —                                                                                        | No                                |
+| `find`                | `query`                                                 | `max_results` (default 10, cap 50)                                                       | R2 upload (per attachment, auto)  |
+| `get_thread`          | `thread_id`                                             | —                                                                                        | R2 upload (per attachment, auto)  |
 | `download_attachment` | `message_id`, `attachment_name` or `attachment_index`   | `target_subfolder_override`                                                              | No (saves attachment to Drive)    |
 | `archive`             | `title`, `body_plain` or `body_html`                    | `archive_label` (default `system-archive`), `context`, `mime_type`                       | Yes (markdown file, not Doc)      |
 
@@ -192,23 +192,50 @@ recipients the same way. All To and CC from the last message receive the reply.
 **Optional fields:**
 - `max_results` — integer, default `10`, hard cap `50`
 
+**Attachment auto-download:** every attachment in every matching thread is
+automatically uploaded to Cloudflare R2 bucket `emailer-attachments`.
+Each thread summary contains a flat `attachments_resolved` array (all
+attachments across all messages in the thread). Files larger than 25 MB are
+skipped (`skipped_reason: "too_large"`). If R2 upload fails for one attachment,
+the rest of the response is unaffected — the failed entry carries
+`skipped_reason: "upload_failed: ..."`. The existing manual
+`download_attachment` action is unchanged.
+
 **Success response:**
 ```json
 {
   "success": true,
   "action": "find",
   "query": "...",
-  "total_found": 3,
+  "total_found": 2,
   "threads": [
     {
       "thread_id": "...",
-      "subject": "...",
-      "last_message_from": "...",
-      "last_message_snippet": "...",
-      "message_count": 4,
-      "has_attachments": false,
+      "subject": "Contract draft v3",
+      "last_message_from": "partner@example.com",
+      "last_message_snippet": "Please see the attached contract...",
+      "message_count": 3,
+      "has_attachments": true,
       "last_message_date": "2026-04-30T09:12:00.000Z",
-      "participants": ["..."]
+      "participants": ["..."],
+      "attachments_resolved": [
+        {
+          "filename": "contract_v3.pdf",
+          "size_bytes": 204800,
+          "mime_type": "application/pdf",
+          "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/a1b2c3..._contract_v3.pdf",
+          "sha256": "a1b2c3...",
+          "skipped_reason": null
+        },
+        {
+          "filename": "huge_video.mp4",
+          "size_bytes": 41943040,
+          "mime_type": "video/mp4",
+          "r2_url": null,
+          "sha256": null,
+          "skipped_reason": "too_large"
+        }
+      ]
     }
   ]
 }
@@ -222,6 +249,35 @@ recipients the same way. All To and CC from the last message receive the reply.
 
 Returns all messages oldest-first with full plain-text bodies, participant
 list, and attachment filenames.
+
+**Attachment auto-download:** same R2 logic as `find`. Each message object
+gains an `attachments_resolved` array alongside the existing `attachment_names`
+array. Dedup by SHA-256 — if the same file was already uploaded in a previous
+call, the existing R2 URL is returned without re-uploading.
+
+**Message shape with attachments:**
+```json
+{
+  "message_id": "...",
+  "from": "partner@example.com",
+  "to": ["emea@dasexperten.de"],
+  "cc": [],
+  "date": "2026-04-30T09:12:00.000Z",
+  "body_plain": "Please see the attached contract...",
+  "has_attachments": true,
+  "attachment_names": ["contract_v3.pdf"],
+  "attachments_resolved": [
+    {
+      "filename": "contract_v3.pdf",
+      "size_bytes": 204800,
+      "mime_type": "application/pdf",
+      "r2_url": "https://pub-0e2fb2d28ea9408bbaa1bdd64b3bf256.r2.dev/inbox/2026-04-30/a1b2c3..._contract_v3.pdf",
+      "sha256": "a1b2c3...",
+      "skipped_reason": null
+    }
+  ]
+}
+```
 
 ---
 
@@ -281,3 +337,6 @@ Drive trail without sending mail. Bypasses Reporter's DocumentApp limit
 | Apps Script timeout (> 6 min) | Scope too large | Reduce `max_results` or paginate |
 | Daily Gmail quota exceeded | Too many sends | HALT; quota resets at midnight Pacific |
 | Auth revoked | Owner removed permissions | HALT; ask Aram to re-run `authorize()` |
+| R2 `skipped_reason: "too_large"` | Attachment exceeds 25 MB | Entry in `attachments_resolved` with `r2_url: null`; rest of response unaffected |
+| R2 `skipped_reason: "upload_failed: ..."` | Network error or R2 API error | Entry in `attachments_resolved` with error details; rest of response unaffected |
+| R2 `skipped_reason: "upload_failed: missing Script Properties: ..."` | One or more of `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_PUBLIC_BASE`, `R2_API_TOKEN` not set | All attachments in that call will carry this reason; fix Script Properties and retry |

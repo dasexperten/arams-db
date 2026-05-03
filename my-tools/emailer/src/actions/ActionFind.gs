@@ -6,6 +6,12 @@
  *
  * Returns threads ordered by Gmail relevance/recency (preserved from GmailApp.search).
  * Reporter does NOT run for read-only actions.
+ *
+ * Attachments: every message with attachments has each file automatically uploaded
+ * to R2 via uploadInboxAttachmentToR2.  Each thread summary includes an
+ * "attachments_resolved" array (flat, across all messages in the thread).
+ * Files >25 MB are skipped with skipped_reason: "too_large".  Upload errors are
+ * captured per-file; they never prevent the action from returning successfully.
  */
 
 var ActionFind = (function () {
@@ -59,21 +65,42 @@ var ActionFind = (function () {
       collectAddresses_(m.getTo(), participants);
     });
 
-    var hasAttachments = messages.some(function (m) {
-      return m.getAttachments().length > 0;
+    var hasAttachments = false;
+    var attachmentsResolved = [];
+
+    messages.forEach(function (m) {
+      var atts = m.getAttachments();
+      if (atts.length > 0) hasAttachments = true;
+      var msgDateIso = m.getDate() ? m.getDate().toISOString() : '';
+      atts.forEach(function (att) {
+        try {
+          var resolved = uploadInboxAttachmentToR2(att, att.getName(), msgDateIso);
+          attachmentsResolved.push(resolved);
+        } catch (err) {
+          attachmentsResolved.push({
+            filename: att.getName(),
+            size_bytes: null,
+            mime_type: att.getContentType() || null,
+            r2_url: null,
+            sha256: null,
+            skipped_reason: 'upload_failed: ' + String(err.message || err)
+          });
+        }
+      });
     });
 
     return {
       thread_id: thread.getId(),
       subject: thread.getFirstMessageSubject() || '',
       last_message_from: last.getFrom() || '',
-      last_message_snippet: thread.getMessages()[messages.length - 1].getBody()
+      last_message_snippet: last.getBody()
         ? (last.getPlainBody() || '').slice(0, 150)
         : '',
       message_count: messages.length,
       has_attachments: hasAttachments,
       last_message_date: last.getDate() ? last.getDate().toISOString() : '',
-      participants: Object.keys(participants)
+      participants: Object.keys(participants),
+      attachments_resolved: attachmentsResolved
     };
   }
 
