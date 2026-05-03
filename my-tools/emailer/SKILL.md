@@ -170,16 +170,19 @@ If any check fails → HALT or rewrite. Never bypass.
 
 ### Multi-inbox sending
 
-The emailer supports outbound email from all 4 Das Experten inboxes. Pass the
-optional `"from"` field on `send`, `reply`, or `reply_all` to specify the
-sending address. Accepted values are `eurasia@dasexperten.de`,
-`emea@dasexperten.de`, `export@dasexperten.de`, and `marketing@dasexperten.de`
-— anything else returns an `INVALID_FROM` error immediately. For `reply` and
-`reply_all`, the inbox is **auto-detected** from the thread's `To`/`CC` headers
-if `"from"` is omitted, so replies automatically originate from the same inbox
-the customer originally wrote to. See `my-tools/emailer/inbox-routing.md` for
-the whitelist and detection rule, and `my-tools/emailer/actions.md` for the
-full `from` parameter contract.
+The emailer supports outbound email from all 6 Das Experten inboxes (4 active,
+2 placeholders pending Gmail send-as alias setup). Pass the optional `"from"`
+field on `send`, `reply`, or `reply_all` to specify the sending address.
+Accepted values are `eurasia@dasexperten.de`, `emea@dasexperten.de`,
+`export@dasexperten.de`, `marketing@dasexperten.de`, `sales@dasexperten.de`,
+and `support@dasexperten.de` — anything else returns an `INVALID_FROM` error
+immediately. The last two (`sales@`, `support@`) are placeholders: they pass
+the whitelist check but Gmail will reject the actual send until the alias is
+configured. For `reply` and `reply_all`, the inbox is **auto-detected** from
+the thread's `To`/`CC` headers if `"from"` is omitted, so replies automatically
+originate from the same inbox the customer originally wrote to. See
+`my-tools/emailer/inbox-routing.md` for the whitelist and detection rule, and
+`my-tools/emailer/actions.md` for the full `from` parameter contract.
 
 ### 7 actions exposed
 

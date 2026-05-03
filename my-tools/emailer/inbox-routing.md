@@ -1,13 +1,18 @@
 # emailer — inbox routing
 
-Source of truth for the 4 Das Experten inboxes, the sender whitelist, and the
+Source of truth for the 6 Das Experten inboxes, the sender whitelist, and the
 auto-detection algorithm used by `reply` and `reply_all`.
+
+> **Placeholder note:** `sales@dasexperten.de` and `support@dasexperten.de` are
+> PENDING — send-as alias not yet configured in Gmail. They are listed in the
+> code whitelist so the system is ready, but any send from these addresses will
+> fail at the Gmail layer until the alias setup is completed.
 
 ---
 
 ## Sender inbox whitelist
 
-Only these four addresses may appear in the `"from"` field of any outgoing
+Only these six addresses may appear in the `"from"` field of any outgoing
 action. They are hardcoded in `ALLOWED_SENDER_INBOXES` inside
 `dist/emailer-bundle.gs`. Every address must exist as a send-as alias in the
 Workspace account; Gmail will reject the send otherwise.
@@ -18,6 +23,8 @@ Workspace account; Gmail will reject the send otherwise.
 | `emea@dasexperten.de` | B-EMEA | European and Middle-Eastern customers |
 | `export@dasexperten.de` | B-EXPORT | International B2B and export markets |
 | `marketing@dasexperten.de` | B-MARKETING | PR, bloggers, media, campaigns |
+| `sales@dasexperten.de` | TBD — pending alias setup | TBD — pending alias setup |
+| `support@dasexperten.de` | TBD — pending alias setup | TBD — pending alias setup |
 
 ---
 
