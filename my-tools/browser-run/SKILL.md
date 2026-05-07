@@ -1,81 +1,105 @@
 ---
 name: browser-run
 description: |
-  Das Experten universal browser-based scraping and rendering gate. Routes calls to the browser-run-bridge Cloudflare Worker, which uses Cloudflare Browser Rendering REST API to open URLs in headless Chrome on Cloudflare's infrastructure. Use this whenever any skill needs to capture a screenshot of a public web page, or extract clean visible text from a JavaScript-rendered page that plain HTTP `fetch` cannot read. Triggers on: "screenshot a page", "сделай скриншот сайта", "захвати страницу", "render this URL", "snapshot the page", "scrape via browser", "headless chrome", "extract text from", "pull the visible text", "render JS-heavy site", "capture web page", "monitor page changes", or any inter-skill call via `[[GATE: browser-run]]`. Fire immediately on trigger — no confirmation needed for read-only browser operations.
+  Das Experten universal browser-based scraping and rendering gate. Routes calls to the browser-run-bridge Cloudflare Worker, which uses Cloudflare Browser Rendering REST API to open URLs in headless Chrome on Cloudflare's infrastructure. Use this skill whenever any task needs to capture a screenshot of a public web page, or extract clean visible text from a JavaScript-rendered page that plain HTTP fetch cannot read, or systematically scrape data from public web sources without using Apify or paid scraping services. Triggers immediately on phrases including "screenshot a page", "сделай скриншот сайта", "захвати страницу", "render this URL", "snapshot the page", "scrape via browser", "headless chrome", "extract text from", "pull the visible text", "render JS-heavy site", "capture web page", "monitor page changes", "найди компании в", "find companies in", "соберём контакты", "scrape competitor data", "research distributors", "find clinics", "find dentists", "find buyers", "discover B2B", "B2B research", "scrape без Apify", "browser scraping", or any inter-skill call via [[GATE: browser-run]]. Fire immediately on trigger — no confirmation needed for read-only browser operations. When the task requires choosing among public data sources by region, category, or type (registries, maps, marketplaces, social), consult the data-sources.md reference file before choosing a URL.
 ---
 
 # browser-run — Cloudflare Browser Rendering gate
 
-Universal Das Experten skill for browser-based page capture. Single entry point to Cloudflare Browser Rendering REST API via the deployed `browser-run-bridge` Worker.
+Universal Das Experten skill for browser-based page capture and structured public-web data collection. Single entry point to Cloudflare Browser Rendering REST API via the deployed `browser-run-bridge` Worker.
 
-## When to fire this skill
+---
 
-🟢 Aram says: "screenshot the page", "сделай скриншот", "захвати страницу", "render the URL", "сними страницу"
-🟢 Aram says: "extract text from", "вытащи текст со страницы", "дай чистый текст с сайта", "что написано на странице"
-🟢 Another skill needs visual or text content from a public web page that plain `fetch` cannot read (JS-rendered, SPA, infinite scroll, dynamic content)
-🟢 Inter-skill gate `[[GATE: browser-run?action=screenshot&url=...]]` or `[[GATE: browser-run?action=extract_text&url=...]]`
-🟢 Monitoring tasks — periodic snapshots of competitor product pages, marketplace listings, news pages, blogger profiles
+## Two actions exposed
 
-## When NOT to fire
+🔵 **`screenshot`** — open URL in headless Chrome → render fully → upload PNG to R2 → return public URL + cost-tracking ms.
 
-🔴 Static HTML page where plain HTTP `fetch` works (faster and free)
-🔴 Page requires login/cookies (browser-run-bridge has no session/auth — call escalates to operator)
-🔴 Page is behind WAF or CAPTCHA (Browser Rendering does not bypass these)
-🔴 PDF or binary file URL — use direct download
-🔴 Internal Das Experten resources already accessible via API (Gmail, Drive, etc.)
+🔵 **`extract_text`** — open URL → render JS → return clean visible text (innerText of body, HTML stripped, entities decoded, whitespace collapsed).
 
-## Two actions
+For full schemas, request/response examples, error tables, and edge cases, see [`actions.md`](./actions.md).
 
-### `screenshot`
-Open URL in headless Chrome → capture full-page PNG → upload to R2 → return public URL.
+---
 
-Use for: visual archive, before/after comparison, marketplace listing snapshots, blogger profile captures.
+## Trigger discipline
 
-### `extract_text`
-Open URL → render JS fully → return clean visible text (innerText of body with HTML stripped).
+🟢 **Fire immediately when triggered** — read-only browser operations need no confirmation. Just go.
 
-Use for: scraping prices, descriptions, reviews, blog posts, news articles, anything where you want the *rendered* text not raw HTML.
+🟢 **One URL per call.** No batch action. Caller orchestrates the loop.
 
-## How to call
+🟢 **Min 11 second pause between calls** — Cloudflare Browser Rendering free tier allows 1 request per 10 seconds. Going faster returns 429.
 
-See [`actions.md`](./actions.md) for full schema. Quick form:
+🟢 **Mobile viewport first for social** — when scraping VK, Twitter, Facebook, use `viewport: {width: 390, height: 844}` and the mobile subdomain (`m.vk.com`, `mobile.twitter.com`, etc.). Mobile versions skip login walls more often.
 
-```bash
-curl -X POST https://browser-run-bridge.dasexperten.workers.dev/ \
-  -H "Authorization: Bearer $BRIDGE_SECRET_BROWSER_RUN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "action": "screenshot",
-    "url": "https://example.com",
-    "options": { "viewport": { "width": 1280, "height": 800 }, "wait_ms": 0 }
-  }'
-```
+🟢 **DDG `site:` first for discovery** — before fetching URLs blindly, use DuckDuckGo `site:<domain>` queries to confirm the target indexes the entity. Saves wasted fetches.
 
-`$BRIDGE_SECRET_BROWSER_RUN` lives in `Das-Secrets.md`. Never inline the literal value into any committed file or external system.
+🔴 **Do NOT fire when:** static HTML page where plain `fetch` works (faster, free), page requires login/cookies (skill has no session), page is behind WAF/CAPTCHA, internal Das Experten resources already accessible via API.
+
+---
+
+## Source-selection gate (lazy-load protocol)
+
+When the task requires choosing **which public web source** to scrape — by region, country, language, vertical, or data type — **read the reference file** [`references/data-sources.md`](./references/data-sources.md) before forming the URL.
+
+### When to read `data-sources.md`
+
+🔵 Operator names a country, region, or language ("найди в Дубае", "Юго-Восточная Азия", "African distributors", "немецкие сети")
+🔵 Operator names a vertical ("стоматологи", "косметические дистрибьюторы", "блогеры", "оптовики", "клиники")
+🔵 Operator asks to discover entities ("найди 20 …", "собери список …", "find companies that …")
+🔵 Inter-skill gate `[[GATE: browser-run?region=<X>&category=<Y>]]` from sales-hunter, ugc-master, contacts, legalizer, or any skill needing structured public data
+🔵 Operator says "use only Browser Run", "no Apify", "free sources only" — implies systematic source discovery
+
+### When NOT to read it
+
+🔴 Operator gives a specific URL ("сделай скрин этой ссылки", "extract text from this page")
+🔴 Source is already obvious from prior turn (continuation of an active scrape)
+🔴 Task is one-off `screenshot` of a known site
+
+### What to do after reading
+
+1. Identify the **region** + **category** in the task
+2. From `data-sources.md`, pick the **top 1-3 sources** for that combination, ordered by trust: official registry → vertical aggregator → maps → general search → social
+3. Form the URL pattern from the catalog (each source entry has a working URL pattern)
+4. Execute the call(s) — respect 11s pause
+5. If the first source returns sparse or blocked data, fall through to the next listed alternative
+6. Report which sources were used and which yielded data, so the operator sees the trail
+
+---
 
 ## Output handling
 
-- `screenshot` → returns public R2 URL. Pass that URL onward to whatever consumer needs the image (presentation, email attachment, archive index).
-- `extract_text` → returns plain text. Pass to downstream skill (price-monitor, review-master, content-analyzer) for further processing.
+- `screenshot` → public R2 URL. Forward the URL to whatever consumer needs the image (presentation, email attachment, archive index).
+- `extract_text` → plain text. Hand off to downstream skill (price-monitor, review-master, sales-hunter, ugc-master, legalizer) for further processing.
+
+---
 
 ## Cost discipline
 
-🟢 Free tier comfortably covers Das Experten realistic usage (hundreds of captures per day).
+🟢 Free tier comfortably covers Das Experten realistic usage (hundreds of captures per day on Workers Paid plan).
 🟢 R2 lifecycle rule auto-deletes screenshots after 30 days — no archive bloat.
-🟢 If a screenshot must be preserved beyond 30 days, copy its bytes into a different R2 bucket or Drive folder. The `browser-run-output` bucket is ephemeral by design.
+🟢 If a screenshot must outlive 30 days, copy bytes to a different R2 bucket or Drive folder before expiry. The `browser-run-output` bucket is **ephemeral by design** — never store reference data here.
 
-## Constraints
+---
 
-- One URL per call. No batch action — caller orchestrates the loop.
-- No retry inside the Worker. If 429 or 502 returned, caller waits and retries.
+## Hard constraints
+
+- One URL per call. No internal batching. No retries inside the Worker.
 - `wait_ms` capped at 10000 (10 seconds).
 - Viewport capped at 3840×2160.
-- No proxy / region selection — Cloudflare picks the datacenter.
-- No JS evaluation, no form filling, no clicks (yet — candidates for future actions).
+- No proxy or region selection — Cloudflare picks the datacenter.
+- No JS evaluation, no form filling, no clicks, no scroll. Future actions may add these.
+- No persistent session, no cookie carry-over between calls. Each call is fresh.
+
+If a task fundamentally requires capabilities outside this list (login session, multi-step navigation, scroll-and-load), the skill **escalates** rather than fabricates: report the limitation, propose extending Browser Run with a new action, or propose Apify if an actor exists.
+
+**Never invent data when scraping returns empty.** Empty is honest. Fabricated contacts are a brand risk.
+
+---
 
 ## Cross-references
 
-- **Worker source:** `workers/browser-run-bridge/` in this repo
-- **Worker docs:** `workers/browser-run-bridge/README.md`, `ACTIONS.md`, `OPERATIONS.md`
-- **Sibling tools:** `my-tools/emailer/`, `my-tools/telegramer/`
-- **Secrets:** `Das-Secrets.md` (Aram-maintained)
+- **Reference catalog of public sources:** [`references/data-sources.md`](./references/data-sources.md) (lazy-load — only read when source-selection gate fires)
+- **Action schemas:** [`actions.md`](./actions.md)
+- **Setup, secrets, health checks:** [`SETUP_NOTES.md`](./SETUP_NOTES.md)
+- **Worker source code & ops docs:** `../../workers/browser-run-bridge/`
+- **Sibling tools:** `../emailer/`, `../telegramer/`
+- **Secrets registry:** `Das-Secrets.md` (operator-maintained)
