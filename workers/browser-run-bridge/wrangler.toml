@@ -1,14 +1,15 @@
 name = "browser-run-bridge"
 main = "src/index.js"
 compatibility_date = "2026-05-01"
-compatibility_flags = ["nodejs_compat"]
 
-# Browser Run binding
-browser = { binding = "BROWSER" }
+# This Worker uses the Cloudflare Browser Rendering REST API (Quick Actions),
+# NOT the @cloudflare/puppeteer module. No `browser` binding is required.
 
-# R2 binding for screenshots
+# R2 bucket binding for screenshot storage
 [[r2_buckets]]
 binding = "OUTPUT"
 bucket_name = "browser-run-output"
 
-# BRIDGE_SECRET is set as a Worker secret via REST, not in this file.
+# Secrets (set via REST or `wrangler secret put`, never committed):
+# - BRIDGE_SECRET     — auth token for callers of this Worker
+# - CF_BROWSER_TOKEN  — Cloudflare API token with Browser Rendering:Edit scope
