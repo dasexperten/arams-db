@@ -1,0 +1,14 @@
+name = "browser-run-bridge"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Run binding
+browser = { binding = "BROWSER" }
+
+# R2 binding for screenshots
+[[r2_buckets]]
+binding = "OUTPUT"
+bucket_name = "browser-run-output"
+
+# BRIDGE_SECRET is set as a Worker secret via REST, not in this file.
