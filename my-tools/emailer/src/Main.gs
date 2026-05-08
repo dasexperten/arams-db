@@ -85,6 +85,10 @@ function dispatchAction_(payload) {
       return ActionGetThread.handle(payload);
     case 'download_attachment':
       return ActionDownloadAttachment.handle(payload);
+    case 'list_send_as':
+      return action_list_send_as(payload);
+    case 'add_send_as':
+      return action_add_send_as(payload);
     case 'archive':
       return ActionArchive.handle(payload);
     default:
