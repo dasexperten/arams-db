@@ -2,7 +2,11 @@
  * ActionSend.gs — handles action "send" (new outgoing email or draft).
  *
  * Required payload fields: recipient, subject, body_html or body_plain
- * Optional:  attachment_link, context, draft_only
+ * Optional:  attachment_link, attachments_urls, context, draft_only
+ *
+ * attachments_urls — array of public URLs (R2, etc). Each is fetched via
+ *   UrlFetchApp and attached as a real Gmail file attachment. Filename is
+ *   derived from the URL path. (Not supported for drafts — see GmailSender.)
  *
  * If draft_only:true → creates a Gmail draft, returns draft response, NO Reporter.
  * Otherwise         → sends email, runs Reporter in try/catch, returns full response.
@@ -10,15 +14,9 @@
 
 var ActionSend = (function () {
 
-  /**
-   * handle — entry point called by Main.gs dispatcher.
-   * @param {object} payload
-   * @returns {object}
-   */
   function handle(payload) {
     payload = payload || {};
 
-    // Validate required fields
     if (!payload.recipient) {
       return { success: false, action: 'send', error: 'Missing required field: recipient.' };
     }
@@ -29,7 +27,6 @@ var ActionSend = (function () {
       return { success: false, action: 'send', error: 'Missing required field: body_html or body_plain (at least one required).' };
     }
 
-    // Validate optional "from" against whitelist
     if (payload.from) {
       var fromLower = String(payload.from).toLowerCase().trim();
       var allowedLower = ALLOWED_SENDER_INBOXES.map(function (a) { return a.toLowerCase(); });
@@ -86,6 +83,9 @@ var ActionSend = (function () {
       mode: 'new',
       message_id: null,
       thread_id: null,
+      attachments_count: 0,
+      attachments_names: [],
+      attachments_error: null,
       archive_doc_link: null,
       archive_doc_id: null,
       archive_error: null,
@@ -94,6 +94,23 @@ var ActionSend = (function () {
 
     var resolvedFrom = payload.from || null;
 
+    // Fetch attachments from URLs (if any) BEFORE sending. If fetch fails,
+    // surface as attachments_error and abort send — better to fail loud than
+    // send a message without the file the caller expected.
+    var attachmentBlobs = [];
+    if (payload.attachments_urls && payload.attachments_urls.length) {
+      try {
+        attachmentBlobs = fetchAttachmentsFromUrls_(payload.attachments_urls);
+        result.attachments_count = attachmentBlobs.length;
+        result.attachments_names = attachmentBlobs.map(function (b) { return b.getName(); });
+      } catch (fetchErr) {
+        result.attachments_error = String(fetchErr.message || fetchErr);
+        result.error = 'Failed to fetch attachments: ' + result.attachments_error;
+        logEmailerOperation(payload, result);
+        return result;
+      }
+    }
+
     try {
       var sendResult = sendNew(
         payload.recipient,
@@ -101,12 +118,14 @@ var ActionSend = (function () {
         payload.body_html || null,
         payload.body_plain || null,
         payload.attachment_link || null,
-        resolvedFrom
+        resolvedFrom,
+        attachmentBlobs
       );
       result.message_id = sendResult.message_id;
       result.thread_id = sendResult.thread_id;
       result.success = true;
-      result.result_summary = 'Email sent to ' + payload.recipient;
+      result.result_summary = 'Email sent to ' + payload.recipient
+        + (attachmentBlobs.length ? ' with ' + attachmentBlobs.length + ' attachment(s)' : '');
     } catch (err) {
       result.error = String(err.message || err);
       logEmailerOperation(payload, result);
