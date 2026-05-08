@@ -7,6 +7,9 @@
  *
  * createDraft uses the Gmail Advanced Service (Gmail.Users.Drafts.create) which
  * must be enabled via Resources → Advanced Google Services → Gmail API v1.
+ *
+ * Attachments are passed as `attachmentBlobs` — array of GoogleAppsScript.Base.Blob.
+ * Caller is responsible for fetching URLs and converting to blobs.
  */
 
 /**
@@ -16,11 +19,12 @@
  * @param {string} subject
  * @param {?string} bodyHtml
  * @param {?string} bodyText
- * @param {?string} attachmentLink
- * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
+ * @param {?string} attachmentLink           - link appended to body (legacy)
+ * @param {?string} fromAddress              - send-as alias; must be in ALLOWED_SENDER_INBOXES
+ * @param {?Array<Blob>} attachmentBlobs     - real file attachments
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAddress) {
+function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAddress, attachmentBlobs) {
   if (!recipient) throw new Error('sendNew: recipient is required.');
   if (!subject) throw new Error('sendNew: subject is required.');
 
@@ -28,6 +32,9 @@ function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAdd
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
   if (fromAddress) options.from = fromAddress;
+  if (attachmentBlobs && attachmentBlobs.length > 0) {
+    options.attachments = attachmentBlobs;
+  }
   GmailApp.sendEmail(recipient, subject, bodies.plain, options);
 
   return locateSentMessage_('to:' + recipient + ' subject:"' + escapeQuery_(subject) + '"');
@@ -42,9 +49,10 @@ function sendNew(recipient, subject, bodyHtml, bodyText, attachmentLink, fromAdd
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId  (informational; thread.reply() handles headers)
  * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
+ * @param {?Array<Blob>} attachmentBlobs
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
+function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress, attachmentBlobs) {
   if (!threadId) throw new Error('replyToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
@@ -52,6 +60,9 @@ function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMe
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
   if (fromAddress) options.from = fromAddress;
+  if (attachmentBlobs && attachmentBlobs.length > 0) {
+    options.attachments = attachmentBlobs;
+  }
   thread.reply(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -69,9 +80,10 @@ function replyToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMe
  * @param {?string} attachmentLink
  * @param {?string} inReplyToMessageId
  * @param {?string} fromAddress - send-as alias; must be in ALLOWED_SENDER_INBOXES
+ * @param {?Array<Blob>} attachmentBlobs
  * @returns {{message_id: ?string, thread_id: ?string}}
  */
-function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress) {
+function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyToMessageId, fromAddress, attachmentBlobs) {
   if (!threadId) throw new Error('replyAllToThread: threadId is required.');
 
   var thread = fetchThread_(threadId);
@@ -79,6 +91,9 @@ function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyT
   var options = { name: 'Das Experten' };
   if (bodies.html) options.htmlBody = bodies.html;
   if (fromAddress) options.from = fromAddress;
+  if (attachmentBlobs && attachmentBlobs.length > 0) {
+    options.attachments = attachmentBlobs;
+  }
   thread.replyAll(bodies.plain, options);
 
   var refreshed = GmailApp.getThreadById(threadId);
@@ -90,6 +105,11 @@ function replyAllToThread(threadId, bodyHtml, bodyText, attachmentLink, inReplyT
 /**
  * createDraft — creates a Gmail draft instead of sending.
  * Uses Gmail Advanced Service (Gmail.Users.Drafts.create).
+ *
+ * Note: attachment blobs in drafts require building a multipart MIME message,
+ * which is significantly more complex than send. For now, drafts only support
+ * the legacy `attachmentLink` (URL in body). If real attachments are needed in
+ * a draft, fall back to using send mode and inspecting Sent Mail.
  *
  * @param {string} mode - "new" | "reply" | "reply_all"
  * @param {object} params
@@ -185,6 +205,50 @@ function createDraft(mode, params) {
   } else {
     throw new Error('createDraft: unsupported mode: ' + mode);
   }
+}
+
+/**
+ * fetchAttachmentsFromUrls_ — downloads each URL via UrlFetchApp and returns
+ * an array of Blobs ready to pass to GmailApp.sendEmail({attachments: [...]}).
+ *
+ * Filename is taken from the last path segment of the URL. Content-type is
+ * what the response carries; falls back to application/octet-stream.
+ *
+ * Throws if any URL returns non-2xx — caller decides how to surface that.
+ *
+ * @param {Array<string>} urls
+ * @returns {Array<Blob>}
+ */
+function fetchAttachmentsFromUrls_(urls) {
+  if (!urls || !urls.length) return [];
+  var blobs = [];
+  for (var i = 0; i < urls.length; i++) {
+    var url = String(urls[i] || '').trim();
+    if (!url) continue;
+
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+    var code = resp.getResponseCode();
+    if (code < 200 || code >= 300) {
+      throw new Error('fetchAttachmentsFromUrls_: HTTP ' + code + ' fetching ' + url);
+    }
+
+    var blob = resp.getBlob();
+
+    // Derive filename from URL path
+    var filename = '';
+    try {
+      var path = url.split('?')[0].split('#')[0];
+      var lastSeg = path.split('/').pop();
+      if (lastSeg) filename = decodeURIComponent(lastSeg);
+    } catch (e) {
+      filename = '';
+    }
+    if (!filename) filename = 'attachment_' + (i + 1);
+    blob.setName(filename);
+
+    blobs.push(blob);
+  }
+  return blobs;
 }
 
 /**
