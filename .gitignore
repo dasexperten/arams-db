@@ -11,3 +11,8 @@ data/
 reports/
 output/
 *.log
+
+# Skill-local secret files — never commit
+**/SECRETS.local.md
+**/secrets.local.md
+**/.secrets.local
