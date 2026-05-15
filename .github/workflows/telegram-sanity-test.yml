@@ -1,0 +1,43 @@
+name: telegram-sanity-test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send three formats
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 << 'PY'
+          import os, requests
+          BOT = os.environ['BOT_TOKEN']
+          CHAT = os.environ['CHAT_ID']
+          API = f"https://api.telegram.org/bot{BOT}/sendMessage"
+
+          # Test 1: plain text with real newlines
+          r = requests.post(API, json={
+            'chat_id': CHAT,
+            'text': "TEST 1 - plain text\nLine 2\nLine 3\nIf you see this as 3 separate lines, newlines work."
+          })
+          print("plain:", r.status_code, r.text[:120])
+
+          # Test 2: HTML 
+          r = requests.post(API, json={
+            'chat_id': CHAT,
+            'parse_mode': 'HTML',
+            'text': "<b>TEST 2 BOLD</b>\nIf you see TEST 2 BOLD as bold, HTML works."
+          })
+          print("html:", r.status_code, r.text[:120])
+
+          # Test 3: Markdown V2
+          r = requests.post(API, json={
+            'chat_id': CHAT,
+            'parse_mode': 'MarkdownV2',
+            'text': "*TEST 3 BOLD*\nIf you see TEST 3 BOLD as bold, Markdown works\\."
+          })
+          print("md:", r.status_code, r.text[:120])
+          PY
