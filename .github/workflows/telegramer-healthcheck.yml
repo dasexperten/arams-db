@@ -35,12 +35,29 @@ jobs:
 
       - name: Alert on failure
         if: steps.probe.outputs.status == 'BROKEN'
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WORKER: ${{ steps.probe.outputs.worker }}
+          VPS: ${{ steps.probe.outputs.vps }}
+          SESSION: ${{ steps.probe.outputs.session }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          MSG="🔴 *telegramer-vps DOWN*%0A%0AWorker: \`${{ steps.probe.outputs.worker }}\`%0AVPS Telethon: \`${{ steps.probe.outputs.vps }}\`%0ASession active: \`${{ steps.probe.outputs.session }}\`%0A%0ATime: $(date -u '+%Y-%m-%d %H:%M:%S UTC')%0ALogs: https://github.com/dasexperten/arams-db/actions/runs/${{ github.run_id }}"
-          
-          curl -s -X POST \
-            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-            --data-urlencode "parse_mode=Markdown" \
-            --data-urlencode "text=$MSG"
+          python3 << 'PY'
+          import os, requests, datetime
+          msg = (
+            f"🔴 <b>telegramer-vps DOWN</b>\n\n"
+            f"Worker: <code>{os.environ['WORKER']}</code>\n"
+            f"VPS Telethon: <code>{os.environ['VPS']}</code>\n"
+            f"Session active: <code>{os.environ['SESSION']}</code>\n\n"
+            f"Time: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+            f"Logs: https://github.com/dasexperten/arams-db/actions/runs/{os.environ['RUN_ID']}"
+          )
+          r = requests.post(
+            f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/sendMessage",
+            json={'chat_id': os.environ['CHAT_ID'], 'parse_mode': 'HTML', 'text': msg},
+            timeout=10
+          )
+          print(r.status_code, r.text[:200])
+          PY
           exit 1
