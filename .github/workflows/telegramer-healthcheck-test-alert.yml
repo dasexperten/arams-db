@@ -1,0 +1,19 @@
+name: telegramer-healthcheck-test-alert
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fake_failure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test alert directly
+        run: |
+          MSG="🟡 *Test alert (manual)*%0A%0AЭто проверка что алерт-канал работает.%0AВ настоящем падении сюда будет приходить 🔴 DOWN с подробностями.%0A%0ATime: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            --data-urlencode "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            --data-urlencode "parse_mode=Markdown" \
+            --data-urlencode "text=$MSG"
+          echo "✓ test alert sent"
