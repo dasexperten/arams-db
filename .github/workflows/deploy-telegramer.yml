@@ -1,0 +1,70 @@
+name: deploy-telegramer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'my-tools/telegramer/vps/main.py'
+      - 'my-tools/telegramer/vps/requirements.txt'
+      - '.github/workflows/deploy-telegramer.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: telegramer-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 178.105.129.200 >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Backup current main.py on VPS
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new \
+              root@178.105.129.200 \
+              'TS=$(date +%Y%m%d-%H%M%S); cp /home/telegramer/service/main.py /home/telegramer/service/main.py.bak.$TS && ls -la /home/telegramer/service/main.py.bak.$TS'
+
+      - name: Upload new main.py
+        run: |
+          scp -i ~/.ssh/id_ed25519 \
+              my-tools/telegramer/vps/main.py \
+              root@178.105.129.200:/home/telegramer/service/main.py
+
+      - name: Fix ownership + restart service
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@178.105.129.200 \
+              'chown telegramer:telegramer /home/telegramer/service/main.py && \
+               systemctl restart telegramer && \
+               sleep 4 && \
+               systemctl is-active telegramer && \
+               journalctl -u telegramer --since "30 seconds ago" --no-pager | tail -20'
+
+      - name: Smoke test /health
+        run: |
+          sleep 2
+          for i in 1 2 3 4 5; do
+            CODE=$(curl -s -o /tmp/h.json -w "%{http_code}" \
+              -H "Authorization: Bearer ${{ secrets.TELEGRAMER_BRIDGE_SECRET }}" \
+              "http://178.105.129.200:8000/health" || echo "000")
+            if [ "$CODE" = "200" ]; then
+              echo "Health OK"
+              cat /tmp/h.json
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $CODE — retrying in 3s..."
+            sleep 3
+          done
+          echo "Health check FAILED after 5 attempts"
+          ssh -i ~/.ssh/id_ed25519 root@178.105.129.200 \
+              'journalctl -u telegramer --since "60 seconds ago" --no-pager | tail -40'
+          exit 1
