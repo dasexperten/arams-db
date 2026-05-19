@@ -7,9 +7,11 @@ on:
         description: "How many replies to post in this run (default 3). Bump to clear backlog."
         required: false
         default: "3"
-  schedule:
-    # every 10 minutes, 24/7 — up to 3 replies per run × 6 runs/hour = 18/hour cap
-    - cron: "*/10 * * * *"
+  # SCHEDULE DISABLED 2026-05-19: WB auto-reply moved to Cloudflare Worker cron
+  # in dasoperator-api (every 10 minutes, reliable). Keep workflow_dispatch
+  # for manual fallback / disaster recovery.
+  # schedule:
+  #   - cron: "*/10 * * * *"
 
 jobs:
   auto-reply-wb:
