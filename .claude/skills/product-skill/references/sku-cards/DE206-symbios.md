@@ -5,7 +5,8 @@ category: toothpaste
 manufacturer_slug: wdaa
 seller_slug: guangzhou-honghui
 status: active
-last_verified: 2026-04-20
+last_verified: 2026-05-23
+source_of_truth: aram-canonical-2026-05-23
 ---
 
 # SYMBIOS — DE206
@@ -13,7 +14,7 @@ last_verified: 2026-04-20
 ## Identity
 - SKU code: DE206
 - Article (alt code, if any): not available
-- Trade name (full): Das Experten SYMBIOS
+- Trade name (full): Das Experten SYMBIOS — Active Probiotic Toothpaste with Bacillus coagulans
 - Trade name (short): SYMBIOS
 - Category: toothpaste
 - Sub-category: probiotic / microbiome restoration (flagship)
@@ -49,10 +50,25 @@ last_verified: 2026-04-20
 - Country of origin: China
 - Shelf life (months): not available
 - Storage conditions: not available — probiotic (Bacillus coagulans) — verify temperature limits with Honghui
-- Certificates / DoC: not available
+- Certificates / DoC: ТР ТС 009/2011 — 🟣 PENDING (Андрей, DEE) — see legalizer/CERTIFICATIONS_reference.md
+
+## Composition (Aram-canonical, 2026-05-23)
+Aqua, Sorbitol, Silica, Xylitol, Bacillus coagulans JYBC-016 (4×10¹⁰ CFU per tube), Sodium pyrophosphate, LS 30, Sodium Saccharin, Xanthan gum, Sodium Benzoate, Menthol oil.
+
+## Core Function
+Stabilizes oral microbiome with Bacillus coagulans. Replaces kill-based strategies; restores ecological balance; supports gingival immunity; inhibits pathogens selectively; improves breath and gingival health; without enamel wear or harsh chemistry.
+
+## Performance Benefits
+- Supports beneficial bacteria
+- Reduces inflammation
+- Helps enamel remineralization
 
 ## Notes
 - ⚠️ PDF physical dimensions and weights reflect old 144-unit master carton — current configuration is 288/master, 72/inner box per Aram's confirmation. Request updated packing data sheet from Honghui (Ellen Wei).
-- Hero ingredient: Bacillus coagulans 4×10¹⁰ CFU. Brand flagship — first product on every catalog/presentation.
-- Best for: dysbiosis, halitosis, gingivitis.
+- Hero ingredient: Bacillus coagulans JYBC-016, **4×10¹⁰ CFU per tube**. Brand flagship — first product on every catalog/presentation.
+- Best for: dysbiosis, halitosis, gingivitis, early caries prevention.
 - ⚠️ Living-culture probiotic — verify storage temperature requirements before signing logistics terms (avoid heat exposure in transit).
+
+## Changelog
+- 2026-05-23 — Updated to Aram-canonical. Volume confirmed 70ml. Full INCI added. Strain identifier JYBC-016 made explicit. CFU notation corrected to per-tube. Composition + Core Function + Performance Benefits sections added.
+- 2026-04-20 — Previous verification.
