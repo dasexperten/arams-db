@@ -8,7 +8,7 @@ Read this index first. Then open the specific SKU file needed for the product be
 | DE209_thermo39.md | DE209 | THERMO 39° | Papain + Lysozyme + Dextranase — thermoactivated at 39°C |
 | DE203_ginger.md | DE203 | GINGER FORCE | Zingiber officinale 1% (gingerols) |
 | DE205_cococannabis.md | DE205 | COCOCANNABIS | Cannabis Sativa Seed Oil 3% |
-| DE206_symbios.md | DE206 | SYMBIOS | Bacillus Coagulans 4×10¹⁰ CFU |
+| DE206_symbios.md | DE206 | SYMBIOS | Bacillus coagulans JYBC-016 4×10¹⁰ CFU per tube + Sodium pyrophosphate |
 | DE210_innoweiss.md | DE210 | INNOWEISS | 5-enzyme cascade (Dextranase, Invertase, GOX, Papain, Bromelain) |
 | DE202_detox.md | DE202 | DETOX | Cinnamon 0.8% + Clove 0.2% |
 | DE201_schwarz.md | DE201 | SCHWARZ | Activated Coconut-Shell Charcoal (micro-milled, ultra-purified) |
