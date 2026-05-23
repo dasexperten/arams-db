@@ -16,7 +16,7 @@ Always pair a number with a product name and a short evidence note.
 | 30% plaque reduction | SCHWARZ | vs. baseline, activated coconut-shell charcoal |
 | 52–69% biofilm removal | INNOWEISS | Dextranase enzyme, in vitro |
 | Enamel roughness ~8–11nm | INNOWEISS | Restored to near-natural after enzyme treatment |
-| 4×10¹⁰ CFU per dose | SYMBIOS | Live Bacillus coagulans JYBC-016 per application |
+| 4×10¹⁰ CFU per tube | SYMBIOS | Live Bacillus coagulans JYBC-016 — survives brushing, manufacturing, shelf storage |
 | +26–40% saliva production | GINGER FORCE | Ginger TRPV1 receptor activation |
 | −65–79% P. gingivalis | GINGER FORCE | 14-day gingival index reduction |
 | −40–60% biofilm | GINGER FORCE | Ginger oil antibiofilm mechanism |
