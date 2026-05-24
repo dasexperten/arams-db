@@ -23,8 +23,6 @@ jobs:
       WB_FEEDBACKS_TOKEN: ${{ secrets.WB_FEEDBACKS_TOKEN }}
       WB_FEEDBACKS_BASE_URL: https://feedbacks-api.wildberries.ru
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       MAX_REPLIES: ${{ github.event.inputs.max_replies || '3' }}
 
     steps:
