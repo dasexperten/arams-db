@@ -358,6 +358,17 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 continue
 
             text = (review.get("text") or "").strip()
+            if not text:
+                # Ozon API forbids commenting on empty (rating-only) reviews
+                # (HTTP 400 createComment: cannot comment on empty review).
+                # Mark PROCESSED and skip — no LLM call.
+                try:
+                    api.change_status([review_id], "PROCESSED")
+                    no_text_marked.append(review_id)
+                except Exception as e:
+                    errors.append({"review_id": review_id, "stage": "mark_no_text",
+                                   "error": str(e)})
+                continue
 
             sku = str(review.get("sku") or "")
             if sku and sku not in catalog:
