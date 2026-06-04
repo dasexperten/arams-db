@@ -7,9 +7,7 @@ on:
         description: "How many replies to post in this run (default 5). Bump to clear backlog."
         required: false
         default: "5"
-  schedule:
-    # every 10 minutes, 24/7
-    - cron: "*/10 * * * *"
+  # schedule moved to hermes-vps systemd timers (2026-06-04): ozon-auto-reply.timer / ozon-auto-answer.timer
 
 jobs:
   auto-reply:

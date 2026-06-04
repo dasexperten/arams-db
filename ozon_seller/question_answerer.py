@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from anthropic import Anthropic
+from .llm_router import generate as llm_generate
 
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -184,39 +184,22 @@ def draft_answer(
     question: dict,
     model: str | None = None,
     max_tokens: int = 1024,
-    client: Anthropic | None = None,
+    client: object | None = None,
 ) -> Answer:
     """Draft a public answer for the given Ozon buyer question.
 
     System prompt is cached (ephemeral prompt caching) so subsequent calls
     reuse the ~3KB of rules without paying for reprocessing.
     """
-    model = model or os.environ.get("ANTHROPIC_MODEL") or DEFAULT_MODEL
-    client = client or Anthropic(timeout=90.0)
     user_body = _format_question(question)
-
-    resp = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=[
-            {
-                "type": "text",
-                "text": SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=[{"role": "user", "content": user_body}],
-    )
-
-    chunks = [block.text for block in resp.content if getattr(block, "type", "") == "text"]
-    text = "\n".join(chunks).strip()
-    usage: Any = resp.usage
+    res = llm_generate(SYSTEM_PROMPT, user_body, has_text=True,
+                       max_tokens=max_tokens)
     return Answer(
-        text=text,
-        input_tokens=getattr(usage, "input_tokens", 0) or 0,
-        output_tokens=getattr(usage, "output_tokens", 0) or 0,
-        cache_read_input_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0,
-        cache_creation_input_tokens=getattr(usage, "cache_creation_input_tokens", 0) or 0,
-        stop_reason=resp.stop_reason,
-        model=model,
+        text=res.text,
+        input_tokens=res.input_tokens,
+        output_tokens=res.output_tokens,
+        cache_read_input_tokens=0,
+        cache_creation_input_tokens=0,
+        stop_reason=None,
+        model=res.provider,
     )

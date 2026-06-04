@@ -358,14 +358,6 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 continue
 
             text = (review.get("text") or "").strip()
-            if not text:
-                try:
-                    api.change_status([review_id], "PROCESSED")
-                    no_text_marked.append(review_id)
-                except Exception as e:
-                    errors.append({"review_id": review_id, "stage": "mark_no_text",
-                                   "error": str(e)})
-                continue
 
             sku = str(review.get("sku") or "")
             if sku and sku not in catalog:
@@ -413,6 +405,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
                 replied_ids.add(review_id)
                 _save_replied_ids(replied_ids)
                 replied.append({
+                    "kind": "text" if text else "no_text",
                     "review_id": review_id,
                     "chars": len(draft_text),
                     "question": text,
@@ -432,6 +425,7 @@ def cmd_auto_reply(args: argparse.Namespace) -> int:
         "max_replies": max_replies,
         "replied": len(replied),
         "no_text_marked": len(no_text_marked),
+        "no_text_replied": sum(1 for r in replied if r.get("kind") == "no_text"),
         "errors": len(errors),
     }
     print(json.dumps(summary, indent=2, ensure_ascii=False))
