@@ -1,13 +1,13 @@
 """
 LLM router for Ozon review/question pipeline.
 
-Routing policy (decided 2026-06-04):
-  - review WITH text  -> gpt-5.5 via local `codex exec` (ChatGPT Plus OAuth,
-                         auto-refreshing auth on hermes-vps), fallback -> Atlas DeepSeek
-  - review WITHOUT text -> DeepSeek V3 via Atlas Cloud (cheap, compact prompt)
+Routing policy (updated 2026-06-06 — Aram directive):
+  - ALL cron LLM tasks (reviews with text, reviews without text, Q&A) run on
+    DeepSeek V4 Pro via Atlas Cloud. No exceptions, no codex/gpt-5.5 path.
 
-Direct DeepSeek API (api.deepseek.com) is NOT used: balance is empty as of
-2026-06-04. To switch back, change ATLAS_URL/ATLAS_MODEL/key env.
+Model is pinned in code (ATLAS_MODEL below) so a stale ATLAS_MODEL in .env
+cannot silently downgrade the engine. Direct api.deepseek.com is not used
+(balance empty since 2026-06-04); Atlas Cloud serves deepseek-ai/deepseek-v4-pro.
 """
 from __future__ import annotations
 
@@ -19,7 +19,10 @@ import urllib.request
 from dataclasses import dataclass
 
 ATLAS_URL = os.environ.get("ATLAS_URL", "https://api.atlascloud.ai/v1/chat/completions")
-ATLAS_MODEL = os.environ.get("ATLAS_MODEL", "deepseek-ai/DeepSeek-V3-0324")
+# Forced engine for every cron LLM call — DeepSeek V4 Pro (Aram directive 2026-06-06).
+# Intentionally NOT read from ATLAS_MODEL env so a stale value can't override it.
+ATLAS_MODEL = "deepseek-ai/deepseek-v4-pro"
+# Legacy codex/gpt-5.5 path retained as dead code for reference only — never called.
 CODEX_BIN = os.environ.get("CODEX_BIN", "codex")
 CODEX_MODEL = os.environ.get("CODEX_MODEL", "gpt-5.5")
 CODEX_TIMEOUT = int(os.environ.get("CODEX_TIMEOUT", "240"))
@@ -109,10 +112,11 @@ def call_codex(system: str, user: str) -> LLMResult:
 
 def generate(system: str, user: str, has_text: bool,
              max_tokens: int = 1024) -> LLMResult:
-    """Route one generation call. has_text=False -> cheap engine only."""
-    if has_text:
-        try:
-            return call_codex(system, user)
-        except Exception:
-            return call_atlas(system, user, max_tokens=max_tokens)
-    return call_atlas(system, user, max_tokens=min(max_tokens, 500))
+    """Route one generation call.
+
+    Every cron LLM task — with or without review text — goes to DeepSeek V4 Pro
+    via Atlas Cloud (Aram directive 2026-06-06). The codex/gpt-5.5 branch was
+    removed; call_codex is kept only as dead reference code.
+    """
+    mt = max_tokens if has_text else min(max_tokens, 500)
+    return call_atlas(system, user, max_tokens=mt)
