@@ -1,0 +1,13 @@
+name = "promozon"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "promozon_db"
+database_id = "f36a8f2b-99b9-49b8-9dc4-fb98181f23c2"
+
+[triggers]
+crons = ["0 */4 * * *"]
+
+# Secrets (set via API, never commit): OZON_PERF_CLIENT_ID, OZON_PERF_CLIENT_SECRET, PROMOZON_AUTH
