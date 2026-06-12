@@ -82,6 +82,28 @@ async function sellerActionProducts(env, actionId) {
   return all;
 }
 
+async function sellerActionCandidates(env, actionId) {
+  // Products eligible for the elastic-boost action but NOT currently participating.
+  // A product lands here once its promo sales-plan ("Осталось продать") hits 0 and it
+  // drops out of active boosting — i.e. the "finished candidates". stock===0 for all of them.
+  const all = [];
+  let offset = 0;
+  for (;;) {
+    const r = await fetch(`${SELLER_BASE}/v1/actions/candidates`, {
+      method: "POST",
+      headers: sellerHeaders(env),
+      body: JSON.stringify({ action_id: actionId, limit: 100, offset }),
+    });
+    if (!r.ok) throw new Error(`actions/candidates ${r.status}: ${await r.text()}`);
+    const res = (await r.json()).result || {};
+    const prods = res.products || [];
+    all.push(...prods);
+    if (all.length >= Number(res.total || 0) || prods.length === 0 || offset > 5000) break;
+    offset += prods.length;
+  }
+  return all;
+}
+
 async function sellerProductNames(env, productIds) {
   const map = new Map();
   if (productIds.length === 0) return map;
@@ -122,6 +144,7 @@ async function getConfig(env) {
     enabled: c.enabled !== "0",
     // elastic-stock-guard
     stockGuardEnabled: c.stock_guard_enabled !== "0",
+    candidateRestoreEnabled: c.candidate_restore_enabled !== "0",
     actionId: Number(c.action_id ?? 1977747),
     targetStock: Number(c.target_stock ?? 29),
     // zero-bid-restore (Performance)
@@ -132,19 +155,41 @@ async function getConfig(env) {
 
 // ---------- scenario: elastic-stock-guard (Seller API) ----------
 
+// Pick a valid elastic promo price for activation. Active dropouts already carry a good
+// action_price; finished candidates come back with action_price=0, so fall back to the
+// least-discount end of the elastic band (max_action_price / price_min_elastic).
+function activationPrice(p) {
+  const cand = [Number(p.action_price), Number(p.max_action_price), Number(p.price_min_elastic)];
+  for (const v of cand) if (Number.isFinite(v) && v > 0) return v;
+  return 0;
+}
+
 async function scenarioElasticStockGuard(env, cfg, runId) {
-  const products = await sellerActionProducts(env, cfg.actionId);
-  const zeros = products.filter((p) => Number(p.stock) === 0);
+  // Two populations share one trigger: "Осталось продать" (the action `stock` field) === 0.
+  //   [A] ACTIVE products still in the action whose plan is exhausted (stock===0).
+  //   [B] FINISHED CANDIDATES — products that already dropped OUT of boosting because their
+  //       plan hit 0; they live in /candidates (stock===0 for all). Previously invisible.
+  const active = await sellerActionProducts(env, cfg.actionId);
+  const activeZeros = active.filter((p) => Number(p.stock) === 0).map((p) => ({ ...p, _src: "active" }));
+
+  let candidates = [];
+  if (cfg.candidateRestoreEnabled) {
+    candidates = (await sellerActionCandidates(env, cfg.actionId))
+      .filter((p) => Number(p.stock) === 0)
+      .map((p) => ({ ...p, _src: "candidate" }));
+  }
+
+  const targets = [...activeZeros, ...candidates];
   let actionsTaken = 0;
 
-  if (zeros.length > 0) {
-    const names = await sellerProductNames(env, zeros.map((p) => p.id));
+  if (targets.length > 0) {
+    const names = await sellerProductNames(env, targets.map((p) => p.id));
     let activated = { product_ids: [], rejected: { product_ids: [] } };
     if (!cfg.dryRun) {
       activated = await sellerActivate(
         env,
         cfg.actionId,
-        zeros.map((p) => ({ product_id: p.id, action_price: Number(p.action_price), stock: cfg.targetStock }))
+        targets.map((p) => ({ product_id: p.id, action_price: activationPrice(p), stock: cfg.targetStock }))
       );
     }
     const okSet = new Set((activated.product_ids || []).map(String));
@@ -152,17 +197,25 @@ async function scenarioElasticStockGuard(env, cfg, runId) {
     const stmt = env.DB.prepare(
       "INSERT INTO actions(run_id, scenario, sku, source_sku, title, old_bid, new_bid, dry_run, result, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
     );
-    const batch = zeros.map((p) => {
+    const batch = targets.map((p) => {
       const n = names.get(String(p.id)) || {};
+      const tag = p._src === "candidate" ? "FINISHED-CANDIDATE" : "ACTIVE";
       const res = cfg.dryRun
-        ? `DRY_RUN: would set stock ${cfg.targetStock} @ price ${p.action_price}`
-        : okSet.has(String(p.id)) ? "activated" : "rejected";
+        ? `DRY_RUN[${tag}]: would re-activate at stock ${cfg.targetStock} @ price ${activationPrice(p)}`
+        : okSet.has(String(p.id)) ? `activated[${tag}]` : `rejected[${tag}]`;
       return stmt.bind(runId, "elastic-stock-guard", String(p.id), n.offerId || "", n.name || "", 0, cfg.targetStock, cfg.dryRun ? 1 : 0, res, now);
     });
     await env.DB.batch(batch);
     actionsTaken = cfg.dryRun ? 0 : okSet.size;
   }
-  return { scenario: "elastic-stock-guard", productsChecked: products.length, zeros: zeros.length, actionsTaken };
+  return {
+    scenario: "elastic-stock-guard",
+    productsChecked: active.length + candidates.length,
+    activeZeros: activeZeros.length,
+    finishedCandidates: candidates.length,
+    zeros: targets.length,
+    actionsTaken,
+  };
 }
 
 // ---------- scenario: zero-bid-restore (Performance API) ----------
@@ -271,7 +324,7 @@ export default {
     }
     if (url.pathname === "/config" && req.method === "POST") {
       const body = await req.json();
-      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "action_id", "target_stock", "bid_restore_enabled", "target_bid"];
+      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "candidate_restore_enabled", "action_id", "target_stock", "bid_restore_enabled", "target_bid"];
       const updated = {};
       for (const k of allowed) {
         if (body[k] !== undefined) {
