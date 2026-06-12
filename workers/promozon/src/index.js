@@ -223,7 +223,10 @@ async function scenarioElasticStockGuard(env, cfg, runId) {
 async function scenarioZeroBidRestore(env, cfg, runId) {
   const token = await perfToken(env);
   const products = await perfListProducts(token);
-  const zeros = products.filter((p) => Number(p.bid) === 0);
+  // "Осталось продать" exhausted → Ozon auto-drops the elastic boost bid to 0 and the product
+  // stops being promoted. Restore bid→target, but ONLY for products still promotable
+  // (isSearchPromoAvailable); bid=0 + not-available = out of stock / ineligible → skip.
+  const zeros = products.filter((p) => Number(p.bid) === 0 && p.isSearchPromoAvailable);
   let actionsTaken = 0;
 
   if (zeros.length > 0) {
@@ -240,7 +243,8 @@ async function scenarioZeroBidRestore(env, cfg, runId) {
       const res = cfg.dryRun
         ? "DRY_RUN: would set bid"
         : JSON.stringify(setResults.get(String(p.sku)) ?? { updated: "unknown" });
-      return stmt.bind(runId, "zero-bid-restore", String(p.sku), p.sourceSku || "", p.title || "", Number(p.bid), cfg.targetBid, cfg.dryRun ? 1 : 0, res, now);
+      const prevBid = Number(p.previousBid?.bid ?? 0);
+      return stmt.bind(runId, "zero-bid-restore", String(p.sku), p.sourceSku || "", p.title || "", prevBid, cfg.targetBid, cfg.dryRun ? 1 : 0, res, now);
     });
     await env.DB.batch(batch);
     actionsTaken = cfg.dryRun ? 0 : zeros.filter((p) => setResults.get(String(p.sku))?.updated).length;
