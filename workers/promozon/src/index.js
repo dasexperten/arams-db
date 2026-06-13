@@ -63,6 +63,17 @@ function sellerHeaders(env) {
   };
 }
 
+async function sellerListBoostActions(env) {
+  // Discover every active "бустинг" action. Products hit stock=0 ("Осталось продать") in any
+  // of them — not just the headline "Эластичный бустинг" — so the guard must cover them all.
+  const r = await fetch(`${SELLER_BASE}/v1/actions`, { method: "GET", headers: sellerHeaders(env) });
+  if (!r.ok) throw new Error(`actions list ${r.status}: ${await r.text()}`);
+  const list = (await r.json()).result || [];
+  return list
+    .filter((a) => String(a.title || "").toLowerCase().includes("бустинг"))
+    .map((a) => ({ id: a.id, title: String(a.title || "").trim() }));
+}
+
 async function sellerActionProducts(env, actionId) {
   const all = [];
   let offset = 0;
@@ -146,6 +157,8 @@ async function getConfig(env) {
     stockGuardEnabled: c.stock_guard_enabled !== "0",
     candidateRestoreEnabled: c.candidate_restore_enabled !== "0",
     actionId: Number(c.action_id ?? 1977747),
+    // empty = auto-discover every active "бустинг" action; or pin a CSV list e.g. "1977747,3876484"
+    actionIds: String(c.action_ids ?? "").split(",").map((s) => Number(s.trim())).filter(Boolean),
     targetStock: Number(c.target_stock ?? 29),
     // zero-bid-restore (Performance)
     bidRestoreEnabled: c.bid_restore_enabled === "1",
@@ -165,55 +178,71 @@ function activationPrice(p) {
 }
 
 async function scenarioElasticStockGuard(env, cfg, runId) {
-  // Two populations share one trigger: "Осталось продать" (the action `stock` field) === 0.
-  //   [A] ACTIVE products still in the action whose plan is exhausted (stock===0).
-  //   [B] FINISHED CANDIDATES — products that already dropped OUT of boosting because their
-  //       plan hit 0; they live in /candidates (stock===0 for all). Previously invisible.
-  const active = await sellerActionProducts(env, cfg.actionId);
-  const activeZeros = active.filter((p) => Number(p.stock) === 0).map((p) => ({ ...p, _src: "active" }));
+  // Trigger: "Осталось продать" (the action `stock` field) === 0 — the product sold through its
+  // boost plan. A product can be in SEVERAL бустинг actions and hit 0 in any of them, so scan
+  // every active бустинг action, not just the headline "Эластичный бустинг".
+  //   [A] ACTIVE products in the action at stock===0.
+  //   [B] FINISHED CANDIDATES that dropped OUT (in /candidates, stock===0) — if enabled.
+  // Both are re-activated to target_stock (29 units).
+  const boostActions = cfg.actionIds.length
+    ? cfg.actionIds.map((id) => ({ id, title: String(id) }))
+    : await sellerListBoostActions(env);
 
-  let candidates = [];
-  if (cfg.candidateRestoreEnabled) {
-    candidates = (await sellerActionCandidates(env, cfg.actionId))
+  let productsChecked = 0, activeZeros = 0, finishedCandidates = 0, actionsTaken = 0;
+  const now = new Date().toISOString();
+  const stmt = env.DB.prepare(
+    "INSERT INTO actions(run_id, scenario, sku, source_sku, title, old_bid, new_bid, dry_run, result, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
+  );
+  const allRows = [];
+
+  for (const act of boostActions) {
+    const active = await sellerActionProducts(env, act.id);
+    productsChecked += active.length;
+    const targets = active
       .filter((p) => Number(p.stock) === 0)
-      .map((p) => ({ ...p, _src: "candidate" }));
-  }
+      .map((p) => ({ ...p, _src: "active" }));
+    activeZeros += targets.length;
 
-  const targets = [...activeZeros, ...candidates];
-  let actionsTaken = 0;
+    if (cfg.candidateRestoreEnabled) {
+      const cands = (await sellerActionCandidates(env, act.id))
+        .filter((p) => Number(p.stock) === 0)
+        .map((p) => ({ ...p, _src: "candidate" }));
+      productsChecked += cands.length;
+      finishedCandidates += cands.length;
+      targets.push(...cands);
+    }
+    if (targets.length === 0) continue;
 
-  if (targets.length > 0) {
     const names = await sellerProductNames(env, targets.map((p) => p.id));
-    let activated = { product_ids: [], rejected: { product_ids: [] } };
+    let activated = { product_ids: [] };
     if (!cfg.dryRun) {
       activated = await sellerActivate(
         env,
-        cfg.actionId,
+        act.id,
         targets.map((p) => ({ product_id: p.id, action_price: activationPrice(p), stock: cfg.targetStock }))
       );
     }
     const okSet = new Set((activated.product_ids || []).map(String));
-    const now = new Date().toISOString();
-    const stmt = env.DB.prepare(
-      "INSERT INTO actions(run_id, scenario, sku, source_sku, title, old_bid, new_bid, dry_run, result, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
-    );
-    const batch = targets.map((p) => {
+    actionsTaken += cfg.dryRun ? 0 : okSet.size;
+
+    for (const p of targets) {
       const n = names.get(String(p.id)) || {};
       const tag = p._src === "candidate" ? "FINISHED-CANDIDATE" : "ACTIVE";
       const res = cfg.dryRun
-        ? `DRY_RUN[${tag}]: would re-activate at stock ${cfg.targetStock} @ price ${activationPrice(p)}`
-        : okSet.has(String(p.id)) ? `activated[${tag}]` : `rejected[${tag}]`;
-      return stmt.bind(runId, "elastic-stock-guard", String(p.id), n.offerId || "", n.name || "", 0, cfg.targetStock, cfg.dryRun ? 1 : 0, res, now);
-    });
-    await env.DB.batch(batch);
-    actionsTaken = cfg.dryRun ? 0 : okSet.size;
+        ? `DRY_RUN[${tag} @${act.title}]: would set stock ${cfg.targetStock}`
+        : okSet.has(String(p.id)) ? `activated[${tag} @${act.id}]` : `rejected[${tag} @${act.id}]`;
+      allRows.push(stmt.bind(runId, "elastic-stock-guard", String(p.id), n.offerId || "", n.name || "", 0, cfg.targetStock, cfg.dryRun ? 1 : 0, res, now));
+    }
   }
+  if (allRows.length) await env.DB.batch(allRows);
+
   return {
     scenario: "elastic-stock-guard",
-    productsChecked: active.length + candidates.length,
-    activeZeros: activeZeros.length,
-    finishedCandidates: candidates.length,
-    zeros: targets.length,
+    boostActions: boostActions.length,
+    productsChecked,
+    activeZeros,
+    finishedCandidates,
+    zeros: activeZeros + finishedCandidates,
     actionsTaken,
   };
 }
@@ -328,7 +357,7 @@ export default {
     }
     if (url.pathname === "/config" && req.method === "POST") {
       const body = await req.json();
-      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "candidate_restore_enabled", "action_id", "target_stock", "bid_restore_enabled", "target_bid"];
+      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "candidate_restore_enabled", "action_id", "action_ids", "target_stock", "bid_restore_enabled", "target_bid"];
       const updated = {};
       for (const k of allowed) {
         if (body[k] !== undefined) {
