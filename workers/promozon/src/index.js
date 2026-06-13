@@ -63,14 +63,14 @@ function sellerHeaders(env) {
   };
 }
 
-async function sellerListBoostActions(env) {
-  // Discover every active "бустинг" action. Products hit stock=0 ("Осталось продать") in any
-  // of them — not just the headline "Эластичный бустинг" — so the guard must cover them all.
+async function sellerListPromoActions(env, scope) {
+  // Discover promos to guard. scope "all" = every active promo (Осталось продать=0 happens in
+  // clearance promos too, e.g. DE310 in «Распродажа стока»); scope "boost" = только бустинг.
   const r = await fetch(`${SELLER_BASE}/v1/actions`, { method: "GET", headers: sellerHeaders(env) });
   if (!r.ok) throw new Error(`actions list ${r.status}: ${await r.text()}`);
   const list = (await r.json()).result || [];
   return list
-    .filter((a) => String(a.title || "").toLowerCase().includes("бустинг"))
+    .filter((a) => scope === "all" || String(a.title || "").toLowerCase().includes("бустинг"))
     .map((a) => ({ id: a.id, title: String(a.title || "").trim() }));
 }
 
@@ -157,8 +157,10 @@ async function getConfig(env) {
     stockGuardEnabled: c.stock_guard_enabled !== "0",
     candidateRestoreEnabled: c.candidate_restore_enabled !== "0",
     actionId: Number(c.action_id ?? 1977747),
-    // empty = auto-discover every active "бустинг" action; or pin a CSV list e.g. "1977747,3876484"
+    // empty = auto-discover; or pin a CSV list e.g. "1977747,3876484"
     actionIds: String(c.action_ids ?? "").split(",").map((s) => Number(s.trim())).filter(Boolean),
+    // "all" = scan every active promo (incl. clearance); "boost" = only бустинг actions
+    promoScope: c.promo_scope === "boost" ? "boost" : "all",
     targetStock: Number(c.target_stock ?? 29),
     // zero-bid-restore (Performance)
     bidRestoreEnabled: c.bid_restore_enabled === "1",
@@ -186,7 +188,7 @@ async function scenarioElasticStockGuard(env, cfg, runId) {
   // Both are re-activated to target_stock (29 units).
   const boostActions = cfg.actionIds.length
     ? cfg.actionIds.map((id) => ({ id, title: String(id) }))
-    : await sellerListBoostActions(env);
+    : await sellerListPromoActions(env, cfg.promoScope);
 
   let productsChecked = 0, activeZeros = 0, finishedCandidates = 0, actionsTaken = 0;
   const now = new Date().toISOString();
@@ -357,7 +359,7 @@ export default {
     }
     if (url.pathname === "/config" && req.method === "POST") {
       const body = await req.json();
-      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "candidate_restore_enabled", "action_id", "action_ids", "target_stock", "bid_restore_enabled", "target_bid"];
+      const allowed = ["dry_run", "enabled", "stock_guard_enabled", "candidate_restore_enabled", "action_id", "action_ids", "promo_scope", "target_stock", "bid_restore_enabled", "target_bid"];
       const updated = {};
       for (const k of allowed) {
         if (body[k] !== undefined) {
