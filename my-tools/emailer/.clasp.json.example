@@ -1,0 +1,13 @@
+{
+  "scriptId": "REPLACE_WITH_YOUR_APPS_SCRIPT_ID",
+  "rootDir": "./src",
+  "fileExtension": "gs",
+  "filePushOrder": [
+    "Main.gs",
+    "GmailSender.gs",
+    "ThreadResolver.gs",
+    "DriveManager.gs",
+    "Reporter.gs",
+    "Logger.gs"
+  ]
+}
